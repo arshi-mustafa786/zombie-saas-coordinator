@@ -1,0 +1,224 @@
+{
+    "nodes": [
+        {
+            "id": "US-1",
+            "title": "Scheduled Identity & Access Telemetry",
+            "description": "As an IT Operations Manager, I want the system to automatically scan IdP logs every 24\u201372 hours and flag applications with zero activity or redundant capabilities, so I don't have to manually hunt for zombie systems.",
+            "acceptance_criteria": [
+                "System connects to identity providers (Okta, Google Workspace, Azure AD) via OAuth 2.0 or SAML federation",
+                "Cron-based Auditor Agent executes on a configurable schedule (default: every 48 hours)",
+                "Flags application when \u226560% of assigned seats show zero SAML/OIDC logins over 60+ days",
+                "Detects capability redundancy by matching application tags/categories against enterprise standards",
+                "Generates structured JSON payload with application name, seat count, inactivity duration, and redundancy confidence score",
+                "Logs all detection logic to Cloud Audit Logs for forensic reconstruction"
+            ],
+            "layers": [
+                "DB",
+                "Service",
+                "API"
+            ]
+        },
+        {
+            "id": "US-2",
+            "title": "Expense & Webhook Ingestion",
+            "description": "As a Finance Lead, I want the system to receive webhook notifications from Brex/Ramp/Expensify when a new software subscription appears on a corporate card, so we can catch shadow IT purchases in real-time.",
+            "acceptance_criteria": [
+                "System exposes a secure webhook endpoint (`POST /webhooks/expense-notification`) authenticated via HMAC-SHA256",
+                "Accepts expense payloads containing: merchant name, amount, billing frequency, contract renewal date",
+                "Identifies unapproved recurring subscriptions by comparing against a whitelist of approved SaaS tools",
+                "Detects auto-renewal windows and flags for cancellation opportunity",
+                "Routes high-value subscriptions (>$500/month) directly to Finance Lead for immediate review",
+                "All webhook events are immutably logged in Cloud Audit Logs"
+            ],
+            "layers": [
+                "API",
+                "Service",
+                "DB"
+            ]
+        },
+        {
+            "id": "US-3",
+            "title": "Auditor Agent \u2013 Consolidation Proposal Generation",
+            "description": "As an IT Ops Manager, I want the system to create a detailed, human-readable consolidation proposal before any migration begins, so I understand what's at risk and can make an informed decision.",
+            "acceptance_criteria": [
+                "Auditor Agent generates structured JSON payload with redundant application identifier, target enterprise standard, and estimated annual savings",
+                "Calculates savings as: seats \u00d7 cost per seat \u00d7 months remaining",
+                "Generates risk score (0\u2013100) based on active user count, connected integrations, data age, compliance sensitivity",
+                "Summarizes detected dependencies (Zapier webhooks, custom fields, automation rules)",
+                "Provides recommendation: Proceed to Full Consolidation, Proceed with Manual Review, or Ignore/Whitelist",
+                "Payload is human-readable with links to source data",
+                "Proposal is timestamped and signed with system identity for audit trail"
+            ],
+            "layers": [
+                "Service",
+                "DB",
+                "API"
+            ]
+        },
+        {
+            "id": "US-4",
+            "title": "Interactive Approval Card",
+            "description": "As an IT Ops Manager, I want to receive an interactive notification (Slack, Teams, or email) that lets me review the consolidation proposal and take action without leaving my communication tool.",
+            "acceptance_criteria": [
+                "System sends formatted message card to designated Slack workspace or Microsoft Teams channel",
+                "Card displays summary, target platform, estimated savings, and dependencies found",
+                "Provides three interactive buttons: [Simulate Migration], [Approve Full Consolidation], [Ignore/Whitelist]",
+                "[Simulate Migration] triggers dry-run without permanent changes; results appended to card",
+                "[Approve Full Consolidation] records approver identity, timestamp, and SSO context",
+                "[Ignore/Whitelist] excludes tool from future recommendations",
+                "All user interactions logged to Cloud Audit Logs with full context"
+            ],
+            "layers": [
+                "API",
+                "Service",
+                "UI"
+            ]
+        },
+        {
+            "id": "US-5",
+            "title": "HITL Execution Gate",
+            "description": "As a CISO, I want a mandatory human approval gate before the system executes any irreversible actions (data migration, account revocation, subscription cancellation), so we maintain accountability and can halt the process if new information emerges.",
+            "acceptance_criteria": [
+                "Clicking [Approve Full Consolidation] serves as the formal authorization trigger",
+                "System does not proceed beyond Validation Phase without explicit human approval",
+                "Approval is tied to authenticated SSO identity (not a generic API token)",
+                "Approval expires after 7 days; re-issue required if migration not completed within window",
+                "System can be halted at any stage if IT Ops or CISO revokes approval",
+                "All halts logged with reason and authorizing identity"
+            ],
+            "layers": [
+                "Service",
+                "DB",
+                "API"
+            ]
+        },
+        {
+            "id": "US-6",
+            "title": "Behavioral Contract Extraction",
+            "description": "As a Technical Lead, I want the system to automatically extract automation rules and behavioral logic from the source system (Trello) so we can verify that the target system (Asana) can enforce the same rules after migration.",
+            "acceptance_criteria": [
+                "Architect Agent connects to Trello API and parses all board configurations",
+                "Extracts automation and power-up rules in structured format (trigger, action, scope)",
+                "Records trigger conditions (status change, label addition, etc.) and actions (archive, move, notify)",
+                "Records custom fields, due dates, card labels, and checklists",
+                "Exports behavioral contract as JSON specification document for audit trail",
+                "Logs all API calls and extracted rules to Cloud Audit Logs"
+            ],
+            "layers": [
+                "Service",
+                "API",
+                "DB"
+            ]
+        },
+        {
+            "id": "US-7",
+            "title": "Schema Diffing & Structural Validation",
+            "description": "As a Technical Lead, I want the system to compare the data schemas of Trello and Asana side-by-side, so we identify field-level mismatches before migration begins.",
+            "acceptance_criteria": [
+                "Architect Agent extracts Asana target schema (tasks, projects, sections, custom fields)",
+                "Maps Trello schema to Asana schema (card\u2192task, list\u2192section, board\u2192project)",
+                "Compares custom fields and flags type compatibility issues",
+                "Maps Trello labels to Asana custom fields or tags",
+                "Generates schema diff report with Green (safe), Yellow (lossy), and Red (unmappable) classifications",
+                "Reports included in Consolidation Proposal"
+            ],
+            "layers": [
+                "Service",
+                "API",
+                "DB"
+            ]
+        },
+        {
+            "id": "US-8",
+            "title": "State-Transition Simulation (Semantic Validation)",
+            "description": "As a Technical Lead, I want the system to simulate what happens when a Trello card transitions to a 'Done' state in Asana, so we verify that all downstream automations still trigger correctly.",
+            "acceptance_criteria": [
+                "Architect Agent takes each extracted behavioral contract and simulates execution in Asana",
+                "Maps Trello status changes to Asana status equivalents",
+                "Checks if Asana can trigger notifications or automations on custom field changes",
+                "Classifies results as: Behaviorally Equivalent, Degraded but Acceptable, or Incompatible",
+                "Records incompatible items for quarantine",
+                "All simulation results logged to validation report"
+            ],
+            "layers": [
+                "Service",
+                "API"
+            ]
+        },
+        {
+            "id": "US-9",
+            "title": "Semantic Mismatch Detection & Hypothesis Formation",
+            "description": "As a Technical Lead, I want the system to clearly identify when a behavioral contract cannot be satisfied in the target platform, and propose a concrete remediation, so I understand what will break during migration.",
+            "acceptance_criteria": [
+                "Architect Agent generates Semantic Mismatch Report for incompatible contracts",
+                "Report contains: original contract, target capability gap, remediation hypothesis",
+                "Proposes concrete remediation (e.g., Zapier/Make webhook with code skeleton)",
+                "Includes risk assessment for proposed remediation",
+                "Flags mismatch as High-Risk item in Consolidation Proposal",
+                "Notifies IT Ops of manual review or custom development requirements"
+            ],
+            "layers": [
+                "Service",
+                "API",
+                "DB"
+            ]
+        },
+        {
+            "id": "US-10",
+            "title": "Automation Hub Scanning",
+            "description": "As an IT Ops Manager, I want the system to automatically find all Zapier and Make workflows that depend on the Trello integration, so we know which automations will break if we decommission Trello.",
+            "acceptance_criteria": [
+                "Integrator Agent connects to Zapier API and Make API via OAuth 2.0",
+                "Queries for all active zaps/workflows containing Trello as trigger or action",
+                "For each workflow, records: workflow name, trigger condition, action, downstream dependencies",
+                "Identifies critical workflows (e.g., daily syncs, customer-facing automations)",
+                "Generates dependency graph showing Trello \u2192 Zapier/Make \u2192 other SaaS tools",
+                "Flags workflows that will break if Trello is decommissioned",
+                "All API calls and dependencies logged to Cloud Audit Logs"
+            ],
+            "layers": [
+                "Service",
+                "API",
+                "DB"
+            ]
+        }
+    ],
+    "edges": [
+        [
+            "US-1",
+            "US-3"
+        ],
+        [
+            "US-2",
+            "US-3"
+        ],
+        [
+            "US-3",
+            "US-4"
+        ],
+        [
+            "US-4",
+            "US-5"
+        ],
+        [
+            "US-5",
+            "US-6"
+        ],
+        [
+            "US-5",
+            "US-10"
+        ],
+        [
+            "US-6",
+            "US-7"
+        ],
+        [
+            "US-7",
+            "US-8"
+        ],
+        [
+            "US-8",
+            "US-9"
+        ]
+    ]
+}

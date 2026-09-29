@@ -1,0 +1,138 @@
+[
+    {
+        "story_id": "US-1",
+        "title": "[US-1] Scheduled Identity & Access Telemetry",
+        "body": "**Story ID:** US-1\n\nAs an IT Operations Manager, I want the system to automatically scan IdP logs every 24–72 hours and flag applications with zero activity or redundant capabilities, so I don't have to manually hunt for zombie systems.\n\n## Acceptance Criteria\n- [ ] System connects to identity providers (Okta, Google Workspace, Azure AD) via OAuth 2.0 or SAML federation\n- [ ] Cron-based Auditor Agent executes on a configurable schedule (default: every 48 hours)\n- [ ] Flags application when ≥60% of assigned seats show zero SAML/OIDC logins over 60+ days\n- [ ] Detects capability redundancy by matching application tags/categories against enterprise standards\n- [ ] Generates structured JSON payload with application name, seat count, inactivity duration, and redundancy confidence score\n- [ ] Logs all detection logic to Cloud Audit Logs for forensic reconstruction\n\n## Layers\nDB, Service, API\n\n## Dependencies\nNone (root story)",
+        "labels": [
+            "user-story",
+            "layer:DB",
+            "layer:Service",
+            "layer:API"
+        ],
+        "blocked_by": []
+    },
+    {
+        "story_id": "US-2",
+        "title": "[US-2] Expense & Webhook Ingestion",
+        "body": "**Story ID:** US-2\n\nAs a Finance Lead, I want the system to receive webhook notifications from Brex/Ramp/Expensify when a new software subscription appears on a corporate card, so we can catch shadow IT purchases in real-time.\n\n## Acceptance Criteria\n- [ ] System exposes a secure webhook endpoint (`POST /webhooks/expense-notification`) authenticated via HMAC-SHA256\n- [ ] Accepts expense payloads containing: merchant name, amount, billing frequency, contract renewal date\n- [ ] Identifies unapproved recurring subscriptions by comparing against a whitelist of approved SaaS tools\n- [ ] Detects auto-renewal windows and flags for cancellation opportunity\n- [ ] Routes high-value subscriptions (>$500/month) directly to Finance Lead for immediate review\n- [ ] All webhook events are immutably logged in Cloud Audit Logs\n\n## Layers\nAPI, Service, DB\n\n## Dependencies\nNone (root story)",
+        "labels": [
+            "user-story",
+            "layer:API",
+            "layer:Service",
+            "layer:DB"
+        ],
+        "blocked_by": []
+    },
+    {
+        "story_id": "US-3",
+        "title": "[US-3] Auditor Agent – Consolidation Proposal Generation",
+        "body": "**Story ID:** US-3\n\nAs an IT Ops Manager, I want the system to create a detailed, human-readable consolidation proposal before any migration begins, so I understand what's at risk and can make an informed decision.\n\n## Acceptance Criteria\n- [ ] Auditor Agent generates structured JSON payload with redundant application identifier, target enterprise standard, and estimated annual savings\n- [ ] Calculates savings as: seats × cost per seat × months remaining\n- [ ] Generates risk score (0–100) based on active user count, connected integrations, data age, compliance sensitivity\n- [ ] Summarizes detected dependencies (Zapier webhooks, custom fields, automation rules)\n- [ ] Provides recommendation: Proceed to Full Consolidation, Proceed with Manual Review, or Ignore/Whitelist\n- [ ] Payload is human-readable with links to source data\n- [ ] Proposal is timestamped and signed with system identity for audit trail\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-1, US-2",
+        "labels": [
+            "user-story",
+            "layer:Service",
+            "layer:DB",
+            "layer:API"
+        ],
+        "blocked_by": [
+            "US-1",
+            "US-2"
+        ]
+    },
+    {
+        "story_id": "US-4",
+        "title": "[US-4] Interactive Approval Card",
+        "body": "**Story ID:** US-4\n\nAs an IT Ops Manager, I want to receive an interactive notification (Slack, Teams, or email) that lets me review the consolidation proposal and take action without leaving my communication tool.\n\n## Acceptance Criteria\n- [ ] System sends formatted message card to designated Slack workspace or Microsoft Teams channel\n- [ ] Card displays summary, target platform, estimated savings, and dependencies found\n- [ ] Provides three interactive buttons: [Simulate Migration], [Approve Full Consolidation], [Ignore/Whitelist]\n- [ ] [Simulate Migration] triggers dry-run without permanent changes; results appended to card\n- [ ] [Approve Full Consolidation] records approver identity, timestamp, and SSO context\n- [ ] [Ignore/Whitelist] excludes tool from future recommendations\n- [ ] All user interactions logged to Cloud Audit Logs with full context\n\n## Layers\nAPI, Service, UI\n\n## Dependencies\nBlocked by: US-3",
+        "labels": [
+            "user-story",
+            "layer:API",
+            "layer:Service",
+            "layer:UI"
+        ],
+        "blocked_by": [
+            "US-3"
+        ]
+    },
+    {
+        "story_id": "US-5",
+        "title": "[US-5] HITL Execution Gate",
+        "body": "**Story ID:** US-5\n\nAs a CISO, I want a mandatory human approval gate before the system executes any irreversible actions (data migration, account revocation, subscription cancellation), so we maintain accountability and can halt the process if new information emerges.\n\n## Acceptance Criteria\n- [ ] Clicking [Approve Full Consolidation] serves as the formal authorization trigger\n- [ ] System does not proceed beyond Validation Phase without explicit human approval\n- [ ] Approval is tied to authenticated SSO identity (not a generic API token)\n- [ ] Approval expires after 7 days; re-issue required if migration not completed within window\n- [ ] System can be halted at any stage if IT Ops or CISO revokes approval\n- [ ] All halts logged with reason and authorizing identity\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-4",
+        "labels": [
+            "user-story",
+            "layer:Service",
+            "layer:DB",
+            "layer:API"
+        ],
+        "blocked_by": [
+            "US-4"
+        ]
+    },
+    {
+        "story_id": "US-6",
+        "title": "[US-6] Behavioral Contract Extraction",
+        "body": "**Story ID:** US-6\n\nAs a Technical Lead, I want the system to automatically extract automation rules and behavioral logic from the source system (Trello) so we can verify that the target system (Asana) can enforce the same rules after migration.\n\n## Acceptance Criteria\n- [ ] Architect Agent connects to Trello API and parses all board configurations\n- [ ] Extracts automation and power-up rules in structured format (trigger, action, scope)\n- [ ] Records trigger conditions (status change, label addition, etc.) and actions (archive, move, notify)\n- [ ] Records custom fields, due dates, card labels, and checklists\n- [ ] Exports behavioral contract as JSON specification document for audit trail\n- [ ] Logs all API calls and extracted rules to Cloud Audit Logs\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-5",
+        "labels": [
+            "user-story",
+            "layer:Service",
+            "layer:API",
+            "layer:DB"
+        ],
+        "blocked_by": [
+            "US-5"
+        ]
+    },
+    {
+        "story_id": "US-7",
+        "title": "[US-7] Schema Diffing & Structural Validation",
+        "body": "**Story ID:** US-7\n\nAs a Technical Lead, I want the system to compare the data schemas of Trello and Asana side-by-side, so we identify field-level mismatches before migration begins.\n\n## Acceptance Criteria\n- [ ] Architect Agent extracts Asana target schema (tasks, projects, sections, custom fields)\n- [ ] Maps Trello schema to Asana schema (card→task, list→section, board→project)\n- [ ] Compares custom fields and flags type compatibility issues\n- [ ] Maps Trello labels to Asana custom fields or tags\n- [ ] Generates schema diff report with Green (safe), Yellow (lossy), and Red (unmappable) classifications\n- [ ] Reports included in Consolidation Proposal\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-6",
+        "labels": [
+            "user-story",
+            "layer:Service",
+            "layer:API",
+            "layer:DB"
+        ],
+        "blocked_by": [
+            "US-6"
+        ]
+    },
+    {
+        "story_id": "US-8",
+        "title": "[US-8] State-Transition Simulation (Semantic Validation)",
+        "body": "**Story ID:** US-8\n\nAs a Technical Lead, I want the system to simulate what happens when a Trello card transitions to a 'Done' state in Asana, so we verify that all downstream automations still trigger correctly.\n\n## Acceptance Criteria\n- [ ] Architect Agent takes each extracted behavioral contract and simulates execution in Asana\n- [ ] Maps Trello status changes to Asana status equivalents\n- [ ] Checks if Asana can trigger notifications or automations on custom field changes\n- [ ] Classifies results as: Behaviorally Equivalent, Degraded but Acceptable, or Incompatible\n- [ ] Records incompatible items for quarantine\n- [ ] All simulation results logged to validation report\n\n## Layers\nService, API\n\n## Dependencies\nBlocked by: US-7",
+        "labels": [
+            "user-story",
+            "layer:Service",
+            "layer:API"
+        ],
+        "blocked_by": [
+            "US-7"
+        ]
+    },
+    {
+        "story_id": "US-9",
+        "title": "[US-9] Semantic Mismatch Detection & Hypothesis Formation",
+        "body": "**Story ID:** US-9\n\nAs a Technical Lead, I want the system to clearly identify when a behavioral contract cannot be satisfied in the target platform, and propose a concrete remediation, so I understand what will break during migration.\n\n## Acceptance Criteria\n- [ ] Architect Agent generates Semantic Mismatch Report for incompatible contracts\n- [ ] Report contains: original contract, target capability gap, remediation hypothesis\n- [ ] Proposes concrete remediation (e.g., Zapier/Make webhook with code skeleton)\n- [ ] Includes risk assessment for proposed remediation\n- [ ] Flags mismatch as High-Risk item in Consolidation Proposal\n- [ ] Notifies IT Ops of manual review or custom development requirements\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-8",
+        "labels": [
+            "user-story",
+            "layer:Service",
+            "layer:API",
+            "layer:DB"
+        ],
+        "blocked_by": [
+            "US-8"
+        ]
+    },
+    {
+        "story_id": "US-10",
+        "title": "[US-10] Automation Hub Scanning",
+        "body": "**Story ID:** US-10\n\nAs an IT Ops Manager, I want the system to automatically find all Zapier and Make workflows that depend on the Trello integration, so we know which automations will break if we decommission Trello.\n\n## Acceptance Criteria\n- [ ] Integrator Agent connects to Zapier API and Make API via OAuth 2.0\n- [ ] Queries for all active zaps/workflows containing Trello as trigger or action\n- [ ] For each workflow, records: workflow name, trigger condition, action, downstream dependencies\n- [ ] Identifies critical workflows (e.g., daily syncs, customer-facing automations)\n- [ ] Generates dependency graph showing Trello → Zapier/Make → other SaaS tools\n- [ ] Flags workflows that will break if Trello is decommissioned\n- [ ] All API calls and dependencies logged to Cloud Audit Logs\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-5",
+        "labels": [
+            "user-story",
+            "layer:Service",
+            "layer:API",
+            "layer:DB"
+        ],
+        "blocked_by": [
+            "US-5"
+        ]
+    }
+]
