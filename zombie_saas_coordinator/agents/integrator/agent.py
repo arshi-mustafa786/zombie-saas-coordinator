@@ -30,3 +30,7 @@ integrator_agent = Agent(
     ),
     tools=[scan_zapier, scan_make, build_dependency_graph],
 )
+
+# Alias for ADK loader compatibility
+agent = integrator_agent
+

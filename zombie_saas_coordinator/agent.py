@@ -42,3 +42,7 @@ root_agent = Agent(
     ),
     sub_agents=[auditor_agent, architect_agent, integrator_agent],
 )
+
+# Alias for ADK loader compatibility
+agent = root_agent
+

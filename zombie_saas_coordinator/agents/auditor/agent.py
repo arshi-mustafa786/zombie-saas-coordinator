@@ -53,3 +53,7 @@ auditor_agent = Agent(
         send_approval_card,
     ],
 )
+
+# Alias for ADK loader compatibility
+agent = auditor_agent
+

@@ -52,3 +52,7 @@ architect_agent = Agent(
         generate_remediation,
     ],
 )
+
+# Alias for ADK loader compatibility
+agent = architect_agent
+
