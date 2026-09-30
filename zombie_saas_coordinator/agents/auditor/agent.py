@@ -25,7 +25,7 @@ from zombie_saas_coordinator.agents.auditor.tools import (
 
 auditor_agent = Agent(
     name="auditor_agent",
-    model="gemini-2.0-flash",
+    model="gemini-3.5-flash",
     description=(
         "Scans IdP telemetry and expense events to detect zombie SaaS applications, "
         "generates consolidation proposals with ROI analysis, and dispatches "

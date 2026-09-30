@@ -24,7 +24,7 @@ from zombie_saas_coordinator.agents.architect.tools import (
 
 architect_agent = Agent(
     name="architect_agent",
-    model="gemini-2.0-pro",
+    model="gemini-3.5-flash",
     description=(
         "Validates semantic compatibility between source (Trello) and target "
         "(Asana) SaaS platforms by extracting behavioral contracts, diffing "

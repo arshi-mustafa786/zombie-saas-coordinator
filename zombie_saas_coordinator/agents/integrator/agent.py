@@ -15,7 +15,7 @@ from zombie_saas_coordinator.agents.integrator.tools import (
 
 integrator_agent = Agent(
     name="integrator_agent",
-    model="gemini-2.0-flash",
+    model="gemini-3.5-flash",
     description=(
         "Scans automation hubs (Zapier, Make) for workflow dependencies "
         "on target SaaS applications and builds risk dependency graphs."

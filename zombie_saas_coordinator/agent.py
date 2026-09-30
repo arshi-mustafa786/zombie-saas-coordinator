@@ -17,7 +17,7 @@ from zombie_saas_coordinator.agents.integrator.agent import integrator_agent
 
 root_agent = Agent(
     name="zombie_saas_coordinator",
-    model="gemini-2.0-pro",
+    model="gemini-3.5-flash",
     description=(
         "Root orchestrator for the Zombie SaaS Consolidator platform. "
         "Coordinates detection, validation, and migration planning for "
