@@ -10,17 +10,17 @@ Responsibilities:
 from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.auditor.tools import (
-    # US-1 tools
-    scan_idp_logs,
     calculate_redundancy,
-    # US-2 tools
-    validate_webhook,
+    calculate_roi,
     flag_subscription,
     # US-3 tools
     generate_proposal,
-    calculate_roi,
+    # US-1 tools
+    scan_idp_logs,
     # US-4 tools
     send_approval_card,
+    # US-2 tools
+    validate_webhook,
 )
 
 auditor_agent = Agent(

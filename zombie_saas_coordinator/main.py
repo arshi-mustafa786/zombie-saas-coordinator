@@ -9,7 +9,6 @@ Exposes HTTP endpoints for:
 The ADK agents are invoked from these endpoints as needed.
 """
 
-import os
 
 from fastapi import FastAPI
 
@@ -21,7 +20,7 @@ app = FastAPI(
 
 
 @app.get("/health")
-async def health_check() -> dict:
+async def health_check() -> dict[str, str]:
     """Health check endpoint for Cloud Run."""
     return {"status": "healthy", "service": "zombie-saas-coordinator"}
 

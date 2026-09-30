@@ -11,12 +11,13 @@ Tool ownership by user story:
 - US-4: send_approval_card
 """
 
+from typing import Any
 
 # ──────────────────────────────────────────────
 # US-1: Scheduled Identity & Access Telemetry
 # ──────────────────────────────────────────────
 
-def scan_idp_logs(tenant_id: str, days: int = 60) -> dict:
+def scan_idp_logs(tenant_id: str, days: int = 60) -> dict[str, Any]:
     """Fetches SAML/OIDC login events from the identity provider
     via Firebase Authentication federation. Returns a list of
     applications with their login activity over the specified period.
@@ -32,7 +33,7 @@ def scan_idp_logs(tenant_id: str, days: int = 60) -> dict:
     raise NotImplementedError("US-1: scan_idp_logs")
 
 
-def calculate_redundancy(apps: list[dict]) -> dict:
+def calculate_redundancy(apps: list[dict[str, Any]]) -> dict[str, Any]:
     """Analyzes application capabilities using Gemini Flash to detect
     functional overlap with enterprise-standard tools. Returns a list
     of flagged applications with redundancy confidence scores (0-100).
@@ -51,7 +52,7 @@ def calculate_redundancy(apps: list[dict]) -> dict:
 # US-2: Expense & Webhook Ingestion
 # ──────────────────────────────────────────────
 
-def validate_webhook(payload: str, signature: str) -> dict:
+def validate_webhook(payload: str, signature: str) -> dict[str, Any]:
     """Validates an incoming expense webhook by verifying its
     HMAC-SHA256 signature against the secret stored in Google
     Secret Manager. Returns validation status.
@@ -67,7 +68,7 @@ def validate_webhook(payload: str, signature: str) -> dict:
     raise NotImplementedError("US-2: validate_webhook")
 
 
-def flag_subscription(event: dict) -> dict:
+def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
     """Analyzes an expense event against the enterprise-approved
     SaaS whitelist stored in Firestore. Flags unapproved recurring
     subscriptions and detects auto-renewal windows. Routes high-value
@@ -87,7 +88,7 @@ def flag_subscription(event: dict) -> dict:
 # US-3: Consolidation Proposal Generation
 # ──────────────────────────────────────────────
 
-def generate_proposal(app_id: str) -> dict:
+def generate_proposal(app_id: str) -> dict[str, Any]:
     """Generates a comprehensive consolidation proposal for a flagged
     zombie SaaS application. Aggregates IdP telemetry data and expense
     events, then uses Gemini Pro to calculate savings, risk score,
@@ -103,7 +104,7 @@ def generate_proposal(app_id: str) -> dict:
     raise NotImplementedError("US-3: generate_proposal")
 
 
-def calculate_roi(app_id: str) -> dict:
+def calculate_roi(app_id: str) -> dict[str, Any]:
     """Calculates the return on investment for consolidating a specific
     application. Queries Cloud SQL for seat cost data and billing history.
 
@@ -121,7 +122,7 @@ def calculate_roi(app_id: str) -> dict:
 # US-4: Interactive Approval Card
 # ──────────────────────────────────────────────
 
-def send_approval_card(proposal_id: str, channel: str) -> dict:
+def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
     """Dispatches an interactive approval card to the specified
     Slack/Teams channel for a given consolidation proposal. The card
     includes: summary, target platform, estimated savings, dependencies,

@@ -10,16 +10,16 @@ Responsibilities:
 from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.architect.tools import (
-    # US-6 tools
-    extract_trello_rules,
-    parse_automation_rule,
+    classify_mapping,
     # US-7 tools
     diff_schemas,
-    classify_mapping,
-    # US-8 tools
-    simulate_transition,
+    # US-6 tools
+    extract_trello_rules,
     # US-9 tools
     generate_remediation,
+    parse_automation_rule,
+    # US-8 tools
+    simulate_transition,
 )
 
 architect_agent = Agent(

@@ -8,9 +8,9 @@ Responsibilities:
 from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.integrator.tools import (
-    scan_zapier,
-    scan_make,
     build_dependency_graph,
+    scan_make,
+    scan_zapier,
 )
 
 integrator_agent = Agent(

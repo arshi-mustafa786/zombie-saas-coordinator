@@ -11,8 +11,8 @@ and coordinates parallel execution of Architect + Integrator after approval.
 
 from google.adk.agents import Agent
 
-from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
 from zombie_saas_coordinator.agents.architect.agent import architect_agent
+from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
 from zombie_saas_coordinator.agents.integrator.agent import integrator_agent
 
 root_agent = Agent(

@@ -7,12 +7,13 @@ Tool ownership by user story:
 - US-9: generate_remediation
 """
 
+from typing import Any
 
 # ──────────────────────────────────────────────
 # US-6: Behavioral Contract Extraction
 # ──────────────────────────────────────────────
 
-def extract_trello_rules(board_id: str) -> dict:
+def extract_trello_rules(board_id: str) -> dict[str, Any]:
     """Connects to Trello API and extracts all automation rules,
     Butler commands, and Power-Up configurations from the specified board.
 
@@ -26,7 +27,7 @@ def extract_trello_rules(board_id: str) -> dict:
     raise NotImplementedError("US-6: extract_trello_rules")
 
 
-def parse_automation_rule(raw_rule: dict) -> dict:
+def parse_automation_rule(raw_rule: dict[str, Any]) -> dict[str, Any]:
     """Normalizes a raw Trello Butler/Power-Up rule into a canonical
     contract format: {trigger, action, scope, metadata}.
 
@@ -44,7 +45,7 @@ def parse_automation_rule(raw_rule: dict) -> dict:
 # US-7: Schema Diffing & Structural Validation
 # ──────────────────────────────────────────────
 
-def diff_schemas(source_schema: dict, target_schema: dict) -> dict:
+def diff_schemas(source_schema: dict[str, Any], target_schema: dict[str, Any]) -> dict[str, Any]:
     """Compares the data schemas of Trello and Asana side-by-side.
     Maps: card→task, list→section, board→project.
 
@@ -59,7 +60,7 @@ def diff_schemas(source_schema: dict, target_schema: dict) -> dict:
     raise NotImplementedError("US-7: diff_schemas")
 
 
-def classify_mapping(field_name: str, source_type: str, target_type: str) -> dict:
+def classify_mapping(field_name: str, source_type: str, target_type: str) -> dict[str, Any]:
     """Classifies a single field mapping as Green (safe),
     Yellow (lossy), or Red (unmappable).
 
@@ -79,7 +80,7 @@ def classify_mapping(field_name: str, source_type: str, target_type: str) -> dic
 # US-8: State-Transition Simulation
 # ──────────────────────────────────────────────
 
-def simulate_transition(contract: dict, schema_diff: dict) -> dict:
+def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -> dict[str, Any]:
     """Simulates the execution of a behavioral contract in Asana.
     Uses Gemini Pro chain-of-thought to reason about behavioral equivalence.
 
@@ -99,7 +100,7 @@ def simulate_transition(contract: dict, schema_diff: dict) -> dict:
 # US-9: Semantic Mismatch Detection
 # ──────────────────────────────────────────────
 
-def generate_remediation(simulation_result: dict) -> dict:
+def generate_remediation(simulation_result: dict[str, Any]) -> dict[str, Any]:
     """For incompatible simulation results, generates a Semantic Mismatch
     Report with a concrete remediation hypothesis and code skeleton.
 

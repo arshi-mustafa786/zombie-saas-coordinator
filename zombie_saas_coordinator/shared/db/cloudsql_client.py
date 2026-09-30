@@ -5,9 +5,10 @@ via the Cloud SQL Python Connector for IAM-based auth.
 """
 
 import os
+from typing import Any
 
 from google.cloud.sql.connector import Connector
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import Engine, create_engine
 
 
 def get_cloudsql_engine() -> Engine:
@@ -18,7 +19,7 @@ def get_cloudsql_engine() -> Engine:
     """
     connector = Connector()
 
-    def get_conn():
+    def get_conn() -> Any:
         return connector.connect(
             os.environ["CLOUDSQL_CONNECTION_NAME"],
             "pg8000",
