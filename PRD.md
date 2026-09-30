@@ -27,6 +27,16 @@ The Hackathon Prototype targets migration from **Trello (lightweight shadow IT t
 
 ---
 
+## AI Builder Cup: Submission Description
+
+**Zombie SaaS Consolidator** is an autonomous multi-agent orchestration platform that identifies redundant SaaS applications and safely migrates data to enterprise standards. 
+- **Cloud Run:** Hosts our event-driven Python microservices, exposing scalable webhook endpoints to ingest telemetry and expense reports.
+- **Gemini (via Vertex AI):** Powers our Architect and Auditor agents, performing complex semantic reasoning to validate if behavioral contracts (e.g., Trello automations) can be safely migrated to target platforms (e.g., Asana).
+- **Firestore:** Serves as the dynamic state store for our multi-agent LangGraph workflows, persisting unstructured behavioral contracts and schema diffs.
+- **Firebase:** Provides Firebase Authentication for secure Human-in-the-Loop (HITL) approval gates and Firebase Hosting to serve the CISO compliance dashboard.
+
+---
+
 ## Problem Statement
 
 ### Current State
@@ -91,7 +101,7 @@ Every month of delay costs the organization:
 > As an IT Operations Manager, I want the system to automatically scan IdP logs every 24–72 hours and flag applications with zero activity or redundant capabilities, so I don't have to manually hunt for zombie systems.
 
 **Acceptance Criteria:**
-- System connects to identity providers (Okta, Google Workspace, Azure AD) via OAuth 2.0 or SAML federation
+- System connects to identity providers (Okta, Google Workspace, Azure AD) using **Firebase Authentication** (via OAuth 2.0 or SAML federation)
 - Cron-based Auditor Agent executes on a configurable schedule (default: every 48 hours)
 - Flags application when ≥60% of assigned seats show zero SAML/OIDC logins over 60+ days
 - Detects capability redundancy by matching application tags/categories (e.g., `kanban_board`) against enterprise standards
@@ -155,7 +165,7 @@ Every month of delay costs the organization:
 **Acceptance Criteria:**
 - Clicking [Approve Full Consolidation] serves as the formal authorization trigger
 - System does not proceed beyond the Validation Phase without explicit human approval
-- Approval is tied to authenticated SSO identity (not a generic API token)
+- Approval is tied to authenticated SSO identity verified via **Firebase Authentication** (not a generic API token)
 - Approval expires after 7 days; if migration is not completed within this window, the approval must be re-issued
 - System can be halted at any stage if IT Ops or CISO revokes approval
 - All halts are logged with reason and authorizing identity

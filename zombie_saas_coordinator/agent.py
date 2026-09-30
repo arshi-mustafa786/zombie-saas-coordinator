@@ -1,0 +1,44 @@
+"""Root Orchestrator Agent — Zombie SaaS Coordinator.
+
+This is the top-level agent that delegates work to specialized sub-agents:
+- auditor_agent:    Detects zombie SaaS and generates consolidation proposals
+- architect_agent:  Validates semantic compatibility between source/target platforms
+- integrator_agent: Scans automation hubs for dependency graphs
+
+The root agent implements the HITL (Human-in-the-Loop) execution gate
+and coordinates parallel execution of Architect + Integrator after approval.
+"""
+
+from google.adk.agents import Agent
+
+from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
+from zombie_saas_coordinator.agents.architect.agent import architect_agent
+from zombie_saas_coordinator.agents.integrator.agent import integrator_agent
+
+root_agent = Agent(
+    name="zombie_saas_coordinator",
+    model="gemini-2.0-pro",
+    description=(
+        "Root orchestrator for the Zombie SaaS Consolidator platform. "
+        "Coordinates detection, validation, and migration planning for "
+        "redundant SaaS applications."
+    ),
+    instruction=(
+        "You are the Zombie SaaS Coordinator, the root orchestrator of a "
+        "multi-agent system that detects and consolidates redundant SaaS tools.\n\n"
+        "## Workflow\n"
+        "1. Delegate to the **auditor_agent** for zombie SaaS detection and "
+        "consolidation proposal generation.\n"
+        "2. After the auditor generates a proposal and sends an approval card, "
+        "WAIT for human approval (HITL gate). Use `check_approval_status` to verify.\n"
+        "3. Once approved, delegate SIMULTANEOUSLY to:\n"
+        "   - **architect_agent** for semantic contract validation\n"
+        "   - **integrator_agent** for automation dependency scanning\n"
+        "4. Aggregate results into a final migration readiness report.\n\n"
+        "## CRITICAL RULES\n"
+        "- NEVER proceed past step 2 without explicit human approval.\n"
+        "- NEVER modify data in external systems (Trello, Asana) — read-only analysis.\n"
+        "- ALL actions must be logged for compliance audit trail.\n"
+    ),
+    sub_agents=[auditor_agent, architect_agent, integrator_agent],
+)

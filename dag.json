@@ -5,7 +5,7 @@
             "title": "Scheduled Identity & Access Telemetry",
             "description": "As an IT Operations Manager, I want the system to automatically scan IdP logs every 24\u201372 hours and flag applications with zero activity or redundant capabilities, so I don't have to manually hunt for zombie systems.",
             "acceptance_criteria": [
-                "System connects to identity providers (Okta, Google Workspace, Azure AD) via OAuth 2.0 or SAML federation",
+                "System connects to identity providers (Okta, Google Workspace, Azure AD) using Firebase Authentication (via OAuth 2.0 or SAML federation)",
                 "Cron-based Auditor Agent executes on a configurable schedule (default: every 48 hours)",
                 "Flags application when \u226560% of assigned seats show zero SAML/OIDC logins over 60+ days",
                 "Detects capability redundancy by matching application tags/categories against enterprise standards",
@@ -81,7 +81,7 @@
             "acceptance_criteria": [
                 "Clicking [Approve Full Consolidation] serves as the formal authorization trigger",
                 "System does not proceed beyond Validation Phase without explicit human approval",
-                "Approval is tied to authenticated SSO identity (not a generic API token)",
+                "Approval is tied to authenticated SSO identity verified via Firebase Authentication (not a generic API token)",
                 "Approval expires after 7 days; re-issue required if migration not completed within window",
                 "System can be halted at any stage if IT Ops or CISO revokes approval",
                 "All halts logged with reason and authorizing identity"

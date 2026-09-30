@@ -2,36 +2,42 @@
     {
         "story_id": "US-1",
         "title": "[US-1] Scheduled Identity & Access Telemetry",
-        "body": "**Story ID:** US-1\n\nAs an IT Operations Manager, I want the system to automatically scan IdP logs every 24–72 hours and flag applications with zero activity or redundant capabilities, so I don't have to manually hunt for zombie systems.\n\n## Acceptance Criteria\n- [ ] System connects to identity providers (Okta, Google Workspace, Azure AD) via OAuth 2.0 or SAML federation\n- [ ] Cron-based Auditor Agent executes on a configurable schedule (default: every 48 hours)\n- [ ] Flags application when ≥60% of assigned seats show zero SAML/OIDC logins over 60+ days\n- [ ] Detects capability redundancy by matching application tags/categories against enterprise standards\n- [ ] Generates structured JSON payload with application name, seat count, inactivity duration, and redundancy confidence score\n- [ ] Logs all detection logic to Cloud Audit Logs for forensic reconstruction\n\n## Layers\nDB, Service, API\n\n## Dependencies\nNone (root story)",
+        "body": "**Story ID:** US-1\n**Agent:** `auditor_agent` | **Framework:** Google ADK (`google-adk`)\n\nAs an IT Operations Manager, I want the system to automatically scan IdP logs every 24\u201372 hours and flag applications with zero activity or redundant capabilities, so I don't have to manually hunt for zombie systems.\n\n## Acceptance Criteria\n- [ ] System connects to identity providers (Okta, Google Workspace, Azure AD) using Firebase Authentication (via OAuth 2.0 or SAML federation)\n- [ ] Cron-based Auditor Agent executes on a configurable schedule (default: every 48 hours) triggered by Cloud Scheduler \u2192 Cloud Run\n- [ ] Flags application when \u226560% of assigned seats show zero SAML/OIDC logins over 60+ days\n- [ ] Detects capability redundancy using Gemini Flash for semantic tag matching\n- [ ] Generates structured JSON payload stored in Firestore\n- [ ] Logs all detection logic to Cloud Audit Logs for forensic reconstruction\n\n## ADK Agent Architecture\n```python\n# Tool functions registered on auditor_agent\ndef scan_idp_logs(tenant_id: str, days: int = 60) -> dict: ...\ndef calculate_redundancy(apps: list[dict]) -> dict: ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| CREATE | zombie_saas_coordinator/agents/auditor/tools.py | Tool functions |\n| CREATE | zombie_saas_coordinator/agents/auditor/agent.py | ADK Agent definition |\n| CREATE | zombie_saas_coordinator/shared/models/telemetry.py | Data models |\n| CREATE | tests/test_US1_scanner.py | Tests |\n\n## Layers\nDB, Service, API\n\n## Dependencies\nNone (root story)",
         "labels": [
             "user-story",
+            "agent:auditor",
             "layer:DB",
             "layer:Service",
-            "layer:API"
+            "layer:API",
+            "google-adk"
         ],
         "blocked_by": []
     },
     {
         "story_id": "US-2",
         "title": "[US-2] Expense & Webhook Ingestion",
-        "body": "**Story ID:** US-2\n\nAs a Finance Lead, I want the system to receive webhook notifications from Brex/Ramp/Expensify when a new software subscription appears on a corporate card, so we can catch shadow IT purchases in real-time.\n\n## Acceptance Criteria\n- [ ] System exposes a secure webhook endpoint (`POST /webhooks/expense-notification`) authenticated via HMAC-SHA256\n- [ ] Accepts expense payloads containing: merchant name, amount, billing frequency, contract renewal date\n- [ ] Identifies unapproved recurring subscriptions by comparing against a whitelist of approved SaaS tools\n- [ ] Detects auto-renewal windows and flags for cancellation opportunity\n- [ ] Routes high-value subscriptions (>$500/month) directly to Finance Lead for immediate review\n- [ ] All webhook events are immutably logged in Cloud Audit Logs\n\n## Layers\nAPI, Service, DB\n\n## Dependencies\nNone (root story)",
+        "body": "**Story ID:** US-2\n**Agent:** `auditor_agent` | **Framework:** Google ADK (`google-adk`)\n\nAs a Finance Lead, I want the system to receive webhook notifications from Brex/Ramp/Expensify when a new software subscription appears on a corporate card, so we can catch shadow IT purchases in real-time.\n\n## Acceptance Criteria\n- [ ] System exposes a secure webhook endpoint (`POST /webhooks/expense-notification`) on Cloud Run authenticated via HMAC-SHA256\n- [ ] Accepts expense payloads containing: merchant name, amount, billing frequency, contract renewal date\n- [ ] Identifies unapproved recurring subscriptions by querying Firestore whitelist\n- [ ] Detects auto-renewal windows and flags for cancellation opportunity\n- [ ] Routes high-value subscriptions (>$500/month) directly to Finance Lead for immediate review\n- [ ] All webhook events are immutably logged in Cloud Audit Logs\n\n## ADK Agent Architecture\n```python\n# Tool functions added to auditor_agent\ndef validate_webhook(payload: str, signature: str) -> dict: ...\ndef flag_subscription(event: dict) -> dict: ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| MODIFY | zombie_saas_coordinator/agents/auditor/tools.py | Add webhook tools |\n| CREATE | zombie_saas_coordinator/shared/models/expense.py | Data models |\n| CREATE | zombie_saas_coordinator/shared/auth/hmac_validator.py | HMAC validation |\n| CREATE | tests/test_US2_expense.py | Tests |\n\n## Layers\nAPI, Service, DB\n\n## Dependencies\nNone (root story)",
         "labels": [
             "user-story",
+            "agent:auditor",
             "layer:API",
             "layer:Service",
-            "layer:DB"
+            "layer:DB",
+            "google-adk"
         ],
         "blocked_by": []
     },
     {
         "story_id": "US-3",
-        "title": "[US-3] Auditor Agent – Consolidation Proposal Generation",
-        "body": "**Story ID:** US-3\n\nAs an IT Ops Manager, I want the system to create a detailed, human-readable consolidation proposal before any migration begins, so I understand what's at risk and can make an informed decision.\n\n## Acceptance Criteria\n- [ ] Auditor Agent generates structured JSON payload with redundant application identifier, target enterprise standard, and estimated annual savings\n- [ ] Calculates savings as: seats × cost per seat × months remaining\n- [ ] Generates risk score (0–100) based on active user count, connected integrations, data age, compliance sensitivity\n- [ ] Summarizes detected dependencies (Zapier webhooks, custom fields, automation rules)\n- [ ] Provides recommendation: Proceed to Full Consolidation, Proceed with Manual Review, or Ignore/Whitelist\n- [ ] Payload is human-readable with links to source data\n- [ ] Proposal is timestamped and signed with system identity for audit trail\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-1, US-2",
+        "title": "[US-3] Auditor Agent Consolidation Proposal Generation",
+        "body": "**Story ID:** US-3\n**Agent:** `auditor_agent` | **Framework:** Google ADK (`google-adk`) | **Model:** Gemini Pro\n\nAs an IT Ops Manager, I want the system to create a detailed, human-readable consolidation proposal before any migration begins, so I understand what's at risk and can make an informed decision.\n\n## Acceptance Criteria\n- [ ] Auditor Agent generates structured JSON payload with redundant application identifier, target enterprise standard, and estimated annual savings\n- [ ] Calculates savings as: seats \u00d7 cost per seat \u00d7 months remaining (Cloud SQL billing data)\n- [ ] Generates risk score (0\u2013100) using Gemini Pro reasoning based on active user count, connected integrations, data age, compliance sensitivity\n- [ ] Summarizes detected dependencies (Zapier webhooks, custom fields, automation rules)\n- [ ] Provides recommendation: Proceed to Full Consolidation, Proceed with Manual Review, or Ignore/Whitelist\n- [ ] Proposal is timestamped and signed for audit trail, stored in Firestore\n\n## ADK Agent Architecture\n```python\n# Capstone tools for auditor_agent (uses Gemini Pro)\ndef generate_proposal(app_id: str) -> dict: ...\ndef calculate_roi(app_id: str) -> dict: ...\n```\nFull auditor_agent toolset: `[scan_idp_logs, calculate_redundancy, validate_webhook, flag_subscription, generate_proposal, calculate_roi]` \u2014 6 tools (\u22647 deep module limit)\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| MODIFY | zombie_saas_coordinator/agents/auditor/tools.py | Add proposal tools |\n| CREATE | zombie_saas_coordinator/shared/models/proposal.py | Data models |\n| CREATE | tests/test_US3_proposal.py | Tests |\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-1, US-2",
         "labels": [
             "user-story",
+            "agent:auditor",
             "layer:Service",
             "layer:DB",
-            "layer:API"
+            "layer:API",
+            "google-adk"
         ],
         "blocked_by": [
             "US-1",
@@ -41,12 +47,14 @@
     {
         "story_id": "US-4",
         "title": "[US-4] Interactive Approval Card",
-        "body": "**Story ID:** US-4\n\nAs an IT Ops Manager, I want to receive an interactive notification (Slack, Teams, or email) that lets me review the consolidation proposal and take action without leaving my communication tool.\n\n## Acceptance Criteria\n- [ ] System sends formatted message card to designated Slack workspace or Microsoft Teams channel\n- [ ] Card displays summary, target platform, estimated savings, and dependencies found\n- [ ] Provides three interactive buttons: [Simulate Migration], [Approve Full Consolidation], [Ignore/Whitelist]\n- [ ] [Simulate Migration] triggers dry-run without permanent changes; results appended to card\n- [ ] [Approve Full Consolidation] records approver identity, timestamp, and SSO context\n- [ ] [Ignore/Whitelist] excludes tool from future recommendations\n- [ ] All user interactions logged to Cloud Audit Logs with full context\n\n## Layers\nAPI, Service, UI\n\n## Dependencies\nBlocked by: US-3",
+        "body": "**Story ID:** US-4\n**Agent:** `auditor_agent` (notification tool) + Cloud Run callback | **Framework:** Google ADK (`google-adk`)\n\nAs an IT Ops Manager, I want to receive an interactive notification (Slack, Teams, or email) that lets me review the consolidation proposal and take action without leaving my communication tool.\n\n## Acceptance Criteria\n- [ ] Auditor Agent sends formatted message card to designated Slack workspace or Microsoft Teams channel\n- [ ] Card displays summary, target platform, estimated savings, and dependencies found\n- [ ] Provides three interactive buttons: [Simulate Migration], [Approve Full Consolidation], [Ignore/Whitelist]\n- [ ] [Simulate Migration] triggers dry-run without permanent changes; results appended to card\n- [ ] [Approve Full Consolidation] records approver identity, timestamp, and Firebase Auth SSO context\n- [ ] [Ignore/Whitelist] excludes tool from future recommendations\n- [ ] All user interactions logged to Cloud Audit Logs with full context\n\n## ADK Agent Architecture\n```python\n# Tool added to auditor_agent\ndef send_approval_card(proposal_id: str, channel: str) -> dict: ...\n\n# Cloud Run callback handler (NOT an agent tool)\n@app.post(\"/api/v1/callbacks/approval\")\nasync def handle_approval_callback(payload): ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| MODIFY | zombie_saas_coordinator/agents/auditor/tools.py | Add notification tool |\n| CREATE | zombie_saas_coordinator/api/callbacks.py | Callback endpoint |\n| CREATE | zombie_saas_coordinator/shared/integrations/slack.py | Slack client |\n| CREATE | tests/test_US4_notifications.py | Tests |\n\n## Layers\nAPI, Service, UI\n\n## Dependencies\nBlocked by: US-3",
         "labels": [
             "user-story",
+            "agent:auditor",
             "layer:API",
             "layer:Service",
-            "layer:UI"
+            "layer:UI",
+            "google-adk"
         ],
         "blocked_by": [
             "US-3"
@@ -55,12 +63,14 @@
     {
         "story_id": "US-5",
         "title": "[US-5] HITL Execution Gate",
-        "body": "**Story ID:** US-5\n\nAs a CISO, I want a mandatory human approval gate before the system executes any irreversible actions (data migration, account revocation, subscription cancellation), so we maintain accountability and can halt the process if new information emerges.\n\n## Acceptance Criteria\n- [ ] Clicking [Approve Full Consolidation] serves as the formal authorization trigger\n- [ ] System does not proceed beyond Validation Phase without explicit human approval\n- [ ] Approval is tied to authenticated SSO identity (not a generic API token)\n- [ ] Approval expires after 7 days; re-issue required if migration not completed within window\n- [ ] System can be halted at any stage if IT Ops or CISO revokes approval\n- [ ] All halts logged with reason and authorizing identity\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-4",
+        "body": "**Story ID:** US-5\n**Agent:** Root Orchestrator (`zombie_saas_coordinator`) | **Framework:** Google ADK (`google-adk`)\n\nAs a CISO, I want a mandatory human approval gate before the system executes any irreversible actions (data migration, account revocation, subscription cancellation), so we maintain accountability and can halt the process if new information emerges.\n\n## Acceptance Criteria\n- [ ] Clicking [Approve Full Consolidation] serves as the formal authorization trigger\n- [ ] Root orchestrator does NOT delegate to Architect/Integrator agents without explicit human approval\n- [ ] Approval is tied to authenticated SSO identity verified via Firebase Authentication (not a generic API token)\n- [ ] Approval expires after 7 days; re-issue required if migration not completed within window\n- [ ] System can be halted at any stage if IT Ops or CISO revokes approval\n- [ ] All halts logged with reason and authorizing identity\n\n## ADK Agent Architecture\nImplements **ADK Human-in-the-Loop (HITL) pattern** with `FirestoreSessionService`:\n```python\nfrom google.adk.sessions import FirestoreSessionService\n\nsession_service = FirestoreSessionService(\n    project_id=\"zombie-saas-coordinator\",\n    collection=\"agent_sessions\",\n)\n\ndef check_approval_status(proposal_id: str) -> dict: ...\ndef revoke_approval(proposal_id: str, reason: str) -> dict: ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| CREATE | zombie_saas_coordinator/api/approvals.py | Authorization endpoint |\n| CREATE | zombie_saas_coordinator/shared/models/approval.py | Data models |\n| CREATE | zombie_saas_coordinator/shared/auth/firebase_auth.py | Firebase Auth utils |\n| MODIFY | zombie_saas_coordinator/agent.py | Add HITL gate to root orchestrator |\n| CREATE | tests/test_US5_approvals.py | Tests |\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-4",
         "labels": [
             "user-story",
+            "agent:orchestrator",
             "layer:Service",
             "layer:DB",
-            "layer:API"
+            "layer:API",
+            "google-adk"
         ],
         "blocked_by": [
             "US-4"
@@ -69,12 +79,14 @@
     {
         "story_id": "US-6",
         "title": "[US-6] Behavioral Contract Extraction",
-        "body": "**Story ID:** US-6\n\nAs a Technical Lead, I want the system to automatically extract automation rules and behavioral logic from the source system (Trello) so we can verify that the target system (Asana) can enforce the same rules after migration.\n\n## Acceptance Criteria\n- [ ] Architect Agent connects to Trello API and parses all board configurations\n- [ ] Extracts automation and power-up rules in structured format (trigger, action, scope)\n- [ ] Records trigger conditions (status change, label addition, etc.) and actions (archive, move, notify)\n- [ ] Records custom fields, due dates, card labels, and checklists\n- [ ] Exports behavioral contract as JSON specification document for audit trail\n- [ ] Logs all API calls and extracted rules to Cloud Audit Logs\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-5",
+        "body": "**Story ID:** US-6\n**Agent:** `architect_agent` | **Framework:** Google ADK (`google-adk`) | **Model:** Gemini Pro\n\nAs a Technical Lead, I want the system to automatically extract automation rules and behavioral logic from the source system (Trello) so we can verify that the target system (Asana) can enforce the same rules after migration.\n\n## Acceptance Criteria\n- [ ] Architect Agent connects to Trello API and parses all board configurations\n- [ ] Extracts automation and Power-Up rules in structured format (trigger, action, scope)\n- [ ] Records trigger conditions (status change, label addition, etc.) and actions (archive, move, notify)\n- [ ] Records custom fields, due dates, card labels, and checklists\n- [ ] Exports behavioral contract as JSON specification document stored in Firestore\n- [ ] Logs all API calls and extracted rules to Cloud Audit Logs\n\n## ADK Agent Architecture\n```python\nfrom google.adk.agents import Agent\n\ndef extract_trello_rules(board_id: str) -> dict: ...\ndef parse_automation_rule(raw_rule: dict) -> dict: ...\n\narchitect_agent = Agent(\n    name=\"architect_agent\",\n    model=\"gemini-2.0-pro\",\n    description=\"Validates semantic compatibility between source and target SaaS platforms\",\n    tools=[extract_trello_rules, parse_automation_rule],\n)\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| CREATE | zombie_saas_coordinator/agents/architect/agent.py | ADK Agent definition |\n| CREATE | zombie_saas_coordinator/agents/architect/tools.py | Tool functions |\n| CREATE | zombie_saas_coordinator/shared/integrations/trello.py | Trello API client |\n| CREATE | zombie_saas_coordinator/shared/db/firestore_client.py | Firestore client |\n| CREATE | tests/test_US6_extractor.py | Tests |\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-5",
         "labels": [
             "user-story",
+            "agent:architect",
             "layer:Service",
             "layer:API",
-            "layer:DB"
+            "layer:DB",
+            "google-adk"
         ],
         "blocked_by": [
             "US-5"
@@ -83,12 +95,14 @@
     {
         "story_id": "US-7",
         "title": "[US-7] Schema Diffing & Structural Validation",
-        "body": "**Story ID:** US-7\n\nAs a Technical Lead, I want the system to compare the data schemas of Trello and Asana side-by-side, so we identify field-level mismatches before migration begins.\n\n## Acceptance Criteria\n- [ ] Architect Agent extracts Asana target schema (tasks, projects, sections, custom fields)\n- [ ] Maps Trello schema to Asana schema (card→task, list→section, board→project)\n- [ ] Compares custom fields and flags type compatibility issues\n- [ ] Maps Trello labels to Asana custom fields or tags\n- [ ] Generates schema diff report with Green (safe), Yellow (lossy), and Red (unmappable) classifications\n- [ ] Reports included in Consolidation Proposal\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-6",
+        "body": "**Story ID:** US-7\n**Agent:** `architect_agent` | **Framework:** Google ADK (`google-adk`) | **Model:** Gemini Pro\n\nAs a Technical Lead, I want the system to compare the data schemas of Trello and Asana side-by-side, so we identify field-level mismatches before migration begins.\n\n## Acceptance Criteria\n- [ ] Architect Agent extracts Asana target schema (tasks, projects, sections, custom fields)\n- [ ] Maps Trello schema to Asana schema (card\u2192task, list\u2192section, board\u2192project)\n- [ ] Compares custom fields and flags type compatibility issues\n- [ ] Maps Trello labels to Asana custom fields or tags\n- [ ] Generates schema diff report with Green (safe), Yellow (lossy), and Red (unmappable) classifications stored in Firestore\n\n## ADK Agent Architecture\n```python\n# Tools added to architect_agent\ndef diff_schemas(source_schema: dict, target_schema: dict) -> dict: ...\ndef classify_mapping(field_name: str, source_type: str, target_type: str) -> dict: ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| MODIFY | zombie_saas_coordinator/agents/architect/tools.py | Add schema tools |\n| CREATE | zombie_saas_coordinator/shared/integrations/asana.py | Asana API client |\n| CREATE | tests/test_US7_schema.py | Tests |\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-6",
         "labels": [
             "user-story",
+            "agent:architect",
             "layer:Service",
             "layer:API",
-            "layer:DB"
+            "layer:DB",
+            "google-adk"
         ],
         "blocked_by": [
             "US-6"
@@ -97,11 +111,13 @@
     {
         "story_id": "US-8",
         "title": "[US-8] State-Transition Simulation (Semantic Validation)",
-        "body": "**Story ID:** US-8\n\nAs a Technical Lead, I want the system to simulate what happens when a Trello card transitions to a 'Done' state in Asana, so we verify that all downstream automations still trigger correctly.\n\n## Acceptance Criteria\n- [ ] Architect Agent takes each extracted behavioral contract and simulates execution in Asana\n- [ ] Maps Trello status changes to Asana status equivalents\n- [ ] Checks if Asana can trigger notifications or automations on custom field changes\n- [ ] Classifies results as: Behaviorally Equivalent, Degraded but Acceptable, or Incompatible\n- [ ] Records incompatible items for quarantine\n- [ ] All simulation results logged to validation report\n\n## Layers\nService, API\n\n## Dependencies\nBlocked by: US-7",
+        "body": "**Story ID:** US-8\n**Agent:** `architect_agent` | **Framework:** Google ADK (`google-adk`) | **Model:** Gemini Pro (chain-of-thought)\n\nAs a Technical Lead, I want the system to simulate what happens when a Trello card transitions to a 'Done' state in Asana, so we verify that all downstream automations still trigger correctly.\n\n## Acceptance Criteria\n- [ ] Architect Agent takes each extracted behavioral contract and simulates execution in Asana context\n- [ ] Maps Trello status changes to Asana status equivalents\n- [ ] Checks if Asana can trigger notifications or automations on custom field changes\n- [ ] Classifies results as: Behaviorally Equivalent, Degraded but Acceptable, or Incompatible\n- [ ] Records incompatible items for quarantine\n- [ ] All simulation results logged to Firestore validation report\n\n## ADK Agent Architecture\n```python\n# Tool added to architect_agent \u2014 uses Gemini Pro chain-of-thought reasoning\ndef simulate_transition(contract: dict, schema_diff: dict) -> dict: ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| MODIFY | zombie_saas_coordinator/agents/architect/tools.py | Add simulation tool |\n| CREATE | tests/test_US8_simulator.py | Tests |\n\n## Layers\nService, API\n\n## Dependencies\nBlocked by: US-7",
         "labels": [
             "user-story",
+            "agent:architect",
             "layer:Service",
-            "layer:API"
+            "layer:API",
+            "google-adk"
         ],
         "blocked_by": [
             "US-7"
@@ -110,12 +126,14 @@
     {
         "story_id": "US-9",
         "title": "[US-9] Semantic Mismatch Detection & Hypothesis Formation",
-        "body": "**Story ID:** US-9\n\nAs a Technical Lead, I want the system to clearly identify when a behavioral contract cannot be satisfied in the target platform, and propose a concrete remediation, so I understand what will break during migration.\n\n## Acceptance Criteria\n- [ ] Architect Agent generates Semantic Mismatch Report for incompatible contracts\n- [ ] Report contains: original contract, target capability gap, remediation hypothesis\n- [ ] Proposes concrete remediation (e.g., Zapier/Make webhook with code skeleton)\n- [ ] Includes risk assessment for proposed remediation\n- [ ] Flags mismatch as High-Risk item in Consolidation Proposal\n- [ ] Notifies IT Ops of manual review or custom development requirements\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-8",
+        "body": "**Story ID:** US-9\n**Agent:** `architect_agent` | **Framework:** Google ADK (`google-adk`) | **Model:** Gemini Pro (code generation)\n\nAs a Technical Lead, I want the system to clearly identify when a behavioral contract cannot be satisfied in the target platform, and propose a concrete remediation, so I understand what will break during migration.\n\n## Acceptance Criteria\n- [ ] Architect Agent generates Semantic Mismatch Report for incompatible contracts\n- [ ] Report contains: original contract, target capability gap, remediation hypothesis\n- [ ] Proposes concrete remediation (e.g., Zapier/Make webhook with code skeleton generated by Gemini Pro)\n- [ ] Includes risk assessment for proposed remediation\n- [ ] Flags mismatch as High-Risk item in Consolidation Proposal in Firestore\n- [ ] Notifies IT Ops of manual review or custom development requirements\n\n## ADK Agent Architecture\n```python\n# Capstone tool for architect_agent\ndef generate_remediation(simulation_result: dict) -> dict: ...\n```\nFull architect_agent toolset: `[extract_trello_rules, parse_automation_rule, diff_schemas, classify_mapping, simulate_transition, generate_remediation]` \u2014 6 tools (\u22647 deep module limit)\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| MODIFY | zombie_saas_coordinator/agents/architect/tools.py | Add remediation tool |\n| CREATE | tests/test_US9_hypothesis.py | Tests |\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-8",
         "labels": [
             "user-story",
+            "agent:architect",
             "layer:Service",
             "layer:API",
-            "layer:DB"
+            "layer:DB",
+            "google-adk"
         ],
         "blocked_by": [
             "US-8"
@@ -124,12 +142,14 @@
     {
         "story_id": "US-10",
         "title": "[US-10] Automation Hub Scanning",
-        "body": "**Story ID:** US-10\n\nAs an IT Ops Manager, I want the system to automatically find all Zapier and Make workflows that depend on the Trello integration, so we know which automations will break if we decommission Trello.\n\n## Acceptance Criteria\n- [ ] Integrator Agent connects to Zapier API and Make API via OAuth 2.0\n- [ ] Queries for all active zaps/workflows containing Trello as trigger or action\n- [ ] For each workflow, records: workflow name, trigger condition, action, downstream dependencies\n- [ ] Identifies critical workflows (e.g., daily syncs, customer-facing automations)\n- [ ] Generates dependency graph showing Trello → Zapier/Make → other SaaS tools\n- [ ] Flags workflows that will break if Trello is decommissioned\n- [ ] All API calls and dependencies logged to Cloud Audit Logs\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-5",
+        "body": "**Story ID:** US-10\n**Agent:** `integrator_agent` | **Framework:** Google ADK (`google-adk`) | **Model:** Gemini Flash\n\nAs an IT Ops Manager, I want the system to automatically find all Zapier and Make workflows that depend on the Trello integration, so we know which automations will break if we decommission Trello.\n\n## Acceptance Criteria\n- [ ] Integrator Agent connects to Zapier API and Make API via OAuth 2.0\n- [ ] Queries for all active zaps/workflows containing Trello as trigger or action\n- [ ] For each workflow, records: workflow name, trigger condition, action, downstream dependencies\n- [ ] Identifies critical workflows (e.g., daily syncs, customer-facing automations)\n- [ ] Generates dependency graph stored in Firestore showing Trello \u2192 Zapier/Make \u2192 other SaaS tools\n- [ ] Flags workflows that will break if Trello is decommissioned\n- [ ] All API calls and dependencies logged to Cloud Audit Logs\n\n## ADK Agent Architecture\n```python\nfrom google.adk.agents import Agent\n\ndef scan_zapier(app_name: str) -> dict: ...\ndef scan_make(app_name: str) -> dict: ...\ndef build_dependency_graph(workflows: list[dict]) -> dict: ...\n\nintegrator_agent = Agent(\n    name=\"integrator_agent\",\n    model=\"gemini-2.0-flash\",\n    description=\"Scans automation hubs for workflow dependencies\",\n    tools=[scan_zapier, scan_make, build_dependency_graph],\n)\n```\nRuns in **parallel** with Architect Agent pipeline (US-6\u2192US-9) after HITL gate.\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| CREATE | zombie_saas_coordinator/agents/integrator/agent.py | ADK Agent definition |\n| CREATE | zombie_saas_coordinator/agents/integrator/tools.py | Tool functions |\n| CREATE | zombie_saas_coordinator/shared/integrations/zapier.py | Zapier API client |\n| CREATE | zombie_saas_coordinator/shared/integrations/make.py | Make API client |\n| CREATE | tests/test_US10_integrator.py | Tests |\n\n## Layers\nService, API, DB\n\n## Dependencies\nBlocked by: US-5",
         "labels": [
             "user-story",
+            "agent:integrator",
             "layer:Service",
             "layer:API",
-            "layer:DB"
+            "layer:DB",
+            "google-adk"
         ],
         "blocked_by": [
             "US-5"

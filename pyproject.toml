@@ -1,0 +1,55 @@
+[project]
+name = "zombie-saas-coordinator"
+version = "0.1.0"
+description = "Autonomous multi-agent orchestration platform for detecting and migrating redundant SaaS applications. Built with Google ADK for the AI Builder Cup 2026."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Zombie SaaS Team"},
+]
+
+dependencies = [
+    "google-adk>=1.2.0",
+    "google-cloud-firestore>=2.19.0",
+    "google-cloud-sql-connector[pg8000]>=1.12.0",
+    "google-cloud-secret-manager>=2.21.0",
+    "google-cloud-logging>=3.11.0",
+    "google-cloud-pubsub>=2.23.0",
+    "firebase-admin>=6.6.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "httpx>=0.27.0",
+    "sqlalchemy>=2.0.36",
+    "pydantic>=2.10.0",
+    "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "S", "B", "A", "C4", "SIM"]
+ignore = ["S101"]  # Allow assert in tests
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
