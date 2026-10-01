@@ -11,11 +11,21 @@ Tool ownership by user story:
 - US-4: send_approval_card
 """
 
-from typing import Any
+import os
+import re
+from datetime import UTC, date, datetime
+from decimal import Decimal
+from typing import Any, Literal
+
+from google.cloud import firestore, logging
+
+from zombie_saas_coordinator.shared.auth.hmac_validator import verify_hmac_sha256
+from zombie_saas_coordinator.shared.models.expense import ExpenseEvent, SubscriptionAssessment
 
 # ──────────────────────────────────────────────
 # US-1: Scheduled Identity & Access Telemetry
 # ──────────────────────────────────────────────
+
 
 def scan_idp_logs(tenant_id: str, days: int = 60) -> dict[str, Any]:
     """Fetches SAML/OIDC login events from the identity provider
@@ -52,6 +62,7 @@ def calculate_redundancy(apps: list[dict[str, Any]]) -> dict[str, Any]:
 # US-2: Expense & Webhook Ingestion
 # ──────────────────────────────────────────────
 
+
 def validate_webhook(payload: str, signature: str) -> dict[str, Any]:
     """Validates an incoming expense webhook by verifying its
     HMAC-SHA256 signature against the secret stored in Google
@@ -64,8 +75,40 @@ def validate_webhook(payload: str, signature: str) -> dict[str, Any]:
     Returns:
         dict with keys: valid (bool), error (str or None).
     """
-    # TODO: Implement in US-2
-    raise NotImplementedError("US-2: validate_webhook")
+    verify_hmac_sha256(payload, signature)
+    return {"valid": True, "error": None}
+
+
+def _get_firestore_client() -> firestore.Client:
+    """Build the Firestore client lazily so importing the agent has no cloud side effects."""
+    return firestore.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))
+
+
+def _get_audit_logger() -> Any:
+    """Return the append-only structured logger used for webhook audit events."""
+    client = logging.Client(  # type: ignore[no-untyped-call]
+        project=os.getenv("GOOGLE_CLOUD_PROJECT")
+    )
+    return client.logger("expense-webhook-audit")  # type: ignore[no-untyped-call]
+
+
+def _merchant_document_id(merchant: str) -> str:
+    """Convert a merchant name into the canonical whitelist document ID."""
+    normalized = re.sub(r"[^a-z0-9]+", "-", merchant.casefold()).strip("-")
+    return normalized or "unknown"
+
+
+def _monthly_equivalent(amount: Decimal, frequency: str) -> Decimal:
+    """Normalize a charge to its monthly equivalent for policy evaluation."""
+    factors = {
+        "weekly": Decimal(52) / Decimal(12),
+        "monthly": Decimal(1),
+        "quarterly": Decimal(1) / Decimal(3),
+        "annual": Decimal(1) / Decimal(12),
+        "yearly": Decimal(1) / Decimal(12),
+        "one_time": Decimal(0),
+    }
+    return (amount * factors[frequency]).quantize(Decimal("0.01"))
 
 
 def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
@@ -80,13 +123,68 @@ def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
     Returns:
         dict with keys: status, flagged (bool), reason, priority.
     """
-    # TODO: Implement in US-2
-    raise NotImplementedError("US-2: flag_subscription")
+    expense = ExpenseEvent.model_validate(event)
+    client = _get_firestore_client()
+
+    whitelist_snapshot = (
+        client.collection("saas_whitelist").document(_merchant_document_id(expense.merchant)).get()
+    )
+    whitelist_data = (whitelist_snapshot.to_dict() or {}) if whitelist_snapshot.exists else {}
+    approved = bool(whitelist_snapshot.exists and whitelist_data.get("approved", True))
+    recurring = expense.frequency != "one_time"
+    monthly_amount = _monthly_equivalent(expense.amount, expense.frequency)
+    high_value = monthly_amount > Decimal("500")
+
+    renewal_window_days = int(os.getenv("EXPENSE_RENEWAL_WINDOW_DAYS", "30"))
+    days_until_renewal = (
+        (expense.renewal_date - date.today()).days if expense.renewal_date else None
+    )
+    renewal_opportunity = bool(
+        recurring
+        and days_until_renewal is not None
+        and 0 <= days_until_renewal <= renewal_window_days
+    )
+
+    reasons: list[str] = []
+    if recurring and not approved:
+        reasons.append("unapproved recurring subscription")
+    if renewal_opportunity:
+        reasons.append("contract is inside the auto-renewal cancellation window")
+    if high_value:
+        reasons.append("monthly equivalent exceeds $500")
+
+    flagged = bool(reasons)
+    priority: Literal["normal", "high", "immediate"] = (
+        "immediate" if high_value else "high" if renewal_opportunity else "normal"
+    )
+    assessment = SubscriptionAssessment(
+        status="flagged" if flagged else "approved",
+        flagged=flagged,
+        reason="; ".join(reasons) if reasons else "approved subscription",
+        reasons=reasons,
+        priority=priority,
+        route_to="finance_lead" if high_value else None,
+        approved=approved,
+        recurring=recurring,
+        monthly_equivalent=monthly_amount,
+        renewal_opportunity=renewal_opportunity,
+        confidence="high" if whitelist_snapshot.exists else "low",
+        event=expense.model_dump(mode="json"),
+    )
+
+    record = assessment.model_dump(mode="json")
+    record["logged_at"] = datetime.now(UTC).isoformat()
+    # Firestore ``create`` is intentionally used instead of ``set`` so an
+    # existing event cannot be overwritten by a replayed webhook.
+    client.collection("expense_events").document(expense.event_id).create(record)
+    _get_audit_logger().log_struct(record, severity="NOTICE")
+    return assessment.model_dump(mode="json")
 
 
 # ──────────────────────────────────────────────
 # US-3: Consolidation Proposal Generation
 # ──────────────────────────────────────────────
+
 
 def generate_proposal(app_id: str) -> dict[str, Any]:
     """Generates a comprehensive consolidation proposal for a flagged
@@ -121,6 +219,7 @@ def calculate_roi(app_id: str) -> dict[str, Any]:
 # ──────────────────────────────────────────────
 # US-4: Interactive Approval Card
 # ──────────────────────────────────────────────
+
 
 def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
     """Dispatches an interactive approval card to the specified
