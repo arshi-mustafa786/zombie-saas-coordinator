@@ -1,6 +1,6 @@
 ---
 story_id: US-5
-story_title: "HITL Execution Gate"
+story_title: "3-Tier HITL Approval Gates"
 complexity: M
 layers: [service, db, api]
 depends_on: [US-4]
@@ -10,7 +10,7 @@ framework: Google ADK (google-adk)
 ---
 
 ## Story Summary
-As a CISO, I want a mandatory human approval gate before the system executes any irreversible actions, so we maintain accountability.
+As a CISO, I want distinct, mandatory human approval gates for investigation, migration, and destruction, so we maintain accountability.
 
 ## Vertical Scope
 This story is a complete vertical slice:
@@ -34,7 +34,7 @@ session_service = FirestoreSessionService(
 )
 
 # Tool that checks approval status before proceeding
-def check_approval_status(proposal_id: str) -> dict:
+def check_approval_status(proposal_id: str, required_state: str) -> dict:
     """Checks whether a consolidation proposal has been approved
     by an authorized human (CISO or IT Ops). Reads approval status
     from Cloud SQL. Returns approval state, approver identity,
@@ -67,7 +67,7 @@ async def authorize_proposal(proposal_id: str, firebase_token: str):
 | `authorize_proposal` (endpoint) | `POST /api/v1/approvals/{id}/authorize` | `200 OK` | `401/403` | Records human approval via Firebase Auth. |
 
 ## Acceptance Criteria
-- Clicking [Approve Full Consolidation] serves as the formal authorization trigger
+- System enforces three distinct authorization gates: Permission to Investigate, Permission to Migrate, Permission to Dispose
 - Root orchestrator does NOT delegate to Architect/Integrator agents without approval
 - Approval is tied to authenticated SSO identity verified via Firebase Authentication
 - Approval expires after 7 days; re-issue required if not completed in window

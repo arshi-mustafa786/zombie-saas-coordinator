@@ -62,8 +62,8 @@
     },
     {
         "story_id": "US-5",
-        "title": "[US-5] HITL Execution Gate",
-        "body": "**Story ID:** US-5\n**Agent:** Root Orchestrator (`zombie_saas_coordinator`) | **Framework:** Google ADK (`google-adk`)\n\nAs a CISO, I want a mandatory human approval gate before the system executes any irreversible actions (data migration, account revocation, subscription cancellation), so we maintain accountability and can halt the process if new information emerges.\n\n## Acceptance Criteria\n- [ ] Clicking [Approve Full Consolidation] serves as the formal authorization trigger\n- [ ] Root orchestrator does NOT delegate to Architect/Integrator agents without explicit human approval\n- [ ] Approval is tied to authenticated SSO identity verified via Firebase Authentication (not a generic API token)\n- [ ] Approval expires after 7 days; re-issue required if migration not completed within window\n- [ ] System can be halted at any stage if IT Ops or CISO revokes approval\n- [ ] All halts logged with reason and authorizing identity\n\n## ADK Agent Architecture\nImplements **ADK Human-in-the-Loop (HITL) pattern** with `FirestoreSessionService`:\n```python\nfrom google.adk.sessions import FirestoreSessionService\n\nsession_service = FirestoreSessionService(\n    project_id=\"zombie-saas-coordinator\",\n    collection=\"agent_sessions\",\n)\n\ndef check_approval_status(proposal_id: str) -> dict: ...\ndef revoke_approval(proposal_id: str, reason: str) -> dict: ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| CREATE | zombie_saas_coordinator/api/approvals.py | Authorization endpoint |\n| CREATE | zombie_saas_coordinator/shared/models/approval.py | Data models |\n| CREATE | zombie_saas_coordinator/shared/auth/firebase_auth.py | Firebase Auth utils |\n| MODIFY | zombie_saas_coordinator/agent.py | Add HITL gate to root orchestrator |\n| CREATE | tests/test_US5_approvals.py | Tests |\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-4",
+        "title": "[US-5] 3-Tier HITL Approval Gates",
+        "body": "**Story ID:** US-5\n**Agent:** Root Orchestrator (`zombie_saas_coordinator`) | **Framework:** Google ADK (`google-adk`)\n\nAs a CISO, I want distinct, mandatory human approval gates for investigation, migration, and destruction (data migration, account revocation, subscription cancellation), so we maintain accountability and can halt the process if new information emerges.\n\n## Acceptance Criteria\n- [ ] System enforces three distinct authorization gates: Permission to Investigate, Permission to Migrate, Permission to Dispose\n- [ ] Root orchestrator does NOT delegate to Architect/Integrator agents without explicit human approval\n- [ ] Approval is tied to authenticated SSO identity verified via Firebase Authentication (not a generic API token)\n- [ ] Approval expires after 7 days; re-issue required if migration not completed within window\n- [ ] System can be halted at any stage if IT Ops or CISO revokes approval\n- [ ] All halts logged with reason and authorizing identity\n\n## ADK Agent Architecture\nImplements **ADK Human-in-the-Loop (HITL) pattern** with `FirestoreSessionService`:\n```python\nfrom google.adk.sessions import FirestoreSessionService\n\nsession_service = FirestoreSessionService(\n    project_id=\"zombie-saas-coordinator\",\n    collection=\"agent_sessions\",\n)\n\ndef check_approval_status(proposal_id: str) -> dict: ...\ndef revoke_approval(proposal_id: str, reason: str) -> dict: ...\n```\n\n## Files to Create\n| Action | File path | Reason |\n|--------|-----------|--------|\n| CREATE | zombie_saas_coordinator/api/approvals.py | Authorization endpoint |\n| CREATE | zombie_saas_coordinator/shared/models/approval.py | Data models |\n| CREATE | zombie_saas_coordinator/shared/auth/firebase_auth.py | Firebase Auth utils |\n| MODIFY | zombie_saas_coordinator/agent.py | Add HITL gate to root orchestrator |\n| CREATE | tests/test_US5_approvals.py | Tests |\n\n## Layers\nService, DB, API\n\n## Dependencies\nBlocked by: US-4",
         "labels": [
             "user-story",
             "agent:orchestrator",
@@ -153,6 +153,39 @@
         ],
         "blocked_by": [
             "US-5"
+        ]
+    },
+    {
+        "story_id": "US-11",
+        "title": "[US-11] Migration Execution & Reconciliation",
+        "body": "**Story ID:** US-11\n**Agent:** orchestrator_agent | **Framework:** Google ADK\n\nAs a Compliance Officer, I want cryptographic proof that the migrated data matches the source data before we approve cutover, so I am confident no data was lost.\n\n## Acceptance Criteria\n- [ ] System generates a migration manifest and source-to-target ID mapping during the MIGRATING phase.\n- [ ] RECONCILING phase checks paginated extraction counts, verifies attachments/comments, and executes field-level checks.\n- [ ] Outputs a post-migration exception report for isolated failures.",
+        "labels": [
+            "user-story",
+            "agent:orchestrator",
+            "layer:Service",
+            "layer:DB",
+            "layer:API",
+            "google-adk"
+        ],
+        "blocked_by": [
+            "US-9",
+            "US-10"
+        ]
+    },
+    {
+        "story_id": "US-12",
+        "title": "[US-12] Fail-Safe Quarantine and Disposal",
+        "body": "**Story ID:** US-12\n**Agent:** orchestrator_agent | **Framework:** Google ADK\n\nAs a CISO, I want source data quarantined by default and destroyed only after a separate, explicit authorization to ensure compliance with data retention policies.\n\n## Acceptance Criteria\n- [ ] Default action after migration is SOURCE_QUARANTINED (retention of source data).\n- [ ] Disposal is blocked if validation exceptions, legal holds, or incomplete migrations remain unresolved.\n- [ ] Requires a separate, multi-signature approval (DISPOSAL_APPROVED) before verifiable destruction.",
+        "labels": [
+            "user-story",
+            "agent:orchestrator",
+            "layer:Service",
+            "layer:DB",
+            "layer:API",
+            "google-adk"
+        ],
+        "blocked_by": [
+            "US-11"
         ]
     }
 ]

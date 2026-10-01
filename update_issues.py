@@ -73,8 +73,13 @@ def main():
 
             updated += 1
         else:
-            print(f"Skipping '{title}': Not found on GitHub.")
-            skipped += 1
+            print(f"Creating '{title}'...")
+            with open("temp_body.md", "w", encoding="utf-8") as temp_file:
+                temp_file.write(local["body"])
+            labels_str = ",".join(local.get("labels", []))
+            label_arg = f' --label "{labels_str}"' if labels_str else ""
+            run_command(f'gh issue create --title "{title}" --body-file temp_body.md{label_arg}')
+            updated += 1
 
     # Cleanup
     if os.path.exists("temp_body.md"):

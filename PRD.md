@@ -260,4 +260,63 @@ Every month of delay costs the organization:
 - Queries for all active zaps/workflows that contain Trello as a trigger or action:
   - `GET /v1/zaps` (Zapier) – retrieve all zaps
   - `GET /automations` (Make) – retrieve all scenarios
-- For each Zapier/Make workflow that references
+- For each Zapier/Make workflow that references Trello, logs the workflow ID, name, owner, and the specific trigger/action used.
+- Flags the workflow for review or automated rewriting.
+
+## 4. Execution, Reconciliation & Governance
+
+### FR5: Durable Workflow & Migration Execution
+
+#### FR5.1: 11-State Workflow Engine
+**User Story:**
+> As a System Architect, I want the orchestration to be governed by a durable 11-state workflow machine so that transient errors, concurrent events, and retries do not cause inconsistent states.
+
+**Acceptance Criteria:**
+- System models execution as explicit states: DETECTED, PROPOSED, AWAITING_APPROVAL, VALIDATING, READY_TO_MIGRATE, MIGRATING, RECONCILING, CUTOVER_APPROVED, SOURCE_QUARANTINED, DISPOSAL_APPROVED, COMPLETED.
+- Execution state is persisted durably (e.g., Firestore) to allow resumption from checkpoints.
+- Handles terminal/exceptional states: FAILED, BLOCKED, PAUSED, CANCELLED, RECOVERY_REQUIRED.
+
+#### FR5.2: Migration completeness & Reconciliation
+**User Story:**
+> As a Compliance Officer, I want cryptographic proof that the migrated data matches the source data before we approve cutover, so I am confident no data was lost.
+
+**Acceptance Criteria:**
+- System generates a migration manifest and source-to-target ID mapping during the MIGRATING phase.
+- RECONCILING phase checks paginated extraction counts, verifies attachments/comments, and executes field-level checks.
+- Outputs a post-migration exception report for isolated failures.
+
+#### FR5.3: Fail-Safe Quarantine and Disposal
+**User Story:**
+> As a CISO, I want source data quarantined by default and destroyed only after a separate, explicit authorization to ensure compliance with data retention policies.
+
+**Acceptance Criteria:**
+- Default action after migration is SOURCE_QUARANTINED (retention of source data).
+- Disposal is blocked if validation exceptions, legal holds, or incomplete migrations remain unresolved.
+- Requires a separate, multi-signature approval (DISPOSAL_APPROVED) before verifiable destruction.
+
+## 5. Non-Functional Requirements
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR1 | Availability | 99.9% uptime for webhook endpoints. |
+| NFR2 | Latency | Audit proposals generated within 5 minutes of trigger. |
+| NFR3 | Security | Secret Manager integration, short-lived scoped OAuth tokens, token rotation, tenant isolation, and strict replay protection. |
+| NFR4 | Scalability | Capable of processing 1000+ board configurations per hour. |
+| NFR5 | Auditability | 100% of actions logged to Firestore/Cloud Audit Logs immutably. |
+
+## 6. Success Metrics
+| Metric | Target | Measurement Method |
+|--------|--------|--------------------|
+| Zombie Identification Rate | >95% accuracy | True positive rate of detected unused apps against manual review. |
+| Migration Success Rate | 100% data fidelity | Zero data loss during Trello to Asana migrations. |
+| Consolidation Time | < 1 hour | Time from HITL approval to completed migration. |
+| Semantic Mismatch Detection | >90% accuracy | Accurate flagging of incompatible behavioral contracts. |
+
+## 7. Out of Scope
+- Migrating to platforms other than Asana (for the hackathon prototype).
+- Automatically modifying third-party Zapier/Make workflows (flagging only).
+- Handling billing cancellation automatically (notifies finance).
+
+## 8. Open Questions / Risk Flags
+- Can we get sufficient API rate limits from Trello and Asana during the hackathon?
+- How to handle custom fields in Trello that have no direct Asana equivalent if not just tagging?
+- Are there specific compliance regimes (e.g. GDPR) we need to explicitly call out for data destruction?

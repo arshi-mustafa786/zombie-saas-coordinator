@@ -31,7 +31,7 @@ The Zombie SaaS Consolidator is an autonomous, event-driven **multi-agent orches
 
 ### 2.4 Security, Governance & UI
 *   **Frontend & UI:** **Firebase Hosting** serves the CISO Compliance Dashboard.
-*   **Identity & Access Management:** **Firebase Authentication** handles SSO for HITL approval gates.
+*   **Identity & Access Management:** **Firebase Authentication** handles SSO for 3-Tier HITL approval gates (Investigation, Migration, Disposal).
 *   **Secret Management:** Google Secret Manager (API keys, OAuth tokens for Trello, Asana, Zapier, Make).
 *   **Compliance & Auditing:** Google Cloud Audit Logs (Immutable logs of all AI decisions, API calls, and HITL actions).
 
@@ -139,16 +139,23 @@ zombie_saas_coordinator/
 └── pyproject.toml
 ```
 
-## 4. Execution Flow
+## 4. Execution Flow (11-State Workflow Engine)
 
-1. **Trigger:** Cloud Scheduler or expense webhook → Cloud Run → Auditor Agent
-2. **Detection:** Auditor Agent scans IdP logs and expense data, generates consolidation proposal
-3. **Notification:** Auditor Agent sends interactive approval card to Slack/Teams
-4. **HITL Gate:** Human approves via Firebase Auth SSO → approval stored in Cloud SQL
-5. **Parallel Validation:** Root Orchestrator simultaneously delegates to:
-   - **Architect Agent:** Extracts contracts → Diffs schemas → Simulates transitions → Generates remediations
-   - **Integrator Agent:** Scans Zapier/Make for dependency graphs
-6. **Aggregation:** Root Orchestrator compiles final migration report in Firestore
+The orchestration is governed by a durable state machine to ensure idempotency, reliable recovery, and distinct approval gates.
+
+1. **DETECTED:** Trigger (Cloud Scheduler / webhook) fires. Auditor Agent collects evidence.
+2. **PROPOSED:** Auditor Agent calculates risk, savings, and dependencies.
+3. **AWAITING_APPROVAL:** Human reviewer grants **Permission to Investigate**.
+4. **VALIDATING:** Root Orchestrator delegates to Architect and Integrator agents. Schemas, semantics, and dependencies are checked.
+5. **READY_TO_MIGRATE:** Required validations pass. Human reviewer grants **Permission to Migrate**.
+6. **MIGRATING:** Executor performs records transfer with checkpoints and idempotent operations.
+7. **RECONCILING:** Source and target are compared (ID mapping, count verification, attachment checks); exceptions isolated.
+8. **CUTOVER_APPROVED:** Integration switch and operational verification authorized.
+9. **SOURCE_QUARANTINED:** Source data retained by default while final checks apply.
+10. **DISPOSAL_APPROVED:** Separate authorized human decision to destroy eligible source data.
+11. **COMPLETED:** Evidence and final status recorded immutably.
+
+*Note: The system supports terminal/exception states (FAILED, BLOCKED, PAUSED, CANCELLED, RECOVERY_REQUIRED) at any applicable stage.*
 
 ## 5. Deployment
 
