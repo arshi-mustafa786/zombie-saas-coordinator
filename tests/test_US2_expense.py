@@ -10,6 +10,7 @@ from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
+from google.api_core.exceptions import AlreadyExists
 
 from zombie_saas_coordinator.agents.auditor import tools
 from zombie_saas_coordinator.main import app
@@ -17,6 +18,7 @@ from zombie_saas_coordinator.shared.auth.hmac_validator import (
     InvalidSignatureError,
     verify_hmac_sha256,
 )
+from zombie_saas_coordinator.shared.models.expense import ExpenseEvent
 
 
 def _signature(payload: bytes, secret: str = "test-secret") -> str:
@@ -51,6 +53,26 @@ def test_verify_hmac_accepts_valid_signature() -> None:
 def test_verify_hmac_rejects_invalid_signature() -> None:
     with pytest.raises(InvalidSignatureError):
         verify_hmac_sha256(b"payload", "sha256=" + "0" * 64, secret="test-secret")
+
+
+def test_expense_event_id_is_stable_for_webhook_retries() -> None:
+    payload = {
+        "provider": "brex",
+        "transaction_id": "txn_123",
+        "merchant": "Trello",
+        "amount": "120.00",
+        "frequency": "monthly",
+    }
+
+    first = ExpenseEvent.model_validate(payload)
+    retry = ExpenseEvent.model_validate(payload)
+    enriched_retry = ExpenseEvent.model_validate({**payload, "amount": "125.00"})
+    different = ExpenseEvent.model_validate({**payload, "transaction_id": "txn_456"})
+
+    assert first.event_id == retry.event_id
+    assert first.event_id == enriched_retry.event_id
+    assert first.event_id != different.event_id
+    assert first.event_id.startswith("expense_")
 
 
 def test_flag_subscription_routes_high_value_renewal(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -88,6 +110,30 @@ def test_approved_subscription_is_not_flagged(monkeypatch: pytest.MonkeyPatch) -
 
     assert result["flagged"] is False
     assert result["status"] == "approved"
+
+
+def test_duplicate_webhook_is_an_idempotent_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    firestore_client, expense_document = _firestore(approved=False, exists=False)
+    expense_document.create.side_effect = AlreadyExists(  # type: ignore[no-untyped-call]
+        "event already stored"
+    )
+    audit_logger = Mock()
+    monkeypatch.setattr(tools, "_get_firestore_client", lambda: firestore_client)
+    monkeypatch.setattr(tools, "_get_audit_logger", lambda: audit_logger)
+
+    result = tools.flag_subscription(
+        {
+            "provider": "ramp",
+            "transaction_id": "txn_retry",
+            "merchant": "Unknown SaaS",
+            "amount": 99,
+            "frequency": "monthly",
+        }
+    )
+
+    assert result["duplicate"] is True
+    expense_document.create.assert_called_once()
+    audit_logger.log_struct.assert_called_once()
 
 
 def test_webhook_rejects_invalid_signature(monkeypatch: pytest.MonkeyPatch) -> None:

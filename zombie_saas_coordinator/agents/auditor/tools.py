@@ -17,6 +17,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any, Literal
 
+from google.api_core.exceptions import AlreadyExists
 from google.cloud import firestore, logging
 
 from zombie_saas_coordinator.shared.auth.hmac_validator import verify_hmac_sha256
@@ -176,7 +177,14 @@ def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
     record["logged_at"] = datetime.now(UTC).isoformat()
     # Firestore ``create`` is intentionally used instead of ``set`` so an
     # existing event cannot be overwritten by a replayed webhook.
-    client.collection("expense_events").document(expense.event_id).create(record)
+    try:
+        client.collection("expense_events").document(expense.event_id).create(record)
+    except AlreadyExists:
+        # Provider retries are successful no-ops. The original immutable event
+        # remains in Firestore, and the retry is still visible in audit logs.
+        assessment = assessment.model_copy(update={"duplicate": True})
+        record = assessment.model_dump(mode="json")
+        record["logged_at"] = datetime.now(UTC).isoformat()
     _get_audit_logger().log_struct(record, severity="NOTICE")
     return assessment.model_dump(mode="json")
 
