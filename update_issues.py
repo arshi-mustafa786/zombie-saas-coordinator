@@ -9,6 +9,7 @@ def run_command(cmd):
         print(f"  Warning: {result.stderr.strip()}")
     return result.stdout.strip()
 
+
 # Label definitions: name -> (color, description)
 LABEL_DEFINITIONS = {
     "user-story": ("0075ca", "User story issue"),
@@ -23,6 +24,7 @@ LABEL_DEFINITIONS = {
     "layer:UI": ("fbca04", "UI layer"),
 }
 
+
 def ensure_labels_exist():
     """Create all labels in the repo if they don't already exist."""
     print("Ensuring all labels exist in the repository...")
@@ -32,6 +34,7 @@ def ensure_labels_exist():
             f'--description "{description}" --force'
         )
     print("Labels ready.\n")
+
 
 def main():
     print("Loading local JSON...")
@@ -64,7 +67,7 @@ def main():
             # Update body
             with open("temp_body.md", "w", encoding="utf-8") as temp_file:
                 temp_file.write(local["body"])
-            run_command(f'gh issue edit {issue_num} --body-file temp_body.md')
+            run_command(f"gh issue edit {issue_num} --body-file temp_body.md")
 
             # Update labels
             if "labels" in local and local["labels"]:
@@ -86,6 +89,7 @@ def main():
         os.remove("temp_body.md")
 
     print(f"\nBulk update complete! Updated: {updated}, Skipped: {skipped}")
+
 
 if __name__ == "__main__":
     main()

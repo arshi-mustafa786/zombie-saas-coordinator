@@ -21,7 +21,9 @@ from google.api_core.exceptions import AlreadyExists
 from google.cloud import firestore, logging
 
 from zombie_saas_coordinator.shared.auth.hmac_validator import verify_hmac_sha256
+from zombie_saas_coordinator.shared.integrations import slack
 from zombie_saas_coordinator.shared.models.expense import ExpenseEvent, SubscriptionAssessment
+from zombie_saas_coordinator.shared.models.proposal import ConsolidationProposal, get_dummy_proposal
 
 # ──────────────────────────────────────────────
 # US-1: Scheduled Identity & Access Telemetry
@@ -240,7 +242,32 @@ def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
         channel: Slack channel ID or Teams channel webhook URL.
 
     Returns:
-        dict with keys: sent (bool), message_id.
+        dict with keys: sent (bool), message_id, proposal_id.
     """
-    # TODO: Implement in US-4
-    raise NotImplementedError("US-4: send_approval_card")
+    client = _get_firestore_client()
+    doc_ref = client.collection("consolidation_proposals").document(proposal_id)
+    snapshot = doc_ref.get()
+
+    if snapshot.exists:
+        data = snapshot.to_dict() or {}
+        proposal = ConsolidationProposal.model_validate(data)
+    else:
+        # Fallback to realistic dummy proposal while US-3 is WIP
+        proposal = get_dummy_proposal(proposal_id)
+
+    payload = slack.build_slack_approval_card(proposal)
+    dispatch_result = slack.dispatch_slack_message(channel, payload)
+
+    audit_entry = {
+        "event_type": "APPROVAL_CARD_DISPATCHED",
+        "proposal_id": proposal_id,
+        "channel": channel,
+        "sent": dispatch_result.get("sent", False),
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+    _get_audit_logger().log_struct(audit_entry, severity="INFO")
+
+    return {
+        **dispatch_result,
+        "proposal_id": proposal_id,
+    }

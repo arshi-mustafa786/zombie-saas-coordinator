@@ -26,6 +26,7 @@ This story contributes **tool functions** to the `auditor_agent`, defined using 
 ```python
 from google.adk.agents import Agent
 
+
 # Tool functions (plain Python functions with docstrings)
 def scan_idp_logs(tenant_id: str, days: int = 60) -> dict:
     """Fetches SAML/OIDC login events from the identity provider
@@ -33,11 +34,13 @@ def scan_idp_logs(tenant_id: str, days: int = 60) -> dict:
     applications with their login activity over the specified period."""
     ...
 
+
 def calculate_redundancy(apps: list[dict]) -> dict:
     """Analyzes application capabilities using Gemini Flash to detect
     functional overlap with enterprise-standard tools. Returns a list
     of flagged applications with redundancy confidence scores (0-100)."""
     ...
+
 
 # Agent definition (composed in root orchestrator)
 auditor_agent = Agent(
@@ -45,8 +48,8 @@ auditor_agent = Agent(
     model="gemini-2.0-flash",
     description="Scans IdP telemetry and expense events to detect zombie SaaS applications",
     instruction="You are the Auditor Agent. Your job is to scan identity provider logs, "
-                "detect applications with low or zero usage, and flag redundant tools. "
-                "Use scan_idp_logs to fetch telemetry and calculate_redundancy to classify apps.",
+    "detect applications with low or zero usage, and flag redundant tools. "
+    "Use scan_idp_logs to fetch telemetry and calculate_redundancy to classify apps.",
     tools=[scan_idp_logs, calculate_redundancy],
 )
 ```

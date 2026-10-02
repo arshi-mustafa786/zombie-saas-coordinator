@@ -30,6 +30,7 @@ def validate_webhook(payload: str, signature: str) -> dict:
     Secret Manager. Returns validation status."""
     ...
 
+
 def flag_subscription(event: dict) -> dict:
     """Analyzes an expense event against the enterprise-approved
     SaaS whitelist stored in Firestore. Flags unapproved recurring

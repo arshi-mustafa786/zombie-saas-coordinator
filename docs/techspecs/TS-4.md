@@ -7,6 +7,7 @@ depends_on: [US-3]
 blocks: [US-5]
 agent: auditor_agent (callback tool)
 framework: Google ADK (google-adk)
+status: DONE
 ---
 
 ## Story Summary
@@ -34,6 +35,7 @@ def send_approval_card(proposal_id: str, channel: str) -> dict:
     Returns delivery status and message ID."""
     ...
 
+
 # Cloud Run callback handler (NOT an agent tool — external webhook)
 # Registered as a Flask/FastAPI route on Cloud Run
 @app.post("/api/v1/callbacks/approval")
@@ -60,12 +62,12 @@ async def handle_approval_callback(payload: ApprovalCallbackPayload):
 - All user interactions logged to Cloud Audit Logs with full context
 
 ## Test Outline
-- [ ] Happy path: Card generated correctly and dispatched to Slack.
-- [ ] Happy path: Button click callback processes approval and updates Firestore.
-- [ ] Edge case: User clicks button on expired proposal.
-- [ ] Security: Forged callback payload with invalid token rejected (403).
-- [ ] Security: SSRF via manipulated channel URL.
-- [ ] Error path: Slack API is down — tool returns error dict.
+- [x] Happy path: Card generated correctly and dispatched to Slack.
+- [x] Happy path: Button click callback processes approval and updates Firestore.
+- [x] Edge case: User clicks button on expired proposal.
+- [x] Security: Forged callback payload with invalid token rejected (403).
+- [x] Security: SSRF via manipulated channel URL.
+- [x] Error path: Slack API is down — tool returns error dict.
 
 ## Files to Create or Modify
 | Action   | File path                                    | Reason               |

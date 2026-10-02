@@ -56,4 +56,3 @@ auditor_agent = Agent(
 
 # Alias for ADK loader compatibility
 agent = auditor_agent
-

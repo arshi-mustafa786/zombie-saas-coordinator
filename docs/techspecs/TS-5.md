@@ -33,6 +33,7 @@ session_service = FirestoreSessionService(
     collection="agent_sessions",
 )
 
+
 # Tool that checks approval status before proceeding
 def check_approval_status(proposal_id: str, required_state: str) -> dict:
     """Checks whether a consolidation proposal has been approved
@@ -43,12 +44,14 @@ def check_approval_status(proposal_id: str, required_state: str) -> dict:
     agents until this tool returns {"approved": true}."""
     ...
 
+
 def revoke_approval(proposal_id: str, reason: str) -> dict:
     """Revokes a previously granted approval. Updates Cloud SQL
     and Firestore session state. Halts any in-progress migration
     pipeline. Logs the halt reason and revoking identity to
     Cloud Audit Logs."""
     ...
+
 
 # Cloud Run endpoint for human authorization
 @app.post("/api/v1/approvals/{proposal_id}/authorize")

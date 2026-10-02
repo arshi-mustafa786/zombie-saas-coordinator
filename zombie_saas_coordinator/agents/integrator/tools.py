@@ -10,6 +10,7 @@ from typing import Any
 # US-10: Automation Hub Scanning
 # ──────────────────────────────────────────────
 
+
 def scan_zapier(app_name: str) -> dict[str, Any]:
     """Connects to the Zapier API (OAuth 2.0) and queries for all
     active zaps containing the specified app as a trigger or action.

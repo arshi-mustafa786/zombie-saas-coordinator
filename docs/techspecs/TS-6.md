@@ -26,6 +26,7 @@ This story defines the **Architect Agent** and its first tool:
 ```python
 from google.adk.agents import Agent
 
+
 def extract_trello_rules(board_id: str) -> dict:
     """Connects to Trello API and extracts all automation rules,
     Butler commands, and Power-Up configurations from the specified
@@ -38,20 +39,22 @@ def extract_trello_rules(board_id: str) -> dict:
     stored in Firestore for audit trail."""
     ...
 
+
 def parse_automation_rule(raw_rule: dict) -> dict:
     """Normalizes a raw Trello Butler/Power-Up rule into a
     canonical contract format: {trigger, action, scope, metadata}.
     Uses Gemini Pro to interpret natural-language rules."""
     ...
 
+
 architect_agent = Agent(
     name="architect_agent",
     model="gemini-2.0-pro",
     description="Validates semantic compatibility between source and target SaaS platforms",
     instruction="You are the Architect Agent. Your job is to extract behavioral contracts "
-                "from source systems (Trello), compare schemas with target systems (Asana), "
-                "simulate state transitions, and detect semantic mismatches. "
-                "Start by extracting rules with extract_trello_rules.",
+    "from source systems (Trello), compare schemas with target systems (Asana), "
+    "simulate state transitions, and detect semantic mismatches. "
+    "Start by extracting rules with extract_trello_rules.",
     tools=[extract_trello_rules, parse_automation_rule],
 )
 ```
