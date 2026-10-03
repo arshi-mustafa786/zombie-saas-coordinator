@@ -45,4 +45,3 @@ root_agent = Agent(
 
 # Alias for ADK loader compatibility
 agent = root_agent
-

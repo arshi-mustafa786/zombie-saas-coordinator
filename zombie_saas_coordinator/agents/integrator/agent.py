@@ -33,4 +33,3 @@ integrator_agent = Agent(
 
 # Alias for ADK loader compatibility
 agent = integrator_agent
-
