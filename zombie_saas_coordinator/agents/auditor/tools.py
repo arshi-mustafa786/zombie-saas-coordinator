@@ -233,7 +233,8 @@ def validate_webhook(payload: str, signature: str) -> dict[str, Any]:
 
 def _get_firestore_client() -> firestore.Client:
     """Build the Firestore client lazily so importing the agent has no cloud side effects."""
-    return firestore.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))
+    database = os.getenv("FIRESTORE_DATABASE_ID") or None
+    return firestore.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"), database=database)
 
 
 def _get_audit_logger(log_name: str = "expense-webhook-audit") -> Any:

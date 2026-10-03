@@ -1,7 +1,8 @@
 import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from zombie_saas_coordinator.agents.auditor import tools
 from zombie_saas_coordinator.shared.db.cloudsql_client import record_scan_in_cloudsql
@@ -13,6 +14,7 @@ from zombie_saas_coordinator.shared.models.telemetry import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
+security = HTTPBearer(auto_error=False)
 
 
 def verify_firebase_token(token: str) -> dict[str, Any]:
@@ -43,7 +45,12 @@ def verify_firebase_token(token: str) -> dict[str, Any]:
 @router.post("/scan-idp", response_model=IdPScanResponse, status_code=status.HTTP_200_OK)
 async def scan_idp_endpoint(
     payload: IdPScanRequest,
-    authorization: Annotated[str, Header(alias="Authorization")] = "",
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)] = None,
+    token: Annotated[
+        str | None,
+        Query(description="Bearer token fallback (convenient for Swagger UI)"),
+    ] = None,
 ) -> IdPScanResponse:
     """Scheduled Cloud Run job triggered by Cloud Scheduler to scan IdP logs.
 
@@ -53,14 +60,28 @@ async def scan_idp_endpoint(
     4. Persists results to Firestore and Cloud SQL.
     5. Emits structured Cloud Audit Log.
     """
-    if not authorization or not authorization.startswith("Bearer "):
+    raw_token = ""
+    if credentials and credentials.credentials:
+        raw_token = credentials.credentials.strip()
+    elif "authorization" in request.headers:
+        auth_header = request.headers["authorization"].strip()
+        raw_token = (
+            auth_header.removeprefix("Bearer ").strip()
+            if auth_header.startswith("Bearer ")
+            else auth_header.strip()
+        )
+    elif token:
+        raw_token = token.strip()
+
+    if not raw_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing or invalid Bearer token in Authorization header",
         )
 
-    raw_token = authorization.removeprefix("Bearer ").strip()
     verify_firebase_token(raw_token)
+
+
 
     try:
         scan_output = tools.scan_idp_logs(tenant_id=payload.tenant_id, days=payload.days)
