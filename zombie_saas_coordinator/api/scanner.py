@@ -114,9 +114,11 @@ async def scan_idp_endpoint(
                 "total_apps": response.total_apps_scanned,
                 "flagged_apps": response.flagged_apps_count,
                 "timestamp": response.timestamp,
-            }
+            },
+            severity="NOTICE",
         )
     except Exception as exc:
+
         logger.warning("Cloud Audit logging skipped: %s", exc)
 
     return response

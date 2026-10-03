@@ -290,3 +290,15 @@ def test_record_scan_in_cloudsql_executes_queries() -> None:
     record_scan_in_cloudsql("tenant-acme", scan_data, engine=mock_engine)
     # Ensure SQL statements were executed via begin context
     assert mock_conn.execute.call_count == 2
+
+
+def test_scan_idp_endpoint_rejects_empty_tenant_id() -> None:
+    """Validation: Rejects whitespace or empty tenant_id with 422 Unprocessable Entity."""
+    client = TestClient(app)
+    headers = {"Authorization": "Bearer test-token"}
+    response = client.post(
+        "/api/v1/jobs/scan-idp",
+        headers=headers,
+        json={"tenant_id": "   ", "days": 60},
+    )
+    assert response.status_code == 422

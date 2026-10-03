@@ -44,10 +44,11 @@ class RedundancyAssessment(BaseModel):
 class IdPScanRequest(BaseModel):
     """Request payload for triggering an on-demand or scheduled IdP scan."""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
-    tenant_id: str
+    tenant_id: str = Field(min_length=1, max_length=128)
     days: int = Field(default=60, ge=1, le=365)
+
 
 
 class IdPScanResponse(BaseModel):
