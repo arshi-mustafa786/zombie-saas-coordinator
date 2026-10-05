@@ -10,6 +10,7 @@ Each model file is created by the user story that introduces it:
 from zombie_saas_coordinator.shared.models.proposal import (
     ComplianceSensitivity,
     ConsolidationProposal,
+    ProposalStatus,
     RecommendationType,
     RiskAssessment,
     SavingsBreakdown,
@@ -30,6 +31,7 @@ __all__ = [
     "RedundancyAssessment",
     "ComplianceSensitivity",
     "ConsolidationProposal",
+    "ProposalStatus",
     "RecommendationType",
     "RiskAssessment",
     "SavingsBreakdown",

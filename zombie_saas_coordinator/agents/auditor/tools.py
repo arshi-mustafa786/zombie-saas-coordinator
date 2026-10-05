@@ -23,10 +23,45 @@ from typing import Any, Literal
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import firestore, logging
 from google.cloud.firestore_v1.base_query import FieldFilter
+from pydantic import ValidationError
 
 from zombie_saas_coordinator.shared.auth.hmac_validator import (
     InvalidSignatureError,
     verify_hmac_sha256,
+)
+from zombie_saas_coordinator.shared.constants import (
+    BASE_RISK_SCORE,
+    DATA_AGE_AGING_DAYS,
+    DATA_AGE_AGING_RISK,
+    DATA_AGE_OLD_DAYS,
+    DATA_AGE_OLD_RISK,
+    DEFAULT_RENEWAL_WINDOW_DAYS,
+    DEFAULT_SCAN_WINDOW_DAYS,
+    ENTERPRISE_STANDARDS,
+    EXPENSE_EVENTS_COLLECTION,
+    EXPENSE_WEBHOOK_AUDIT_LOG,
+    HIGH_ACTIVE_RATIO,
+    HIGH_ACTIVE_RISK,
+    HIGH_COMPLIANCE_RISK,
+    HIGH_VALUE_MONTHLY_THRESHOLD,
+    INACTIVITY_MIN_DAYS,
+    INACTIVITY_SEAT_RATIO,
+    MANUAL_REVIEW_RISK_THRESHOLD,
+    MAX_DEPENDENCY_RISK,
+    MAX_PROMPT_FIELD_LENGTH,
+    MAX_RATIONALE_LENGTH,
+    MAX_SUMMARY_LENGTH,
+    MEDIUM_COMPLIANCE_RISK,
+    MIN_ANNUAL_SAVINGS,
+    MODERATE_ACTIVE_RATIO,
+    MODERATE_ACTIVE_RISK,
+    PROPOSAL_AUDIT_LOG,
+    PROPOSALS_COLLECTION,
+    REDUNDANCY_MIN_SCORE,
+    RISK_PER_DEPENDENCY,
+    SAAS_WHITELIST_COLLECTION,
+    SCANS_COLLECTION,
+    UNSIGNED_PROPOSAL_FIELDS,
 )
 from zombie_saas_coordinator.shared.models.expense import ExpenseEvent, SubscriptionAssessment
 from zombie_saas_coordinator.shared.models.proposal import (
@@ -46,34 +81,9 @@ from zombie_saas_coordinator.shared.models.telemetry import (
 # US-1: Scheduled Identity & Access Telemetry
 # ──────────────────────────────────────────────
 
-_ENTERPRISE_STANDARDS: dict[str, dict[str, Any]] = {
-    "Project Management": {
-        "standard_app": "Jira Software (Enterprise Standard)",
-        "capabilities": {
-            "kanban",
-            "scrum",
-            "issue-tracking",
-            "task-tracking",
-            "collaboration",
-            "enterprise-agile",
-        },
-    },
-    "Team Communication": {
-        "standard_app": "Microsoft Teams (Enterprise Standard)",
-        "capabilities": {"chat", "video-calls", "screen-sharing", "channels", "team-messaging"},
-    },
-    "Cloud Storage": {
-        "standard_app": "Google Drive (Enterprise Standard)",
-        "capabilities": {"file-storage", "document-sharing", "cloud-sync", "permissions"},
-    },
-    "Document Collaboration": {
-        "standard_app": "Confluence (Enterprise Standard)",
-        "capabilities": {"wiki", "documentation", "knowledge-base", "specs"},
-    },
-}
-
-
-def _fetch_idp_application_telemetry(tenant_id: str, days: int = 60) -> list[dict[str, Any]]:
+def _fetch_idp_application_telemetry(
+    tenant_id: str, days: int = DEFAULT_SCAN_WINDOW_DAYS
+) -> list[dict[str, Any]]:
     """Fetches SAML/OIDC access logs from the identity provider via Firebase Auth federation."""
     if not tenant_id:
         raise IdpAuthError("Missing tenant_id for IdP authentication")
@@ -122,7 +132,7 @@ def _fetch_idp_application_telemetry(tenant_id: str, days: int = 60) -> list[dic
     ]
 
 
-def scan_idp_logs(tenant_id: str, days: int = 60) -> dict[str, Any]:
+def scan_idp_logs(tenant_id: str, days: int = DEFAULT_SCAN_WINDOW_DAYS) -> dict[str, Any]:
     """Fetches SAML/OIDC login events from the identity provider
     via Firebase Authentication federation. Returns a list of
     applications with their login activity over the specified period.
@@ -144,7 +154,7 @@ def scan_idp_logs(tenant_id: str, days: int = 60) -> dict[str, Any]:
         ratio = round(inactive / total, 2) if total > 0 else 0.0
 
         # AC-1.3: Flags application when >= 60% of assigned seats show zero logins over 60+ days
-        is_flagged = bool(ratio >= 0.60 and days >= 60)
+        is_flagged = bool(ratio >= INACTIVITY_SEAT_RATIO and days >= INACTIVITY_MIN_DAYS)
 
         telemetry = AppTelemetry(
             app_id=raw_app.get("app_id", ""),
@@ -188,7 +198,7 @@ def calculate_redundancy(apps: list[dict[str, Any]]) -> dict[str, Any]:
         category = app.get("category", "")
         capabilities = set(app.get("capabilities", []))
 
-        standard_info = _ENTERPRISE_STANDARDS.get(category)
+        standard_info = ENTERPRISE_STANDARDS.get(category)
         if not standard_info:
             continue
 
@@ -203,7 +213,7 @@ def calculate_redundancy(apps: list[dict[str, Any]]) -> dict[str, Any]:
         if overlap:
             overlap_ratio = len(overlap) / len(capabilities) if capabilities else 0.0
             score = min(100, int(overlap_ratio * 100))
-            if score >= 50:
+            if score >= REDUNDANCY_MIN_SCORE:
                 overlapping_list = sorted(overlap)
                 rationale = (
                     f"{app_name} provides {', '.join(overlapping_list)}, which duplicates "
@@ -251,7 +261,7 @@ def _get_firestore_client() -> firestore.Client:
     return firestore.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"), database=database)
 
 
-def _get_audit_logger(log_name: str = "expense-webhook-audit") -> Any:
+def _get_audit_logger(log_name: str = EXPENSE_WEBHOOK_AUDIT_LOG) -> Any:
     """Return the append-only structured logger used for webhook audit events."""
     client = logging.Client(  # type: ignore[no-untyped-call]
         project=os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -294,15 +304,19 @@ def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
     client = _get_firestore_client()
 
     whitelist_snapshot = (
-        client.collection("saas_whitelist").document(_merchant_document_id(expense.merchant)).get()
+        client.collection(SAAS_WHITELIST_COLLECTION)
+        .document(_merchant_document_id(expense.merchant))
+        .get()
     )
     whitelist_data = (whitelist_snapshot.to_dict() or {}) if whitelist_snapshot.exists else {}
     approved = bool(whitelist_snapshot.exists and whitelist_data.get("approved", True))
     recurring = expense.frequency != "one_time"
     monthly_amount = _monthly_equivalent(expense.amount, expense.frequency)
-    high_value = monthly_amount > Decimal("500")
+    high_value = monthly_amount > Decimal(HIGH_VALUE_MONTHLY_THRESHOLD)
 
-    renewal_window_days = int(os.getenv("EXPENSE_RENEWAL_WINDOW_DAYS", "30"))
+    renewal_window_days = int(
+        os.getenv("EXPENSE_RENEWAL_WINDOW_DAYS", str(DEFAULT_RENEWAL_WINDOW_DAYS))
+    )
     days_until_renewal = (
         (expense.renewal_date - date.today()).days if expense.renewal_date else None
     )
@@ -344,7 +358,7 @@ def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
     # Firestore ``create`` is intentionally used instead of ``set`` so an
     # existing event cannot be overwritten by a replayed webhook.
     try:
-        client.collection("expense_events").document(expense.event_id).create(record)
+        client.collection(EXPENSE_EVENTS_COLLECTION).document(expense.event_id).create(record)
     except AlreadyExists:
         # Provider retries are successful no-ops. The original immutable event
         # remains in Firestore, and the retry is still visible in audit logs.
@@ -359,17 +373,6 @@ def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
 # US-3: Consolidation Proposal Generation
 # ──────────────────────────────────────────────
 
-PROPOSALS_COLLECTION = "consolidation_proposals"
-SCANS_COLLECTION = "scans"
-EXPENSE_EVENTS_COLLECTION = "expense_events"
-_MAX_PROMPT_FIELD_LENGTH = 200
-_MAX_SUMMARY_LENGTH = 1000
-# Workflow fields that US-4 callbacks update after the proposal is signed.
-_UNSIGNED_PROPOSAL_FIELDS = frozenset(
-    {"signature", "status", "updated_at", "action_by", "action_email", "action"}
-)
-
-
 class ProposalSigningError(RuntimeError):
     """Raised when the proposal signing secret is not configured."""
 
@@ -380,7 +383,7 @@ class ProposalDataError(LookupError):
 
 def _get_proposal_audit_logger() -> Any:
     """Return the append-only structured logger used for proposal audit events."""
-    return _get_audit_logger("consolidation-proposal-audit")
+    return _get_audit_logger(PROPOSAL_AUDIT_LOG)
 
 
 def _get_proposal_signing_secret() -> str:
@@ -394,7 +397,7 @@ def _get_proposal_signing_secret() -> str:
 def _canonical_proposal_payload(proposal: dict[str, Any]) -> str:
     """Serialize a proposal deterministically, excluding its signature and workflow state."""
     unsigned = {
-        key: value for key, value in proposal.items() if key not in _UNSIGNED_PROPOSAL_FIELDS
+        key: value for key, value in proposal.items() if key not in UNSIGNED_PROPOSAL_FIELDS
     }
     return json.dumps(unsigned, sort_keys=True, separators=(",", ":"))
 
@@ -555,14 +558,14 @@ def _score_risk(
     """
     risk_factors: list[str] = []
     unknown: list[str] = []
-    score = 10
+    score = BASE_RISK_SCORE
     active_ratio = (active_users / seats) if seats > 0 else 0.0
 
-    if active_ratio >= 0.50:
-        score += 40
+    if active_ratio >= HIGH_ACTIVE_RATIO:
+        score += HIGH_ACTIVE_RISK
         risk_factors.append(f"High active user ratio ({active_ratio:.0%})")
-    elif active_ratio >= 0.20:
-        score += 20
+    elif active_ratio >= MODERATE_ACTIVE_RATIO:
+        score += MODERATE_ACTIVE_RISK
         risk_factors.append(f"Moderate active user ratio ({active_ratio:.0%})")
     else:
         risk_factors.append(f"Low active user ratio ({active_ratio:.0%}) - high inactivity")
@@ -570,26 +573,26 @@ def _score_risk(
     if dependency_count is None:
         unknown.append("Automation dependencies (Zapier/Make) not yet scanned (US-10)")
     elif dependency_count > 0:
-        score += min(dependency_count * 15, 30)
+        score += min(dependency_count * RISK_PER_DEPENDENCY, MAX_DEPENDENCY_RISK)
         risk_factors.append(f"{dependency_count} connected automation workflows detected")
 
     if compliance is None:
         unknown.append("Compliance sensitivity of the app's data is not classified")
     elif compliance == ComplianceSensitivity.HIGH:
-        score += 20
+        score += HIGH_COMPLIANCE_RISK
         risk_factors.append("High compliance sensitivity (SOC2/GDPR/PII data)")
     elif compliance == ComplianceSensitivity.MEDIUM:
-        score += 10
+        score += MEDIUM_COMPLIANCE_RISK
         risk_factors.append("Medium compliance sensitivity")
 
     # Older data means more history to migrate and more chance of retention obligations.
     if data_age_days is None:
         unknown.append("Data age is not available from IdP telemetry")
-    elif data_age_days > 365:
-        score += 10
+    elif data_age_days > DATA_AGE_OLD_DAYS:
+        score += DATA_AGE_OLD_RISK
         risk_factors.append(f"Data older than 1 year ({data_age_days} days)")
-    elif data_age_days > 180:
-        score += 5
+    elif data_age_days > DATA_AGE_AGING_DAYS:
+        score += DATA_AGE_AGING_RISK
         risk_factors.append(f"Data older than 6 months ({data_age_days} days)")
 
     return min(max(score, 0), 100), risk_factors, unknown
@@ -601,9 +604,9 @@ def _recommend(
     """Map risk, savings and whitelist status to one of the three recommendations."""
     if whitelisted:
         return RecommendationType.IGNORE_WHITELIST
-    if not cost_data_available or risk_score >= 65:
+    if not cost_data_available or risk_score >= MANUAL_REVIEW_RISK_THRESHOLD:
         return RecommendationType.MANUAL_REVIEW
-    if savings < 500:
+    if savings < MIN_ANNUAL_SAVINGS:
         return RecommendationType.IGNORE_WHITELIST
     return RecommendationType.PROCEED_CONSOLIDATION
 
@@ -613,7 +616,7 @@ def _prompt_safe(value: object) -> str:
     text = re.sub(r"[\x00-\x1f\x7f]+", " ", str(value))
     # Angle brackets are swapped so data cannot close the <proposal_data> block.
     text = text.replace("<", "(").replace(">", ")")
-    return text.strip()[:_MAX_PROMPT_FIELD_LENGTH]
+    return text.strip()[:MAX_PROMPT_FIELD_LENGTH]
 
 
 def _gemini_summary(facts: dict[str, Any]) -> str | None:
@@ -645,7 +648,7 @@ def _gemini_summary(facts: dict[str, Any]) -> str | None:
         return None
 
     text = (getattr(response, "text", None) or "").strip()
-    return text[:_MAX_SUMMARY_LENGTH] or None
+    return text[:MAX_SUMMARY_LENGTH] or None
 
 
 def _template_summary(
@@ -672,6 +675,14 @@ def _template_summary(
         f"and {inactive_ratio:.0%} of its {roi['seats']} seats had no logins in the scan "
         f"window. {cost}. Risk score {risk_score}/100. Action: {recommendation.value}."
     )
+
+
+def _invalid_source_data(error: ValidationError) -> dict[str, Any]:
+    """Turn a model validation failure on upstream data into a tool error."""
+    first = error.errors()[0]
+    location = ".".join(str(part) for part in first["loc"]) or "proposal"
+    message = f"Source data failed validation ({location}): {first['msg']}"
+    return {"status": "error", "error": message}
 
 
 def calculate_roi(app_id: str, tenant_id: str) -> dict[str, Any]:
@@ -739,16 +750,19 @@ def generate_proposal(app_id: str, tenant_id: str) -> dict[str, Any]:
         }
 
     roi = _roi_from_context(context)
-    savings = SavingsBreakdown(
-        seats=roi["seats"],
-        monthly_cost=roi["monthly_cost"],
-        cost_per_seat_monthly=roi["cost_per_seat_monthly"],
-        estimated_annual_savings=roi["annual_savings"],
-        currency=roi["currency"],
-        renewal_date=roi["renewal_date"],
-        days_until_renewal=roi["days_until_renewal"],
-        cost_data_available=roi["cost_data_available"],
-    )
+    try:
+        savings = SavingsBreakdown(
+            seats=roi["seats"],
+            monthly_cost=roi["monthly_cost"],
+            cost_per_seat_monthly=roi["cost_per_seat_monthly"],
+            estimated_annual_savings=roi["annual_savings"],
+            currency=roi["currency"],
+            renewal_date=roi["renewal_date"],
+            days_until_renewal=roi["days_until_renewal"],
+            cost_data_available=roi["cost_data_available"],
+        )
+    except ValidationError as error:
+        return _invalid_source_data(error)
 
     active_users = int(app.get("active_seats", 0))
     inactive_ratio = float(app.get("inactive_ratio", 0.0))
@@ -795,34 +809,38 @@ def generate_proposal(app_id: str, tenant_id: str) -> dict[str, Any]:
     if not summary:
         summary = _template_summary(
             app_name, target_app, redundancy_score, inactive_ratio, roi, risk_score, recommendation
-        )
+        )[:MAX_SUMMARY_LENGTH]
 
-    proposal = ConsolidationProposal(
-        app_id=str(app.get("app_id", "")),
-        app_name=app_name,
-        target_app=target_app,
-        tenant_id=tenant_id,
-        savings=savings,
-        risk=RiskAssessment(
-            risk_score=risk_score,
-            active_user_count=active_users,
-            inactive_ratio=inactive_ratio,
-            risk_factors=risk_factors,
-            unknown_factors=unknown_factors,
-        ),
-        redundancy_score=redundancy_score,
-        redundancy_rationale=str(redundancy.get("rationale", "")),
-        recommendation=recommendation,
-        summary=summary,
-        source_refs={
-            "idp_scan_id": context["scan_id"],
-            "expense_event_id": roi["expense_event_id"],
-        },
-        metadata={
-            "summary_source": summary_source,
-            "expense_reasons": list(expense.get("reasons", [])),
-        },
-    )
+    try:
+        proposal = ConsolidationProposal(
+            app_id=str(app.get("app_id", "")),
+            app_name=app_name,
+            target_app=target_app,
+            tenant_id=tenant_id,
+            savings=savings,
+            risk=RiskAssessment(
+                risk_score=risk_score,
+                active_user_count=active_users,
+                inactive_ratio=inactive_ratio,
+                risk_factors=risk_factors,
+                unknown_factors=unknown_factors,
+            ),
+            redundancy_score=redundancy_score,
+            redundancy_rationale=str(redundancy.get("rationale", ""))[:MAX_RATIONALE_LENGTH],
+            recommendation=recommendation,
+            summary=summary,
+            source_refs={
+                "idp_scan_id": context["scan_id"],
+                "expense_event_id": roi["expense_event_id"],
+            },
+            metadata={
+                "summary_source": summary_source,
+                "expense_reasons": list(expense.get("reasons", [])),
+            },
+        )
+    except ValidationError as error:
+        return _invalid_source_data(error)
+
     record = proposal.model_dump(mode="json")
     record["signature"] = sign_proposal(record, signing_secret)
 
@@ -851,7 +869,7 @@ def generate_proposal(app_id: str, tenant_id: str) -> dict[str, Any]:
                     "recommendation": recommendation.value,
                     "signed_by": proposal.signed_by,
                     "signature": record["signature"],
-                    "created_at": proposal.created_at,
+                    "created_at": record["created_at"],
                 },
                 severity="NOTICE",
             )

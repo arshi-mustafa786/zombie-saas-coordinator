@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from zombie_saas_coordinator.agents.auditor import tools
+from zombie_saas_coordinator.shared.constants import IDP_TELEMETRY_AUDIT_LOG, SCANS_COLLECTION
 from zombie_saas_coordinator.shared.db.cloudsql_client import record_scan_in_cloudsql
 from zombie_saas_coordinator.shared.models.telemetry import (
     IdpAuthError,
@@ -112,7 +113,7 @@ async def scan_idp_endpoint(
     # 1. Persist to Firestore
     try:
         firestore_client = tools._get_firestore_client()
-        scan_doc_ref = firestore_client.collection("scans").document(response.scan_id)
+        scan_doc_ref = firestore_client.collection(SCANS_COLLECTION).document(response.scan_id)
         scan_doc_ref.set(response.model_dump())
     except Exception as exc:
         logger.warning("Firestore scan persistence skipped: %s", exc)
@@ -125,7 +126,7 @@ async def scan_idp_endpoint(
 
     # 3. Emit structured Cloud Audit Log
     try:
-        audit_logger = tools._get_audit_logger("idp-telemetry-audit")
+        audit_logger = tools._get_audit_logger(IDP_TELEMETRY_AUDIT_LOG)
         audit_logger.log_struct(
             {
                 "event": "idp_scan_completed",

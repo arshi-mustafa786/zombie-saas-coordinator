@@ -13,6 +13,7 @@ from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from zombie_saas_coordinator.agents.auditor import tools
 from zombie_saas_coordinator.agents.auditor.tools import (
@@ -21,10 +22,13 @@ from zombie_saas_coordinator.agents.auditor.tools import (
     verify_proposal_signature,
 )
 from zombie_saas_coordinator.main import app
+from zombie_saas_coordinator.shared.constants import PROPOSALS_COLLECTION
 from zombie_saas_coordinator.shared.models.proposal import (
     ConsolidationProposal,
+    ProposalStatus,
     RecommendationType,
     RiskAssessment,
+    SavingsBreakdown,
 )
 
 SECRET = "test-proposal-secret"
@@ -230,7 +234,7 @@ def cloud(monkeypatch: pytest.MonkeyPatch, db: FakeFirestore) -> SimpleNamespace
 
 
 def _stored_proposals(db: FakeFirestore) -> dict[str, dict[str, Any]]:
-    return db.collections.get(tools.PROPOSALS_COLLECTION, {})
+    return db.collections.get(PROPOSALS_COLLECTION, {})
 
 
 # ──────────────────────────────────────────────
@@ -594,3 +598,164 @@ def test_get_unknown_proposal_is_not_found() -> None:
 def test_risk_score_outside_range_is_rejected() -> None:
     with pytest.raises(ValueError):
         RiskAssessment(risk_score=150, active_user_count=0)
+
+
+def _savings(**overrides: Any) -> SavingsBreakdown:
+    values: dict[str, Any] = {
+        "seats": 100,
+        "monthly_cost": 120.0,
+        "cost_per_seat_monthly": 1.2,
+        "estimated_annual_savings": 1440.0,
+    }
+    return SavingsBreakdown(**{**values, **overrides})
+
+
+def _proposal_fields(**overrides: Any) -> dict[str, Any]:
+    values: dict[str, Any] = {
+        "app_id": "app_trello_01",
+        "app_name": "Trello",
+        "target_app": "Jira",
+        "tenant_id": TENANT,
+        "savings": _savings(),
+        "risk": RiskAssessment(risk_score=30, active_user_count=25),
+        "redundancy_score": 100,
+        "recommendation": RecommendationType.PROCEED_CONSOLIDATION,
+        "summary": "Summary.",
+    }
+    return {**values, **overrides}
+
+
+@pytest.mark.parametrize("field", ["app_id", "app_name", "target_app", "tenant_id"])
+def test_empty_identifiers_are_rejected(field: str) -> None:
+    with pytest.raises(ValidationError):
+        ConsolidationProposal(**_proposal_fields(**{field: ""}))
+
+
+def test_status_must_be_a_us4_workflow_state() -> None:
+    for state in ProposalStatus:
+        assert ConsolidationProposal(**_proposal_fields(status=state.value)).status == state
+    with pytest.raises(ValidationError):
+        ConsolidationProposal(**_proposal_fields(status="approvedd"))
+
+
+def test_timestamps_must_be_timezone_aware() -> None:
+    with pytest.raises(ValidationError):
+        ConsolidationProposal(**_proposal_fields(created_at="2026-10-05T10:00:00"))
+
+
+def test_expiry_defaults_to_seven_days_and_must_follow_creation() -> None:
+    created = datetime(2026, 10, 5, 10, tzinfo=UTC)
+    proposal = ConsolidationProposal(**_proposal_fields(created_at=created))
+    assert proposal.expires_at == created + timedelta(days=7)
+
+    with pytest.raises(ValidationError, match="expires_at must be later"):
+        ConsolidationProposal(
+            **_proposal_fields(created_at=created, expires_at=created - timedelta(days=1))
+        )
+
+
+def test_savings_must_be_internally_consistent() -> None:
+    with pytest.raises(ValidationError, match=r"monthly_cost \* 12"):
+        _savings(estimated_annual_savings=5.0)
+    with pytest.raises(ValidationError, match="monthly_cost / seats"):
+        _savings(cost_per_seat_monthly=99.0)
+
+
+def test_missing_cost_data_cannot_carry_amounts() -> None:
+    zero = _savings(
+        monthly_cost=0,
+        cost_per_seat_monthly=0,
+        estimated_annual_savings=0,
+        cost_data_available=False,
+    )
+    assert zero.estimated_annual_savings == 0
+    with pytest.raises(ValidationError, match="must be 0"):
+        _savings(
+            monthly_cost=0,
+            cost_per_seat_monthly=0,
+            estimated_annual_savings=999,
+            cost_data_available=False,
+        )
+
+
+def test_money_is_rounded_to_cents() -> None:
+    savings = _savings(
+        seats=3, monthly_cost=0.1 + 0.2, cost_per_seat_monthly=0.1, estimated_annual_savings=3.6
+    )
+    assert savings.monthly_cost == 0.3
+
+
+def test_summary_longer_than_firestore_safe_limit_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        ConsolidationProposal(**_proposal_fields(summary="x" * 1001))
+
+
+def test_missing_required_field_is_rejected() -> None:
+    """A misspelt required field shows up as missing instead of being silently ignored."""
+    fields = _proposal_fields()
+    fields["recomendation"] = fields.pop("recommendation")
+    with pytest.raises(ValidationError, match="recommendation"):
+        ConsolidationProposal(**fields)
+
+
+def test_proposal_cannot_be_modified_after_creation() -> None:
+    """Proposals are signed, so they are frozen."""
+    proposal = ConsolidationProposal(**_proposal_fields())
+    with pytest.raises(ValidationError):
+        proposal.recommendation = RecommendationType.IGNORE_WHITELIST  # type: ignore[misc]
+    with pytest.raises(ValidationError):
+        proposal.savings.monthly_cost = 1.0  # type: ignore[misc]
+
+
+def test_stored_document_round_trips_and_us4_extras_are_ignored() -> None:
+    record = ConsolidationProposal(**_proposal_fields()).model_dump(mode="json")
+    stored = {**record, "updated_at": "2026-10-06T00:00:00+00:00", "action_by": "U123"}
+
+    loaded = ConsolidationProposal.model_validate(stored)
+
+    assert loaded.model_dump(mode="json") == record
+
+
+def test_stored_document_with_mismatched_us4_fields_is_rejected() -> None:
+    record = ConsolidationProposal(**_proposal_fields()).model_dump(mode="json")
+
+    with pytest.raises(ValidationError, match="annual_savings"):
+        ConsolidationProposal.model_validate({**record, "annual_savings": 999999})
+
+
+def test_bad_upstream_data_returns_tool_error(db: FakeFirestore) -> None:
+    """A US-1 record that fails validation produces an error, not a crash."""
+    db.seed(
+        "scans",
+        "scan_bad",
+        _scan(
+            "scan_bad",
+            "2026-10-05T00:00:00+00:00",
+            [_app("", "Trello", 100, 25, True)],
+            [_redundancy("Trello", "Jira Software (Enterprise Standard)")],
+        ),
+    )
+
+    result = generate_proposal("trello", TENANT)
+
+    assert result["status"] == "error"
+    assert "app_id" in result["error"]
+
+
+def test_very_long_app_name_still_produces_valid_summary(db: FakeFirestore) -> None:
+    long_name = "Trello " + "x" * 2000
+    db.seed(
+        "scans",
+        "scan_long",
+        _scan(
+            "scan_long",
+            "2026-10-05T00:00:00+00:00",
+            [_app("app_long", long_name, 100, 25, True)],
+            [_redundancy(long_name, "Jira Software (Enterprise Standard)")],
+        ),
+    )
+
+    result = generate_proposal("app_long", TENANT)
+
+    assert result["status"] == "success"
+    assert len(result["proposal"]["summary"]) == 1000
