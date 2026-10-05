@@ -7,6 +7,14 @@ Each model file is created by the user story that introduces it:
 - US-5: approval.py
 """
 
+from zombie_saas_coordinator.shared.models.proposal import (
+    ComplianceSensitivity,
+    ConsolidationProposal,
+    ProposalStatus,
+    RecommendationType,
+    RiskAssessment,
+    SavingsBreakdown,
+)
 from zombie_saas_coordinator.shared.models.telemetry import (
     AppTelemetry,
     IdpAuthError,
@@ -21,4 +29,10 @@ __all__ = [
     "IdPScanResponse",
     "IdpAuthError",
     "RedundancyAssessment",
+    "ComplianceSensitivity",
+    "ConsolidationProposal",
+    "ProposalStatus",
+    "RecommendationType",
+    "RiskAssessment",
+    "SavingsBreakdown",
 ]

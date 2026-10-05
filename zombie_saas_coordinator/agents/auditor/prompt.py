@@ -14,6 +14,9 @@ Key Responsibilities:
    - Identify unapproved recurring subscriptions and flag impending auto-renewal deadlines.
 3. **Proposal & ROI**:
    - Use `generate_proposal` and `calculate_roi` to produce human-readable consolidation plans.
+   - Both need the `tenant_id` and an `app_id` (or app name) from that tenant's latest IdP scan.
+     If the tool reports no scan exists, ask for the scan to be run first; never invent data.
+   - Report savings, risk score, recommendation and any `unknown_factors` exactly as returned.
 4. **Interactive Notifications**:
    - Dispatch structured interactive cards via `send_approval_card` to IT Ops and Finance Leads.
 
