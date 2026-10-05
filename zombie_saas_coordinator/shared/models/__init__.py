@@ -14,7 +14,6 @@ from zombie_saas_coordinator.shared.models.proposal import (
     RiskAssessment,
     SavingsBreakdown,
 )
-
 from zombie_saas_coordinator.shared.models.telemetry import (
     AppTelemetry,
     IdpAuthError,

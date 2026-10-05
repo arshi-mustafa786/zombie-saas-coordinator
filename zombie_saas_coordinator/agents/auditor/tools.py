@@ -22,6 +22,7 @@ from typing import Any, Literal
 
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import firestore, logging
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from zombie_saas_coordinator.shared.auth.hmac_validator import (
     InvalidSignatureError,
@@ -33,7 +34,8 @@ from zombie_saas_coordinator.shared.models.proposal import (
     ConsolidationProposal,
     RecommendationType,
     RiskAssessment,
-    SavingsBreakdown)
+    SavingsBreakdown,
+)
 from zombie_saas_coordinator.shared.models.telemetry import (
     AppTelemetry,
     IdpAuthError,
@@ -353,69 +355,32 @@ def flag_subscription(event: dict[str, Any]) -> dict[str, Any]:
     return assessment.model_dump(mode="json")
 
 
-# Fallback & local catalog for applications
-DEFAULT_APP_METRICS: dict[str, dict[str, Any]] = {
-    "trello": {
-        "app_name": "Trello",
-        "target_app": "Asana",
-        "seats": 50,
-        "cost_per_seat_monthly": 12.50,
-        "months_remaining": 10,
-        "active_users": 4,
-        "compliance_sensitivity": ComplianceSensitivity.LOW,
-        "data_age_days": 420,
-        "dependencies": [
-            "Zapier Webhook: Trello new card -> Slack #product-feed",
-            "Butler Automation: Move to Done on label change",
-        ],
-    },
-    "airtable": {
-        "app_name": "Airtable",
-        "target_app": "Asana",
-        "seats": 30,
-        "cost_per_seat_monthly": 20.00,
-        "months_remaining": 8,
-        "active_users": 22,
-        "compliance_sensitivity": ComplianceSensitivity.HIGH,
-        "data_age_days": 600,
-        "dependencies": [
-            "Make.com Scenario: Sync Airtable to Salesforce CRM",
-            "Zapier Webhook: Lead intake form",
-        ],
-    },
-    "miro": {
-        "app_name": "Miro",
-        "target_app": "FigJam",
-        "seats": 5,
-        "cost_per_seat_monthly": 8.00,
-        "months_remaining": 3,
-        "active_users": 1,
-        "compliance_sensitivity": ComplianceSensitivity.LOW,
-        "data_age_days": 90,
-        "dependencies": [],
-    },
-}
-
-
 # ──────────────────────────────────────────────
 # US-3: Consolidation Proposal Generation
 # ──────────────────────────────────────────────
 
 PROPOSALS_COLLECTION = "consolidation_proposals"
+SCANS_COLLECTION = "scans"
+EXPENSE_EVENTS_COLLECTION = "expense_events"
 _MAX_PROMPT_FIELD_LENGTH = 200
 _MAX_SUMMARY_LENGTH = 1000
+# Workflow fields that US-4 callbacks update after the proposal is signed.
+_UNSIGNED_PROPOSAL_FIELDS = frozenset(
+    {"signature", "status", "updated_at", "action_by", "action_email", "action"}
+)
 
 
 class ProposalSigningError(RuntimeError):
     """Raised when the proposal signing secret is not configured."""
 
 
+class ProposalDataError(LookupError):
+    """Raised when the US-1 / US-2 source data a proposal needs is missing."""
+
+
 def _get_proposal_audit_logger() -> Any:
     """Return the append-only structured logger used for proposal audit events."""
-    client = logging.Client(  # type: ignore[no-untyped-call]
-        project=os.getenv("GOOGLE_CLOUD_PROJECT")
-    )
-    return client.logger("consolidation-proposal-audit")  # type: ignore[no-untyped-call]
+    return _get_audit_logger("consolidation-proposal-audit")
 
 
 def _get_proposal_signing_secret() -> str:
@@ -427,8 +392,10 @@ def _get_proposal_signing_secret() -> str:
 
 
 def _canonical_proposal_payload(proposal: dict[str, Any]) -> str:
-    """Serialize a proposal deterministically, excluding its own signature."""
-    unsigned = {key: value for key, value in proposal.items() if key != "signature"}
+    """Serialize a proposal deterministically, excluding its signature and workflow state."""
+    unsigned = {
+        key: value for key, value in proposal.items() if key not in _UNSIGNED_PROPOSAL_FIELDS
+    }
     return json.dumps(unsigned, sort_keys=True, separators=(",", ":"))
 
 
@@ -462,15 +429,132 @@ def load_proposal(proposal_id: str) -> dict[str, Any] | None:
     return snapshot.to_dict() if snapshot.exists else None
 
 
+def _latest_scan(client: firestore.Client, tenant_id: str) -> dict[str, Any] | None:
+    """Most recent US-1 IdP scan for a tenant.
+
+    Sorting happens in Python so Firestore does not need a tenant_id+timestamp index.
+    """
+    snapshots = (
+        client.collection(SCANS_COLLECTION)
+        .where(filter=FieldFilter("tenant_id", "==", tenant_id))
+        .stream()
+    )
+    scans = [snapshot.to_dict() or {} for snapshot in snapshots]
+    return max(scans, key=lambda scan: str(scan.get("timestamp", "")), default=None)
+
+
+def _find_app(scan: dict[str, Any], app_id: str) -> dict[str, Any] | None:
+    """Match an app in a scan by its IdP app_id or, as a convenience, its name."""
+    wanted = app_id.strip().casefold()
+    for app in scan.get("apps", []):
+        identifiers = (str(app.get("app_id", "")), str(app.get("app_name", "")))
+        if wanted in (identifier.casefold() for identifier in identifiers):
+            return app
+    return None
+
+
+def _find_redundancy(scan: dict[str, Any], app_name: str) -> dict[str, Any] | None:
+    """US-1 redundancy assessment for an app (assessments are keyed by app name)."""
+    return next(
+        (
+            assessment
+            for assessment in scan.get("flagged", [])
+            if str(assessment.get("app_name", "")).casefold() == app_name.casefold()
+        ),
+        None,
+    )
+
+
+def _latest_expense(client: firestore.Client, merchant: str) -> dict[str, Any] | None:
+    """Most recent US-2 expense event whose merchant matches the app name.
+
+    Expense events carry no tenant or app ID, so the merchant name is the only join key.
+    """
+    snapshots = (
+        client.collection(EXPENSE_EVENTS_COLLECTION)
+        .where(filter=FieldFilter("event.merchant", "==", merchant))
+        .stream()
+    )
+    events = [snapshot.to_dict() or {} for snapshot in snapshots]
+    return max(
+        events,
+        key=lambda record: str((record.get("event") or {}).get("received_at", "")),
+        default=None,
+    )
+
+
+def _load_app_context(app_id: str, tenant_id: str) -> dict[str, Any]:
+    """Gather the US-1 scan record and US-2 expense record for one application."""
+    client = _get_firestore_client()
+    scan = _latest_scan(client, tenant_id)
+    if scan is None:
+        raise ProposalDataError(
+            f"No IdP scan (US-1) found for tenant '{tenant_id}'. "
+            "Run POST /api/v1/jobs/scan-idp first."
+        )
+    app = _find_app(scan, app_id)
+    if app is None:
+        raise ProposalDataError(
+            f"Application '{app_id}' not found in the latest IdP scan for tenant '{tenant_id}'."
+        )
+    app_name = str(app.get("app_name", ""))
+    return {
+        "scan_id": scan.get("scan_id"),
+        "app": app,
+        "redundancy": _find_redundancy(scan, app_name),
+        "expense": _latest_expense(client, app_name),
+    }
+
+
+def _roi_from_context(context: dict[str, Any]) -> dict[str, Any]:
+    """Annual savings from cancelling the subscription: monthly card spend * 12."""
+    app = context["app"]
+    expense = context["expense"]
+    seats = int(app.get("total_seats", 0))
+
+    if expense is None:
+        monthly, currency, renewal_date, event_id = Decimal(0), "USD", None, None
+    else:
+        event = expense.get("event") or {}
+        monthly = Decimal(str(expense.get("monthly_equivalent") or 0))
+        currency = str(event.get("currency") or "USD")
+        renewal_date = event.get("renewal_date")
+        event_id = event.get("event_id")
+
+    days_until_renewal = (
+        (date.fromisoformat(renewal_date) - date.today()).days if renewal_date else None
+    )
+    cents = Decimal("0.01")
+    return {
+        "status": "success",
+        "app_id": app.get("app_id"),
+        "app_name": app.get("app_name"),
+        "seats": seats,
+        "monthly_cost": float(monthly.quantize(cents)),
+        "cost_per_seat_monthly": float((monthly / seats).quantize(cents)) if seats else 0.0,
+        "annual_savings": float((monthly * 12).quantize(cents)),
+        "currency": currency,
+        "renewal_date": renewal_date,
+        "days_until_renewal": days_until_renewal,
+        "cost_data_available": expense is not None,
+        "expense_event_id": event_id,
+    }
+
+
 def _score_risk(
     seats: int,
     active_users: int,
-    dependency_count: int,
-    compliance: ComplianceSensitivity,
-    data_age_days: int,
-) -> tuple[int, list[str]]:
-    """Rule-based migration risk score (0-100) and the factors that drove it."""
+    dependency_count: int | None,
+    compliance: ComplianceSensitivity | None,
+    data_age_days: int | None,
+) -> tuple[int, list[str], list[str]]:
+    """Rule-based migration risk score (0-100) from the inputs that have data.
+
+    Returns the score, the factors that drove it, and the inputs that were unknown.
+    Unknown inputs are reported, never guessed.
+    """
     risk_factors: list[str] = []
+    unknown: list[str] = []
     score = 10
     active_ratio = (active_users / seats) if seats > 0 else 0.0
 
@@ -483,11 +567,15 @@ def _score_risk(
     else:
         risk_factors.append(f"Low active user ratio ({active_ratio:.0%}) - high inactivity")
 
-    if dependency_count > 0:
+    if dependency_count is None:
+        unknown.append("Automation dependencies (Zapier/Make) not yet scanned (US-10)")
+    elif dependency_count > 0:
         score += min(dependency_count * 15, 30)
         risk_factors.append(f"{dependency_count} connected automation workflows detected")
 
-    if compliance == ComplianceSensitivity.HIGH:
+    if compliance is None:
+        unknown.append("Compliance sensitivity of the app's data is not classified")
+    elif compliance == ComplianceSensitivity.HIGH:
         score += 20
         risk_factors.append("High compliance sensitivity (SOC2/GDPR/PII data)")
     elif compliance == ComplianceSensitivity.MEDIUM:
@@ -495,19 +583,25 @@ def _score_risk(
         risk_factors.append("Medium compliance sensitivity")
 
     # Older data means more history to migrate and more chance of retention obligations.
-    if data_age_days > 365:
+    if data_age_days is None:
+        unknown.append("Data age is not available from IdP telemetry")
+    elif data_age_days > 365:
         score += 10
         risk_factors.append(f"Data older than 1 year ({data_age_days} days)")
     elif data_age_days > 180:
         score += 5
         risk_factors.append(f"Data older than 6 months ({data_age_days} days)")
 
-    return min(max(score, 0), 100), risk_factors
+    return min(max(score, 0), 100), risk_factors, unknown
 
 
-def _recommend(risk_score: int, savings: float) -> RecommendationType:
-    """Map risk and savings to one of the three proposal recommendations."""
-    if risk_score >= 65:
+def _recommend(
+    risk_score: int, savings: float, cost_data_available: bool, whitelisted: bool
+) -> RecommendationType:
+    """Map risk, savings and whitelist status to one of the three recommendations."""
+    if whitelisted:
+        return RecommendationType.IGNORE_WHITELIST
+    if not cost_data_available or risk_score >= 65:
         return RecommendationType.MANUAL_REVIEW
     if savings < 500:
         return RecommendationType.IGNORE_WHITELIST
@@ -554,127 +648,157 @@ def _gemini_summary(facts: dict[str, Any]) -> str | None:
     return text[:_MAX_SUMMARY_LENGTH] or None
 
 
-def calculate_roi(app_id: str) -> dict[str, Any]:
+def _template_summary(
+    app_name: str,
+    target_app: str,
+    redundancy_score: int,
+    inactive_ratio: float,
+    roi: dict[str, Any],
+    risk_score: int,
+    recommendation: RecommendationType,
+) -> str:
+    """Deterministic summary used when Gemini is not configured or fails."""
+    if roi["cost_data_available"]:
+        cost = (
+            f"Cancelling it saves an estimated ${roi['annual_savings']:,.2f}/year "
+            f"(${roi['monthly_cost']:,.2f}/month)"
+        )
+        if roi["days_until_renewal"] is not None:
+            cost += f"; the subscription renews in {roi['days_until_renewal']} days"
+    else:
+        cost = "No corporate-card spend was found for it, so savings could not be calculated"
+    return (
+        f"{app_name} overlaps {redundancy_score}% with the enterprise standard {target_app}, "
+        f"and {inactive_ratio:.0%} of its {roi['seats']} seats had no logins in the scan "
+        f"window. {cost}. Risk score {risk_score}/100. Action: {recommendation.value}."
+    )
+
+
+def calculate_roi(app_id: str, tenant_id: str) -> dict[str, Any]:
     """Calculates the return on investment for consolidating a specific
-    application. Queries Cloud SQL for seat cost data and billing history
-    with fallback to application inventory metadata. Missing cost data
-    yields $0 savings rather than an error.
+    application. Seat counts come from the tenant's latest IdP scan (US-1)
+    and spend from the matching corporate-card expense event (US-2).
+    Annual savings = monthly spend * 12; no matching expense yields $0
+    with cost_data_available=False.
 
     Args:
-        app_id: The application identifier.
+        app_id: The application identifier (or name) from the IdP scan.
+        tenant_id: The tenant whose IdP scan should be used.
 
     Returns:
-        dict with keys: status, app_id, seats, cost_per_seat_monthly,
-        months_remaining, annual_savings, currency, cost_data_available.
+        dict with keys: status, app_id, app_name, seats, monthly_cost,
+        cost_per_seat_monthly, annual_savings, currency, renewal_date,
+        days_until_renewal, cost_data_available, expense_event_id.
     """
-    key = app_id.strip().lower()
-    metrics = DEFAULT_APP_METRICS.get(key)
-    if metrics is None:
-        return {
-            "status": "error",
-            "error": f"Application '{app_id}' not found in billing inventory.",
-            "annual_savings": 0.0,
-            "months_remaining": 0,
-            "seats": 0,
-            "cost_per_seat_monthly": 0.0,
-        }
-
-    raw_seats = metrics.get("seats")
-    raw_cost = metrics.get("cost_per_seat_monthly")
-    raw_months = metrics.get("months_remaining")
-    cost_data_available = None not in (raw_seats, raw_cost, raw_months)
-
-    seats = int(raw_seats or 0)
-    cost_per_seat = float(raw_cost or 0.0)
-    months = int(raw_months or 0)
-    annual_savings = round(seats * cost_per_seat * months, 2) if cost_data_available else 0.0
-
-    return {
-        "status": "success",
-        "app_id": key,
-        "seats": seats,
-        "cost_per_seat_monthly": cost_per_seat,
-        "months_remaining": months,
-        "annual_savings": annual_savings,
-        "currency": "USD",
-        "cost_data_available": cost_data_available,
-    }
+    try:
+        context = _load_app_context(app_id, tenant_id)
+    except ProposalDataError as error:
+        return {"status": "error", "error": str(error)}
+    except Exception as error:
+        return {"status": "error", "error": f"Could not read source data from Firestore: {error}"}
+    return _roi_from_context(context)
 
 
-def generate_proposal(app_id: str, tenant_id: str = "default-tenant") -> dict[str, Any]:
-    """Generates a comprehensive consolidation proposal for a flagged
-    zombie SaaS application. Calculates savings, risk score and a
+def generate_proposal(app_id: str, tenant_id: str) -> dict[str, Any]:
+    """Generates a comprehensive consolidation proposal for an application
+    flagged by the IdP redundancy scan. Combines US-1 seat telemetry and
+    redundancy with US-2 card spend, calculates savings, risk score and a
     recommendation, signs the proposal with HMAC-SHA256, stores it in
     Firestore and writes an audit log entry.
 
     Args:
-        app_id: The application identifier to generate a proposal for.
+        app_id: The application identifier (or name) from the IdP scan.
         tenant_id: The tenant that owns the application.
 
     Returns:
         dict with keys: status, proposal_id, savings, risk_score, recommendation,
         stored, storage_error, audit_logged, proposal.
     """
-    roi = calculate_roi(app_id)
-    if roi["status"] != "success":
-        return {"status": "error", "error": roi["error"]}
-
     try:
         signing_secret = _get_proposal_signing_secret()
     except ProposalSigningError as error:
         return {"status": "error", "error": str(error)}
 
-    key = roi["app_id"]
-    metrics = DEFAULT_APP_METRICS[key]
+    try:
+        context = _load_app_context(app_id, tenant_id)
+    except ProposalDataError as error:
+        return {"status": "error", "error": str(error)}
+    except Exception as error:
+        return {"status": "error", "error": f"Could not read source data from Firestore: {error}"}
+
+    app = context["app"]
+    app_name = str(app.get("app_name", ""))
+    redundancy = context["redundancy"]
+    if redundancy is None:
+        return {
+            "status": "error",
+            "error": (
+                f"'{app_name}' was not flagged as redundant by the IdP scan, so there is no "
+                "enterprise-standard target to consolidate into."
+            ),
+        }
+
+    roi = _roi_from_context(context)
     savings = SavingsBreakdown(
         seats=roi["seats"],
+        monthly_cost=roi["monthly_cost"],
         cost_per_seat_monthly=roi["cost_per_seat_monthly"],
-        months_remaining=roi["months_remaining"],
         estimated_annual_savings=roi["annual_savings"],
         currency=roi["currency"],
+        renewal_date=roi["renewal_date"],
+        days_until_renewal=roi["days_until_renewal"],
         cost_data_available=roi["cost_data_available"],
     )
 
-    active_users = int(metrics.get("active_users", 0))
-    dependencies = [str(dependency) for dependency in metrics.get("dependencies", [])]
-    compliance = ComplianceSensitivity(
-        str(metrics.get("compliance_sensitivity", ComplianceSensitivity.LOW)).lower()
+    active_users = int(app.get("active_seats", 0))
+    inactive_ratio = float(app.get("inactive_ratio", 0.0))
+    # No source yet for these inputs: dependencies come from US-10, the others from nowhere.
+    risk_score, risk_factors, unknown_factors = _score_risk(
+        savings.seats, active_users, None, None, None
     )
-    data_age = int(metrics.get("data_age_days", 0))
+    if app.get("is_flagged_inactive"):
+        risk_factors.append(f"Flagged inactive by IdP scan ({inactive_ratio:.0%} idle seats)")
 
-    risk_score, risk_factors = _score_risk(
-        savings.seats, active_users, len(dependencies), compliance, data_age
+    expense = context["expense"] or {}
+    whitelisted = bool(expense.get("approved"))
+    if whitelisted:
+        risk_factors.append("App is on the enterprise-approved SaaS whitelist")
+    if not savings.cost_data_available:
+        risk_factors.append(f"No corporate-card expense found for merchant '{app_name}'")
+    recommendation = _recommend(
+        risk_score, savings.estimated_annual_savings, savings.cost_data_available, whitelisted
     )
-    recommendation = _recommend(risk_score, savings.estimated_annual_savings)
 
-    app_name = str(metrics.get("app_name", key.capitalize()))
-    target_app = str(metrics.get("target_app", "Asana"))
+    target_app = str(redundancy.get("enterprise_standard_match", ""))
+    redundancy_score = int(redundancy.get("redundancy_score", 0))
 
     summary = _gemini_summary(
         {
             "app": app_name,
             "target": target_app,
+            "redundancy_score": f"{redundancy_score}%",
             "seats": savings.seats,
-            "active_users": active_users,
-            "savings_usd": f"{savings.estimated_annual_savings:,.2f}",
+            "inactive_seats": f"{inactive_ratio:.0%}",
+            "annual_savings_usd": (
+                f"{savings.estimated_annual_savings:,.2f}"
+                if savings.cost_data_available
+                else "unknown (no expense data)"
+            ),
+            "days_until_renewal": savings.days_until_renewal,
             "risk_score": f"{risk_score}/100",
             "recommendation": recommendation.value,
-            "dependencies": "; ".join(dependencies) or "None",
             "risk_factors": "; ".join(risk_factors),
+            "unknown_factors": "; ".join(unknown_factors),
         }
     )
     summary_source = "gemini" if summary else "template"
     if not summary:
-        summary = (
-            f"Consolidation proposal for {app_name} into enterprise standard {target_app}. "
-            f"Decommissioning {savings.seats} seats ({active_users} active) yields estimated "
-            f"savings of ${savings.estimated_annual_savings:,.2f} over "
-            f"{savings.months_remaining} months with a calculated risk score of "
-            f"{risk_score}/100. Action: {recommendation.value}."
+        summary = _template_summary(
+            app_name, target_app, redundancy_score, inactive_ratio, roi, risk_score, recommendation
         )
 
     proposal = ConsolidationProposal(
-        app_id=key,
+        app_id=str(app.get("app_id", "")),
         app_name=app_name,
         target_app=target_app,
         tenant_id=tenant_id,
@@ -682,15 +806,22 @@ def generate_proposal(app_id: str, tenant_id: str = "default-tenant") -> dict[st
         risk=RiskAssessment(
             risk_score=risk_score,
             active_user_count=active_users,
-            connected_integrations_count=len(dependencies),
-            data_age_days=data_age,
-            compliance_sensitivity=compliance,
+            inactive_ratio=inactive_ratio,
             risk_factors=risk_factors,
+            unknown_factors=unknown_factors,
         ),
-        dependencies=dependencies,
+        redundancy_score=redundancy_score,
+        redundancy_rationale=str(redundancy.get("rationale", "")),
         recommendation=recommendation,
         summary=summary,
-        metadata={"summary_source": summary_source},
+        source_refs={
+            "idp_scan_id": context["scan_id"],
+            "expense_event_id": roi["expense_event_id"],
+        },
+        metadata={
+            "summary_source": summary_source,
+            "expense_reasons": list(expense.get("reasons", [])),
+        },
     )
     record = proposal.model_dump(mode="json")
     record["signature"] = sign_proposal(record, signing_secret)
@@ -712,7 +843,9 @@ def generate_proposal(app_id: str, tenant_id: str = "default-tenant") -> dict[st
                     "event": "proposal_generated",
                     "proposal_id": proposal.proposal_id,
                     "tenant_id": tenant_id,
-                    "app_id": key,
+                    "app_id": proposal.app_id,
+                    "idp_scan_id": context["scan_id"],
+                    "expense_event_id": roi["expense_event_id"],
                     "risk_score": risk_score,
                     "annual_savings": savings.estimated_annual_savings,
                     "recommendation": recommendation.value,
