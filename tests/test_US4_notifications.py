@@ -21,31 +21,36 @@ from zombie_saas_coordinator.shared.models.proposal import (
     ConsolidationProposal,
     ProposalStatus,
     RiskAssessment,
-    ROIEstimate,
+    SavingsBreakdown,
+    RecommendationType,
 )
 
 
 def _get_dummy_proposal(proposal_id: str = "prop-12345") -> ConsolidationProposal:
     return ConsolidationProposal(
         proposal_id=proposal_id,
+        app_id="app-trello-123",
         app_name="Trello",
-        target_platform="Asana",
-        annual_savings=5000.0,
-        risk_score=25,
-        detected_dependencies=["Miro", "Slack"],
+        target_app="Asana",
+        tenant_id="tenant-001",
+        savings=SavingsBreakdown(
+            seats=10,
+            monthly_cost=416.67,
+            cost_per_seat_monthly=41.67,
+            estimated_annual_savings=5000.04,
+        ),
+        risk=RiskAssessment(
+            risk_score=25,
+            active_user_count=10,
+            inactive_ratio=0.0,
+        ),
+        redundancy_score=85,
+        dependencies=["Miro", "Slack"],
+        recommendation=RecommendationType.PROCEED_CONSOLIDATION,
+        summary="dummy test summary",
         status=ProposalStatus.PENDING,
         created_at=datetime.now(UTC),
         expires_at=datetime.now(UTC) + timedelta(days=7),
-        roi=ROIEstimate(
-            payback_period_months=6,
-            five_year_savings=25000.0,
-            implementation_cost=2500.0,
-        ),
-        risk=RiskAssessment(
-            complexity="LOW",
-            data_migration_risk="LOW",
-            business_disruption_risk="LOW",
-        ),
     )
 
 def _mock_firestore(
@@ -321,6 +326,7 @@ def test_callback_rejects_invalid_token(monkeypatch: pytest.MonkeyPatch) -> None
 def test_callback_rejects_expired_proposal(monkeypatch: pytest.MonkeyPatch) -> None:
     expired_data = _get_dummy_proposal().model_dump(mode="json")
     expired_data["status"] = "EXPIRED"
+    expired_data["created_at"] = (datetime.now(UTC) - timedelta(days=2)).isoformat()
     expired_data["expires_at"] = (datetime.now(UTC) - timedelta(days=1)).isoformat()
 
     firestore_client, _ = _mock_firestore(proposal_data=expired_data)
