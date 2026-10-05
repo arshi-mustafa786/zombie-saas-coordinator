@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from zombie_saas_coordinator.api.callbacks import router as callbacks_router
+from zombie_saas_coordinator.api.proposals import router as proposals_router
+from zombie_saas_coordinator.api.scanner import router as scanner_router
 from zombie_saas_coordinator.api.webhooks import router as webhooks_router
 
 load_dotenv()
@@ -24,6 +26,8 @@ app = FastAPI(
 )
 app.include_router(webhooks_router)
 app.include_router(callbacks_router)
+app.include_router(proposals_router)
+app.include_router(scanner_router)
 
 
 @app.get("/health")
@@ -34,6 +38,5 @@ async def health_check() -> dict[str, str]:
 
 # Import and register route modules
 # These will be added by individual user stories:
-# - US-1: from zombie_saas_coordinator.api.scanner import router as scanner_router
 # - US-4: from zombie_saas_coordinator.api.callbacks import router as callbacks_router
 # - US-5: from zombie_saas_coordinator.api.approvals import router as approvals_router

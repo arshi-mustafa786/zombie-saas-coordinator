@@ -15,9 +15,12 @@ build/
 venv/
 env/
 
-# Environment variables
+# Environment variables & Credentials
 .env
 .env.local
+*credentials*.json
+*-key.json
+gcp-credentials.json
 
 # IDE
 .vscode/

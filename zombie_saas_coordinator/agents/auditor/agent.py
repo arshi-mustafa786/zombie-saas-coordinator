@@ -9,17 +9,14 @@ Responsibilities:
 
 from google.adk.agents import Agent
 
+from zombie_saas_coordinator.agents.auditor.prompt import AUDITOR_SYSTEM_INSTRUCTION
 from zombie_saas_coordinator.agents.auditor.tools import (
     calculate_redundancy,
     calculate_roi,
     flag_subscription,
-    # US-3 tools
     generate_proposal,
-    # US-1 tools
     scan_idp_logs,
-    # US-4 tools
     send_approval_card,
-    # US-2 tools
     validate_webhook,
 )
 
@@ -31,18 +28,7 @@ auditor_agent = Agent(
         "generates consolidation proposals with ROI analysis, and dispatches "
         "interactive approval cards to IT Ops."
     ),
-    instruction=(
-        "You are the Auditor Agent. Your responsibilities:\n\n"
-        "1. **Detection**: Use `scan_idp_logs` to fetch identity provider telemetry "
-        "and `calculate_redundancy` to identify overlapping SaaS tools.\n"
-        "2. **Expense Monitoring**: Use `validate_webhook` and `flag_subscription` "
-        "to process incoming expense webhook events.\n"
-        "3. **Proposal Generation**: Use `generate_proposal` and `calculate_roi` "
-        "to create a comprehensive consolidation proposal with risk scoring.\n"
-        "4. **Notification**: Use `send_approval_card` to dispatch an interactive "
-        "approval card to the IT Ops Slack/Teams channel.\n\n"
-        "Always log your reasoning and results for audit compliance."
-    ),
+    instruction=AUDITOR_SYSTEM_INSTRUCTION,
     tools=[
         scan_idp_logs,
         calculate_redundancy,
@@ -53,6 +39,7 @@ auditor_agent = Agent(
         send_approval_card,
     ],
 )
+
 
 # Alias for ADK loader compatibility
 agent = auditor_agent

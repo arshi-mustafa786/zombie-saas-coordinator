@@ -9,15 +9,33 @@ Each model file is created by the user story that introduces it:
 
 from zombie_saas_coordinator.shared.models.expense import ExpenseEvent, SubscriptionAssessment
 from zombie_saas_coordinator.shared.models.proposal import (
+    ComplianceSensitivity,
     ConsolidationProposal,
     ProposalStatus,
-    get_dummy_proposal,
+    RecommendationType,
+    RiskAssessment,
+    SavingsBreakdown,
+)
+from zombie_saas_coordinator.shared.models.telemetry import (
+    AppTelemetry,
+    IdpAuthError,
+    IdPScanRequest,
+    IdPScanResponse,
+    RedundancyAssessment,
 )
 
 __all__ = [
+    "AppTelemetry",
+    "IdPScanRequest",
+    "IdPScanResponse",
+    "IdpAuthError",
+    "RedundancyAssessment",
+    "ComplianceSensitivity",
     "ConsolidationProposal",
-    "ExpenseEvent",
     "ProposalStatus",
+    "RecommendationType",
+    "RiskAssessment",
+    "SavingsBreakdown",
+    "ExpenseEvent",
     "SubscriptionAssessment",
-    "get_dummy_proposal",
 ]

@@ -13,7 +13,6 @@ from zombie_saas_coordinator.agents.auditor.tools import send_approval_card
 from zombie_saas_coordinator.shared.models.proposal import (
     ConsolidationProposal,
     ProposalStatus,
-    get_dummy_proposal,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["notifications", "callbacks"])
@@ -67,12 +66,14 @@ async def handle_approval_callback(payload: ApprovalCallbackPayload) -> dict[str
     doc_ref = client.collection("consolidation_proposals").document(payload.proposal_id)
     snapshot = doc_ref.get()
 
-    if snapshot.exists:
-        data = snapshot.to_dict() or {}
-        proposal = ConsolidationProposal.model_validate(data)
-    else:
-        # Fallback to realistic dummy proposal if US-3 is still WIP
-        proposal = get_dummy_proposal(payload.proposal_id)
+    if not snapshot.exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Consolidation proposal '{payload.proposal_id}' not found.",
+        )
+
+    data = snapshot.to_dict() or {}
+    proposal = ConsolidationProposal.model_validate(data)
 
     # Check for expiration
     now = datetime.now(UTC)

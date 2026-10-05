@@ -18,6 +18,7 @@ from zombie_saas_coordinator.shared.auth.hmac_validator import (
     InvalidSignatureError,
     verify_hmac_sha256,
 )
+from zombie_saas_coordinator.shared.constants import SAAS_WHITELIST_COLLECTION
 from zombie_saas_coordinator.shared.models.expense import ExpenseEvent
 
 
@@ -37,7 +38,7 @@ def _firestore(approved: bool = False, exists: bool = True) -> tuple[Mock, Mock]
     def collection(name: str) -> Mock:
         result = Mock()
         result.document.return_value = (
-            whitelist_document if name == "saas_whitelist" else expense_document
+            whitelist_document if name == SAAS_WHITELIST_COLLECTION else expense_document
         )
         return result
 
