@@ -12,6 +12,7 @@ The ADK agents are invoked from these endpoints as needed.
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from zombie_saas_coordinator.api.proposals import router as proposals_router
 from zombie_saas_coordinator.api.webhooks import router as webhooks_router
 
 load_dotenv()
@@ -22,6 +23,7 @@ app = FastAPI(
     version="0.1.0",
 )
 app.include_router(webhooks_router)
+app.include_router(proposals_router)
 
 
 @app.get("/health")
