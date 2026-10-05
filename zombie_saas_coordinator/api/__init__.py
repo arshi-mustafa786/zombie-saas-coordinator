@@ -6,3 +6,7 @@ Each route module is created by the user story that introduces it:
 - US-4: callbacks.py  (Slack/Teams interaction callbacks)
 - US-5: approvals.py  (HITL authorization endpoint)
 """
+
+from zombie_saas_coordinator.api import scanner, webhooks
+
+__all__ = ["scanner", "webhooks"]

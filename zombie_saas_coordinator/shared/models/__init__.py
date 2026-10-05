@@ -15,11 +15,23 @@ from zombie_saas_coordinator.shared.models.proposal import (
     SavingsBreakdown,
 )
 
+from zombie_saas_coordinator.shared.models.telemetry import (
+    AppTelemetry,
+    IdpAuthError,
+    IdPScanRequest,
+    IdPScanResponse,
+    RedundancyAssessment,
+)
+
 __all__ = [
+    "AppTelemetry",
+    "IdPScanRequest",
+    "IdPScanResponse",
+    "IdpAuthError",
+    "RedundancyAssessment",
     "ComplianceSensitivity",
     "ConsolidationProposal",
     "RecommendationType",
     "RiskAssessment",
     "SavingsBreakdown",
 ]
-
