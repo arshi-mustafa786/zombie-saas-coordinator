@@ -18,10 +18,35 @@ from zombie_saas_coordinator.shared.integrations.slack import (
     validate_slack_webhook_url,
 )
 from zombie_saas_coordinator.shared.models.proposal import (
+    ConsolidationProposal,
     ProposalStatus,
-    get_dummy_proposal,
+    RiskAssessment,
+    ROIEstimate,
 )
 
+
+def _get_dummy_proposal(proposal_id: str = "prop-12345") -> ConsolidationProposal:
+    return ConsolidationProposal(
+        proposal_id=proposal_id,
+        app_name="Trello",
+        target_platform="Asana",
+        annual_savings=5000.0,
+        risk_score=25,
+        detected_dependencies=["Miro", "Slack"],
+        status=ProposalStatus.PENDING,
+        created_at=datetime.now(UTC),
+        expires_at=datetime.now(UTC) + timedelta(days=7),
+        roi=ROIEstimate(
+            payback_period_months=6,
+            five_year_savings=25000.0,
+            implementation_cost=2500.0,
+        ),
+        risk=RiskAssessment(
+            complexity="LOW",
+            data_migration_risk="LOW",
+            business_disruption_risk="LOW",
+        ),
+    )
 
 def _mock_firestore(
     proposal_data: dict[str, Any] | None = None,
@@ -30,7 +55,7 @@ def _mock_firestore(
     client = Mock()
     proposal_snapshot = Mock()
     proposal_snapshot.exists = exists
-    proposal_snapshot.to_dict.return_value = proposal_data or get_dummy_proposal().model_dump(
+    proposal_snapshot.to_dict.return_value = proposal_data or _get_dummy_proposal().model_dump(
         mode="json"
     )
 
@@ -53,7 +78,7 @@ def _mock_firestore(
 
 
 def test_dummy_proposal_generation() -> None:
-    proposal = get_dummy_proposal("prop-trello-001")
+    proposal = _get_dummy_proposal("prop-trello-001")
     assert proposal.proposal_id == "prop-trello-001"
     assert proposal.app_name == "Trello"
     assert proposal.target_platform == "Asana"
@@ -69,7 +94,7 @@ def test_dummy_proposal_generation() -> None:
 
 
 def test_build_slack_approval_card_format() -> None:
-    proposal = get_dummy_proposal("prop-123")
+    proposal = _get_dummy_proposal("prop-123")
     card = build_slack_approval_card(proposal)
 
     assert "blocks" in card
@@ -294,7 +319,7 @@ def test_callback_rejects_invalid_token(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_callback_rejects_expired_proposal(monkeypatch: pytest.MonkeyPatch) -> None:
-    expired_data = get_dummy_proposal().model_dump(mode="json")
+    expired_data = _get_dummy_proposal().model_dump(mode="json")
     expired_data["status"] = "EXPIRED"
     expired_data["expires_at"] = (datetime.now(UTC) - timedelta(days=1)).isoformat()
 
