@@ -323,7 +323,8 @@ def test_callback_rejects_invalid_token(monkeypatch: pytest.MonkeyPatch) -> None
     assert "Invalid callback verification token" in response.json()["detail"]
 
 
-def test_callback_rejects_expired_proposal(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_callback_rejects_terminal_state_proposal(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A proposal already in a terminal state (EXPIRED, APPROVED, WHITELISTED) must return 409."""
     expired_data = _get_dummy_proposal().model_dump(mode="json")
     expired_data["status"] = "EXPIRED"
     expired_data["created_at"] = (datetime.now(UTC) - timedelta(days=2)).isoformat()
@@ -350,5 +351,40 @@ def test_callback_rejects_expired_proposal(monkeypatch: pytest.MonkeyPatch) -> N
             "user_id": "usr_ops",
         },
     )
+    assert response.status_code == 409
+    assert "terminal state" in response.json()["detail"].lower()
+
+
+def test_callback_rejects_expired_proposal(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A PENDING proposal whose expires_at is in the past must return 400."""
+    expired_data = _get_dummy_proposal().model_dump(mode="json")
+    # Keep status as PENDING so it passes the terminal state guard,
+    # but set expires_at in the past so the expiry check fires.
+    expired_data["status"] = "PENDING"
+    expired_data["created_at"] = (datetime.now(UTC) - timedelta(days=2)).isoformat()
+    expired_data["expires_at"] = (datetime.now(UTC) - timedelta(days=1)).isoformat()
+
+    firestore_client, _ = _mock_firestore(proposal_data=expired_data)
+    audit_logger = Mock()
+
+    monkeypatch.setenv("SLACK_VERIFICATION_TOKEN", "valid-token-secret")
+    monkeypatch.setattr(
+        "zombie_saas_coordinator.api.callbacks._get_firestore_client", lambda: firestore_client
+    )
+    monkeypatch.setattr(
+        "zombie_saas_coordinator.api.callbacks._get_audit_logger", lambda: audit_logger
+    )
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/callbacks/approval",
+        json={
+            "token": "valid-token-secret",
+            "action": "approve_consolidation",
+            "proposal_id": "prop-expired",
+            "user_id": "usr_ops",
+        },
+    )
     assert response.status_code == 400
     assert "expired" in response.json()["detail"].lower()
+

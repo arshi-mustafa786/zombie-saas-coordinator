@@ -924,7 +924,14 @@ def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
     proposal = ConsolidationProposal.model_validate(data)
 
     payload = slack.build_slack_approval_card(proposal)
-    dispatch_result = slack.dispatch_slack_message(channel, payload)
+    try:
+        dispatch_result = slack.dispatch_slack_message(channel, payload)
+    except slack.SSRFSecurityError as exc:
+        return {
+            "sent": False,
+            "error": str(exc),
+            "proposal_id": proposal_id,
+        }
 
     audit_entry = {
         "event_type": "APPROVAL_CARD_DISPATCHED",
