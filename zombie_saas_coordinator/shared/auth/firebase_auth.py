@@ -34,6 +34,12 @@ def verify_firebase_auth_token(
             "email": "ciso@mock.enterprise.com",
             "roles": ["ciso", "admin"],
         }
+    elif clean_token.startswith("mock-viewer"):
+        decoded = {
+            "uid": "mock-viewer-uid",
+            "email": "viewer@mock.enterprise.com",
+            "roles": ["viewer"],
+        }
     else:
         try:
             from firebase_admin import auth
