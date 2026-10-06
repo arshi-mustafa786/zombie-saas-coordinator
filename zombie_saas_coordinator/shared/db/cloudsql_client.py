@@ -109,3 +109,90 @@ def record_scan_in_cloudsql(
                     "is_flagged_inactive": app_record.get("is_flagged_inactive", False),
                 },
             )
+
+
+def record_approval_in_cloudsql(
+    approval_data: dict[str, Any],
+    engine: Engine | None = None,
+) -> None:
+    """Records human approval grant in Cloud SQL approvals table."""
+    if engine is None:
+        try:
+            engine = get_cloudsql_engine()
+        except KeyError:
+            return
+
+    from sqlalchemy import text
+
+    insert_approval_sql = text(
+        """
+        INSERT INTO approvals (
+            proposal_id, gate_type, approved, approver_id, approver_email,
+            roles, approved_at, expires_at, notes, revoked
+        )
+        VALUES (
+            :proposal_id, :gate_type, :approved, :approver_id, :approver_email,
+            :roles, :approved_at, :expires_at, :notes, :revoked
+        )
+        ON CONFLICT (proposal_id, gate_type) DO UPDATE SET
+            approved = EXCLUDED.approved,
+            approver_id = EXCLUDED.approver_id,
+            approver_email = EXCLUDED.approver_email,
+            roles = EXCLUDED.roles,
+            approved_at = EXCLUDED.approved_at,
+            expires_at = EXCLUDED.expires_at,
+            notes = EXCLUDED.notes,
+            revoked = EXCLUDED.revoked;
+        """
+    )
+
+    roles_str = ",".join(approval_data.get("roles", []))
+    params = {
+        "proposal_id": approval_data.get("proposal_id", ""),
+        "gate_type": str(approval_data.get("gate_type", "")),
+        "approved": approval_data.get("approved", True),
+        "approver_id": approval_data.get("approver_id", ""),
+        "approver_email": approval_data.get("approver_email"),
+        "roles": roles_str,
+        "approved_at": approval_data.get("approved_at"),
+        "expires_at": approval_data.get("expires_at"),
+        "notes": approval_data.get("notes"),
+        "revoked": approval_data.get("revoked", False),
+    }
+
+    with engine.begin() as conn:
+        conn.execute(insert_approval_sql, params)
+
+
+def record_revocation_in_cloudsql(
+    proposal_id: str,
+    revocation_data: dict[str, Any],
+    engine: Engine | None = None,
+) -> None:
+    """Records approval revocation in Cloud SQL."""
+    if engine is None:
+        try:
+            engine = get_cloudsql_engine()
+        except KeyError:
+            return
+
+    from sqlalchemy import text
+
+    update_revocation_sql = text(
+        """
+        UPDATE approvals
+        SET revoked = TRUE,
+            revoked_at = :revoked_at,
+            revoked_by = :revoked_by,
+            revoke_reason = :revoke_reason
+        WHERE proposal_id = :proposal_id;
+        """
+    )
+    params = {
+        "proposal_id": proposal_id,
+        "revoked_at": revocation_data.get("revoked_at"),
+        "revoked_by": revocation_data.get("revoked_by"),
+        "revoke_reason": revocation_data.get("revoke_reason"),
+    }
+    with engine.begin() as conn:
+        conn.execute(update_revocation_sql, params)

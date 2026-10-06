@@ -7,6 +7,7 @@ depends_on: [US-4]
 blocks: [US-6, US-10]
 agent: root orchestrator (zombie_saas_coordinator)
 framework: Google ADK (google-adk)
+status: DONE
 ---
 
 ## Story Summary

@@ -7,6 +7,13 @@ Each model file is created by the user story that introduces it:
 - US-5: approval.py
 """
 
+from zombie_saas_coordinator.shared.models.approval import (
+    ApprovalGateType,
+    ApprovalRecord,
+    ApprovalStatusResponse,
+    AuthorizeProposalRequest,
+    RevokeApprovalRequest,
+)
 from zombie_saas_coordinator.shared.models.expense import ExpenseEvent, SubscriptionAssessment
 from zombie_saas_coordinator.shared.models.proposal import (
     ComplianceSensitivity,
@@ -38,4 +45,9 @@ __all__ = [
     "SavingsBreakdown",
     "ExpenseEvent",
     "SubscriptionAssessment",
+    "ApprovalGateType",
+    "ApprovalRecord",
+    "ApprovalStatusResponse",
+    "AuthorizeProposalRequest",
+    "RevokeApprovalRequest",
 ]
