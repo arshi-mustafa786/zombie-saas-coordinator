@@ -20,9 +20,9 @@ from zombie_saas_coordinator.shared.integrations.slack import (
 from zombie_saas_coordinator.shared.models.proposal import (
     ConsolidationProposal,
     ProposalStatus,
+    RecommendationType,
     RiskAssessment,
     SavingsBreakdown,
-    RecommendationType,
 )
 
 

@@ -60,11 +60,11 @@ def _verify_slack_signature(raw_body: bytes, request: Request) -> None:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Request timestamp is too old (possible replay attack).",
             )
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing or invalid X-Slack-Request-Timestamp header.",
-        )
+        ) from exc
 
     basestring = f"v0:{timestamp}:{raw_body.decode('utf-8')}"
     computed = "v0=" + hmac.new(
@@ -163,7 +163,7 @@ async def handle_approval_callback(request: Request) -> dict[str, Any]:
 
         try:
             payload_obj = ApprovalCallbackPayload(
-                token="__slack_signed__",  # Signing secret already verified above.
+                token="__slack_signed__",  # noqa: S106  # Signing secret already verified above.
                 action=action_data.get("action_id", ""),
                 proposal_id=action_data.get("value", ""),
                 user_id=user_id,
@@ -291,8 +291,13 @@ async def send_notification_endpoint(request: SendNotificationRequest) -> dict[s
             keyword in error_msg
             for keyword in ("Insecure protocol", "not in the allowed", "SSRF", "forbidden")
         )
+        status_code = (
+            status.HTTP_400_BAD_REQUEST
+            if is_client_error
+            else status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST if is_client_error else status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status_code,
             detail=f"Failed to dispatch approval card: {error_msg}",
         )
     return result
