@@ -49,7 +49,6 @@ class ComplianceSensitivity(StrEnum):
 
 class ProposalStatus(StrEnum):
     """Approval workflow states; values match the US-4 callbacks."""
-
     PENDING = "PENDING"
     SIMULATING = "SIMULATING"
     APPROVED = "APPROVED"

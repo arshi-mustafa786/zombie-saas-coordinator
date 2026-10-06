@@ -172,7 +172,7 @@
                 "Queries for all active zaps/workflows containing Trello as trigger or action",
                 "For each workflow, records: workflow name, trigger condition, action, downstream dependencies",
                 "Identifies critical workflows (e.g., daily syncs, customer-facing automations)",
-                "Generates dependency graph showing Trello \u2192 Zapier/Make \u2192 other SaaS tools",
+                "Generates dependency graph showing Trello → Zapier/Make → other SaaS tools",
                 "Flags workflows that will break if Trello is decommissioned",
                 "All API calls and dependencies logged to Cloud Audit Logs"
             ],
@@ -180,6 +180,36 @@
                 "Service",
                 "API",
                 "DB"
+            ]
+        },
+        {
+            "id": "US-11",
+            "title": "Migration Execution & Reconciliation",
+            "description": "As a Compliance Officer, I want cryptographic proof that the migrated data matches the source data before we approve cutover, so I am confident no data was lost.",
+            "acceptance_criteria": [
+                "System generates a migration manifest and source-to-target ID mapping during the MIGRATING phase",
+                "RECONCILING phase checks paginated extraction counts, verifies attachments/comments, and executes field-level checks",
+                "Outputs a post-migration exception report for isolated failures"
+            ],
+            "layers": [
+                "Service",
+                "DB",
+                "API"
+            ]
+        },
+        {
+            "id": "US-12",
+            "title": "Fail-Safe Quarantine and Disposal",
+            "description": "As a CISO, I want source data quarantined by default and destroyed only after a separate, explicit authorization to ensure compliance with data retention policies.",
+            "acceptance_criteria": [
+                "Default action after migration is SOURCE_QUARANTINED (retention of source data)",
+                "Disposal is blocked if validation exceptions, legal holds, or incomplete migrations remain unresolved",
+                "Requires a separate, multi-signature approval (DISPOSAL_APPROVED) before verifiable destruction"
+            ],
+            "layers": [
+                "Service",
+                "DB",
+                "API"
             ]
         }
     ],
@@ -219,6 +249,18 @@
         [
             "US-8",
             "US-9"
+        ],
+        [
+            "US-9",
+            "US-11"
+        ],
+        [
+            "US-10",
+            "US-11"
+        ],
+        [
+            "US-11",
+            "US-12"
         ]
     ]
 }

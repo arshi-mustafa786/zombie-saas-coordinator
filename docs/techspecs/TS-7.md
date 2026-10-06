@@ -32,6 +32,7 @@ def diff_schemas(source_schema: dict, target_schema: dict) -> dict:
     semantic type compatibility analysis. Stores diff report in Firestore."""
     ...
 
+
 def classify_mapping(field_name: str, source_type: str, target_type: str) -> dict:
     """Classifies a single field mapping as:
     - Green (safe): Direct type equivalent exists

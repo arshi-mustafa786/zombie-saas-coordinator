@@ -1,0 +1,87 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "🚨 Zombie SaaS Detected: Trello → Asana",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Target Platform:*\nAsana"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Est. Annual Savings:*\n$14,400.00"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Risk Score:*\n`42 / 100`"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Proposal ID:*\n`prop-trello-asana-001`"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Recommendation:*\nProceed to Full Consolidation: 65% inactive seats, equivalent board logic available in Asana."
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Detected Dependencies & Automations:*\n• Zapier Zap #9812: Trello card created -> Slack notification\n• Make Scenario #42: Trello due date alert -> Google Calendar\n• Trello Power-Up: Custom Fields (Sprint Points, Priority Tag)"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Simulate Migration",
+            "emoji": true
+          },
+          "action_id": "simulate_migration",
+          "value": "prop-trello-asana-001"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Approve Full Consolidation",
+            "emoji": true
+          },
+          "style": "primary",
+          "action_id": "approve_consolidation",
+          "value": "prop-trello-asana-001"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Ignore / Whitelist",
+            "emoji": true
+          },
+          "style": "danger",
+          "action_id": "ignore_whitelist",
+          "value": "prop-trello-asana-001"
+        }
+      ]
+    }
+  ]
+}

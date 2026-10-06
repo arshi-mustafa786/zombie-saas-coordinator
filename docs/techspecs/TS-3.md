@@ -36,6 +36,7 @@ def generate_proposal(app_id: str) -> dict:
     Returns the proposal as a structured JSON document stored in Firestore."""
     ...
 
+
 def calculate_roi(app_id: str) -> dict:
     """Calculates the return on investment for consolidating a specific
     application. Queries Cloud SQL for seat cost data and billing history."""
