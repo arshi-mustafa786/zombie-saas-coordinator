@@ -287,7 +287,7 @@ def test_check_approval_status_expired_blocks_delegation() -> None:
 
 
 def test_revoke_approval_tool_halts_pipeline() -> None:
-    """revoke_approval tool immediately halts approval and updates state."""
+    """revoke_approval tool immediately halts all gate approvals and updates state."""
     client, _, approval_doc = _mock_firestore(
         proposal_data=_get_dummy_proposal(status=ProposalStatus.APPROVED).model_dump(mode="json"),
         approval_data={
@@ -310,6 +310,23 @@ def test_revoke_approval_tool_halts_pipeline() -> None:
         assert result["proposal_id"] == "prop-us5-001"
         assert approval_doc.update.called
         assert mock_audit.log_struct.called
+
+
+def test_revoke_approval_rejects_anonymous_caller() -> None:
+    """revoke_approval raises ValueError if revoker_info has no uid (AC-5.6 prompt injection guard)."""
+    with pytest.raises(ValueError, match="non-empty 'uid'"):
+        revoke_approval(
+            proposal_id="prop-us5-001",
+            revoker_info={"email": "nobody@unknown.com"},  # no uid
+            reason="Some reason",
+        )
+
+    with pytest.raises(ValueError, match="non-empty 'uid'"):
+        revoke_approval(
+            proposal_id="prop-us5-001",
+            revoker_info={"uid": ""},  # empty uid
+            reason="Some reason",
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -407,9 +424,10 @@ def test_api_authorize_proposal_not_found() -> None:
         assert response.status_code == 404
 
 
-def test_api_authorize_proposal_conflict_if_already_approved() -> None:
-    """Attempting to authorize an already approved proposal returns 409 Conflict."""
+def test_api_authorize_proposal_conflict_if_same_gate_already_approved() -> None:
+    """Authorizing the same gate twice returns 409 — but a different gate must succeed (AC-5.1)."""
     client = TestClient(app)
+    # Same gate already approved
     fs_client, _, _ = _mock_firestore(
         proposal_data=_get_dummy_proposal(status=ProposalStatus.APPROVED).model_dump(mode="json"),
         approval_data={"approved": True, "revoked": False},
@@ -425,6 +443,33 @@ def test_api_authorize_proposal_conflict_if_already_approved() -> None:
             json={"firebase_token": "ciso-token", "gate_type": "PERMISSION_TO_MIGRATE"},
         )
         assert response.status_code == 409
+
+
+def test_api_authorize_second_gate_allowed_after_first_gate_approved() -> None:
+    """Authorizing a second gate on an already-APPROVED proposal must NOT return 409 (AC-5.1)."""
+    client = TestClient(app)
+    # Proposal is APPROVED (first gate done) but the DISPOSE gate doc does not exist yet
+    fs_client, _, _ = _mock_firestore(
+        proposal_data=_get_dummy_proposal(status=ProposalStatus.APPROVED).model_dump(mode="json"),
+        approval_data=None,  # no per-gate doc for DISPOSE yet
+    )
+    mock_decoded = {"uid": "ciso-01", "email": "ciso@corp.internal", "roles": ["ciso"]}
+    mock_audit = MagicMock()
+
+    with (
+        patch(_FS_CLIENT_PATCH, return_value=fs_client),
+        patch("zombie_saas_coordinator.api.approvals._get_audit_logger", return_value=mock_audit),
+        patch("firebase_admin.auth.verify_id_token", return_value=mock_decoded),
+        patch("zombie_saas_coordinator.api.approvals.record_approval_in_cloudsql"),
+    ):
+        response = client.post(
+            "/api/v1/approvals/prop-us5-001/authorize",
+            json={"firebase_token": "ciso-token", "gate_type": "PERMISSION_TO_DISPOSE"},
+        )
+        # Must be 200 — proposal.status == APPROVED should NOT block a different gate
+        assert response.status_code == 200
+        data = response.json()
+        assert data["gate_type"] == "PERMISSION_TO_DISPOSE"
 
 
 def test_api_revoke_proposal_happy_path() -> None:
@@ -471,6 +516,13 @@ def test_api_revoke_proposal_missing_reason() -> None:
         assert response.status_code == 400
 
 
+def test_api_get_approval_status_requires_auth() -> None:
+    """GET /api/v1/approvals/{proposal_id} without Authorization header returns 422."""
+    client = TestClient(app)
+    response = client.get("/api/v1/approvals/prop-us5-001")
+    assert response.status_code == 422  # FastAPI missing header → 422 Unprocessable Entity
+
+
 def test_api_get_approval_status() -> None:
     """GET /api/v1/approvals/{proposal_id} retrieves current gate and expiration details."""
     client = TestClient(app)
@@ -488,8 +540,15 @@ def test_api_get_approval_status() -> None:
             "revoked": False,
         },
     )
-    with patch(_FS_CLIENT_PATCH, return_value=fs_client):
-        response = client.get("/api/v1/approvals/prop-us5-001")
+    mock_decoded = {"uid": "any-user", "roles": ["viewer"]}
+    with (
+        patch(_FS_CLIENT_PATCH, return_value=fs_client),
+        patch("firebase_admin.auth.verify_id_token", return_value=mock_decoded),
+    ):
+        response = client.get(
+            "/api/v1/approvals/prop-us5-001",
+            headers={"Authorization": "Bearer valid-viewer-token"},
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["proposal_id"] == "prop-us5-001"

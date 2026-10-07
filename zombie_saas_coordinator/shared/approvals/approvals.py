@@ -1,9 +1,17 @@
-import contextlib
+"""HITL Approval gate helpers — shared module.
+
+Contains the gate-keyed Firestore logic for checking and revoking approvals.
+Lives in the shared package so both the root agent and the API router can
+import it without creating a circular dependency.
+"""
+
 import os
 from datetime import UTC, datetime
 from typing import Any
 
 from google.cloud import firestore, logging
+
+from zombie_saas_coordinator.shared.models.proposal import ProposalStatus
 
 
 def _get_firestore_client() -> firestore.Client:
@@ -22,7 +30,12 @@ def check_approval_status(
     proposal_id: str,
     required_gate: str = "PERMISSION_TO_MIGRATE",
 ) -> dict[str, Any]:
-    """Checks whether a consolidation proposal has been approved by an authorized human."""
+    """Checks whether a specific gate on a proposal has been approved.
+
+    Reads the per-gate approval document (keyed as `{proposal_id}_{gate}`),
+    enforces 7-day TTL expiration, and returns a structured result that the
+    root agent uses to decide whether delegation is safe.
+    """
     client = _get_firestore_client()
     doc_id = f"{proposal_id}_{required_gate}"
     approval_doc = client.collection("approvals").document(doc_id).get()
@@ -39,15 +52,17 @@ def check_approval_status(
                 "revoked": False,
                 "message": f"Proposal '{proposal_id}' does not exist.",
             }
-        prop_data = prop_doc.to_dict() or {}
         return {
             "approved": False,
             "proposal_id": proposal_id,
-            "status": str(prop_data.get("status", "PENDING")).upper(),
+            "status": "PENDING",
             "can_delegate": False,
             "is_expired": False,
             "revoked": False,
-            "message": f"Proposal has not received formal human authorization for gate {required_gate}.",
+            "message": (
+                f"No approval found for gate '{required_gate}'. "
+                "Human authorization via the /authorize endpoint is required."
+            ),
         }
 
     data = approval_doc.to_dict() or {}
@@ -86,7 +101,7 @@ def check_approval_status(
                 "message": "Approval expired (7-day TTL elapsed). Re-authorization required.",
             }
 
-    is_approved = data.get("approved", True)
+    is_approved = bool(data.get("approved", False))
     return {
         "approved": is_approved,
         "proposal_id": proposal_id,
@@ -105,22 +120,42 @@ def check_approval_status(
 def revoke_approval(
     proposal_id: str,
     reason: str,
-    revoker_info: str = "system",
+    revoker_info: dict[str, Any],
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Revokes previously granted approvals, halting any running or pending pipeline."""
+    """Revokes ALL active gate approvals for a proposal, halting the pipeline.
+
+    Queries all per-gate approval documents by proposal_id and marks each as
+    revoked. Raises RuntimeError if no approval documents are found (prevents
+    silent no-ops). Updates the proposal status to REVOKED (a valid ProposalStatus
+    enum value) and emits a Cloud Audit Log entry.
+
+    Args:
+        proposal_id: The proposal whose approvals are being revoked.
+        reason: Mandatory non-empty reason for the revocation.
+        revoker_info: Dict with 'uid' and optional 'email' of the authenticated revoker.
+            Must be a real identity dict — anonymous revocations are not permitted.
+        **kwargs: Optional 'client' (Firestore client) for testing injection.
+
+    Raises:
+        ValueError: If reason is empty or revoker_info is missing a uid.
+        RuntimeError: If no approval documents are found for the proposal (prevents
+            silent success when nothing was actually revoked).
+    """
     clean_reason = reason.strip() if reason else ""
     if not clean_reason:
         raise ValueError("Revocation reason must not be empty or whitespace.")
 
-    revoker_id = (
-        revoker_info if isinstance(revoker_info, str) else revoker_info.get("uid", "unknown")
-    )
-    revoker_email = revoker_info.get("email") if isinstance(revoker_info, dict) else None
+    if not isinstance(revoker_info, dict) or not revoker_info.get("uid"):
+        raise ValueError(
+            "revoker_info must be a dict with a non-empty 'uid'. "
+            "Anonymous revocations are not permitted."
+        )
 
-    client = kwargs.get("client")
-    if client is None:
-        client = _get_firestore_client()
+    revoker_id: str = revoker_info["uid"]
+    revoker_email: str | None = revoker_info.get("email")
+
+    client: firestore.Client = kwargs.get("client") or _get_firestore_client()
     now = datetime.now(UTC)
 
     update_data = {
@@ -133,20 +168,45 @@ def revoke_approval(
         "approved": False,
     }
 
-    try:
-        app_docs = client.collection("approvals").where(filter=firestore.FieldFilter("proposal_id", "==", proposal_id)).get()
-        for app_snap in app_docs:
-            app_snap.reference.update(update_data)
-    except Exception:
-        # Fallback to single doc if index fails or something
-        approval_ref = client.collection("approvals").document(proposal_id)
-        app_snap = approval_ref.get()
-        if app_snap.exists:
-            approval_ref.update(update_data)
+    # Query all per-gate approval documents for this proposal.
+    # This is the authoritative path — if it fails we raise immediately instead
+    # of silently falling back to a stale document ID.
+    app_docs = (
+        client.collection("approvals")
+        .where(filter=firestore.FieldFilter("proposal_id", "==", proposal_id))
+        .get()
+    )
 
+    if not app_docs:
+        raise RuntimeError(
+            f"No approval documents found for proposal '{proposal_id}'. "
+            "Nothing was revoked; downstream agents may still be running."
+        )
+
+    for snap in app_docs:
+        snap.reference.update(update_data)
+
+    # Update proposal to REVOKED — uses the enum value, not a raw string.
     prop_ref = client.collection("consolidation_proposals").document(proposal_id)
-    with contextlib.suppress(Exception):
-        prop_ref.update({"status": "revoked", "updated_at": now.isoformat()})
+    try:
+        prop_ref.update({
+            "status": ProposalStatus.REVOKED.value,
+            "updated_at": now.isoformat(),
+        })
+    except Exception as exc:
+        # Log but don't suppress — callers must know if the proposal wasn't updated.
+        _get_audit_logger().log_struct(
+            {
+                "event_type": "HITL_PROPOSAL_UPDATE_FAILED",
+                "proposal_id": proposal_id,
+                "error": str(exc),
+                "timestamp": now.isoformat(),
+            },
+            severity="ERROR",
+        )
+        raise RuntimeError(
+            f"Approval documents revoked but proposal status update failed: {exc}"
+        ) from exc
 
     # Emit Cloud Audit Log
     audit_record = {
@@ -159,7 +219,7 @@ def revoke_approval(
     }
     _get_audit_logger().log_struct(audit_record, severity="WARNING")
 
-    with contextlib.suppress(Exception):
+    try:
         from zombie_saas_coordinator.shared.db.cloudsql_client import (
             record_revocation_in_cloudsql,
         )
@@ -172,6 +232,9 @@ def revoke_approval(
                 "revoke_reason": clean_reason,
             },
         )
+    except Exception:
+        # Cloud SQL sync failure is non-fatal — Firestore is the source of truth.
+        pass
 
     return {
         "revoked": True,

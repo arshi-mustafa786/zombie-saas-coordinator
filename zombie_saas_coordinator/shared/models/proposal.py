@@ -54,6 +54,7 @@ class ProposalStatus(StrEnum):
     APPROVED = "APPROVED"
     WHITELISTED = "WHITELISTED"
     EXPIRED = "EXPIRED"
+    REVOKED = "REVOKED"
 
 
 class SavingsBreakdown(BaseModel):

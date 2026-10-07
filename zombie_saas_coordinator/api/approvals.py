@@ -1,9 +1,17 @@
+"""HITL Approval API endpoints — US-5.
+
+Provides:
+  POST /{proposal_id}/authorize  — Record per-gate human approval (auth required)
+  POST /{proposal_id}/revoke     — Revoke all active approvals (auth required)
+  GET  /{proposal_id}            — Read per-gate approval status (auth required)
+"""
+
 import contextlib
 import os
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, status
 from google.cloud import firestore, logging
 
 from zombie_saas_coordinator.shared.approvals.approvals import revoke_approval
@@ -42,7 +50,15 @@ def record_approval(
     gate_type: str = "PERMISSION_TO_MIGRATE",
     notes: str | None = None,
 ) -> ApprovalRecord:
-    """Persists human approval record with 7-day TTL to Firestore and Cloud SQL."""
+    """Persists per-gate human approval record with 7-day TTL to Firestore and Cloud SQL.
+
+    The Firestore document is keyed as `{proposal_id}_{gate_type}` so that each
+    of the three gates (INVESTIGATE, MIGRATE, DISPOSE) can be approved independently.
+
+    The proposal document is updated to APPROVED status on first authorization but
+    gate_type is intentionally NOT written back onto the proposal — the proposal
+    has its own semantic signature (US-3) that must not be mutated by approval records.
+    """
     now = datetime.now(UTC)
     expires_at = now + timedelta(days=7)
 
@@ -66,17 +82,22 @@ def record_approval(
     )
 
     client = _get_firestore_client()
+
+    # Store the approval document keyed by proposal_id + gate so all three
+    # gates can coexist without overwriting each other.
     doc_id = f"{proposal_id}_{record.gate_type.value}"
     approval_ref = client.collection("approvals").document(doc_id)
     approval_ref.set(record.model_dump(mode="json"))
 
+    # Update proposal status — but only record who actioned it, NOT the gate_type.
+    # Writing gate_type here would corrupt the US-3 semantic signature.
     prop_ref = client.collection("consolidation_proposals").document(proposal_id)
     prop_ref.update({
         "status": ProposalStatus.APPROVED.value,
         "updated_at": now.isoformat(),
         "action_by": record.approver_id,
         "action_email": record.approver_email,
-        "gate_type": record.gate_type.value,
+        # Do NOT write record.gate_type.value here — it breaks US-3 signature.
     })
 
     with contextlib.suppress(Exception):
@@ -114,10 +135,12 @@ async def authorize_proposal_endpoint(
     proposal_id: str,
     request: AuthorizeProposalRequest,
 ) -> dict[str, Any]:
-    """Cloud Run endpoint to grant formal human authorization for consolidation.
+    """Grant formal human authorization for a specific gate on a consolidation proposal.
 
-    Verifies Firebase SSO token and CISO/IT-Ops claims, checks proposal lifecycle,
-    and records an immutable 7-day TTL approval.
+    Verifies Firebase SSO token and CISO/IT-Ops claims.  Checks only the
+    *per-gate* approval document — not the overall proposal status — so that
+    all three gates (INVESTIGATE, MIGRATE, DISPOSE) can be authorized
+    independently without triggering a 409 after the first one.
     """
     user_info = verify_firebase_auth_token(
         request.firebase_token,
@@ -134,9 +157,9 @@ async def authorize_proposal_endpoint(
             detail=f"Consolidation proposal '{proposal_id}' was not found.",
         )
 
-    prop_data = prop_snap.to_dict() or {}
-    current_status = prop_data.get("status")
-
+    # Check only the per-gate approval doc — NOT proposal.status.
+    # proposal.status == APPROVED just means at least one gate was approved;
+    # it must not block subsequent gate approvals (AC-5.1 three-gate design).
     doc_id = f"{proposal_id}_{request.gate_type.value}"
     approval_ref = client.collection("approvals").document(doc_id)
     app_snap = approval_ref.get()
@@ -145,14 +168,11 @@ async def authorize_proposal_endpoint(
         if existing_app.get("approved") and not existing_app.get("revoked"):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Proposal '{proposal_id}' has already been authorized.",
+                detail=(
+                    f"Gate '{request.gate_type.value}' for proposal '{proposal_id}' "
+                    "has already been authorized."
+                ),
             )
-
-    if current_status == ProposalStatus.APPROVED.value:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Proposal '{proposal_id}' is already approved.",
-        )
 
     record = record_approval(
         proposal_id=proposal_id,
@@ -177,7 +197,11 @@ async def revoke_approval_endpoint(
     proposal_id: str,
     request: RevokeApprovalRequest,
 ) -> dict[str, Any]:
-    """Cloud Run endpoint to revoke approval and halt consolidation."""
+    """Revoke all active gate approvals and halt consolidation.
+
+    Requires CISO/IT-Ops Firebase token. Passes the authenticated user identity
+    through to revoke_approval so revocations are never anonymous.
+    """
     clean_reason = request.reason.strip() if request.reason else ""
     if not clean_reason:
         raise HTTPException(
@@ -199,12 +223,18 @@ async def revoke_approval_endpoint(
             detail=f"Consolidation proposal '{proposal_id}' was not found.",
         )
 
-    revoke_approval(
-        proposal_id=proposal_id,
-        revoker_info=user_info,
-        reason=clean_reason,
-        client=client,
-    )
+    try:
+        revoke_approval(
+            proposal_id=proposal_id,
+            revoker_info=user_info,
+            reason=clean_reason,
+            client=client,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
 
     audit_record = {
         "event_type": "HITL_APPROVAL_REVOKED",
@@ -239,9 +269,18 @@ async def revoke_approval_endpoint(
 @router.get("/{proposal_id}", response_model=ApprovalStatusResponse, status_code=status.HTTP_200_OK)
 async def get_approval_status_endpoint(
     proposal_id: str,
-    gate_type: str = "PERMISSION_TO_MIGRATE"
+    gate_type: str = "PERMISSION_TO_MIGRATE",
+    authorization: str = Header(..., description="Firebase ID token — Bearer <token>"),
 ) -> ApprovalStatusResponse:
-    """Retrieves current HITL approval gate and expiry details for a proposal."""
+    """Retrieve per-gate HITL approval status for a proposal.
+
+    Requires a valid Firebase Authorization header so that approver emails,
+    UIDs, and role information are not exposed to unauthenticated callers.
+    Any authenticated user (no specific role required) may read status.
+    """
+    token = authorization.removeprefix("Bearer ").strip()
+    verify_firebase_auth_token(token)  # any authenticated caller — no role restriction
+
     client = _get_firestore_client()
     prop_snap = client.collection("consolidation_proposals").document(proposal_id).get()
     if not prop_snap.exists:
