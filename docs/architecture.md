@@ -160,8 +160,8 @@ The orchestration is governed by a durable state machine to ensure idempotency, 
 ## 5. Deployment
 
 ```bash
-# Local development
-adk web zombie_saas_coordinator
+# Local development (Root Coordinator with sub-agents)
+adk web adk_app
 
 # Deploy to Cloud Run
 adk deploy cloud_run \

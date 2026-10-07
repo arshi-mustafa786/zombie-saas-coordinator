@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from google.cloud import firestore, logging
 
-from zombie_saas_coordinator.agent import revoke_approval
+from zombie_saas_coordinator.shared.approvals.approvals import revoke_approval
 from zombie_saas_coordinator.shared.auth.firebase_auth import verify_firebase_auth_token
 from zombie_saas_coordinator.shared.db.cloudsql_client import (
     record_approval_in_cloudsql,
@@ -66,7 +66,8 @@ def record_approval(
     )
 
     client = _get_firestore_client()
-    approval_ref = client.collection("approvals").document(proposal_id)
+    doc_id = f"{proposal_id}_{record.gate_type.value}"
+    approval_ref = client.collection("approvals").document(doc_id)
     approval_ref.set(record.model_dump(mode="json"))
 
     prop_ref = client.collection("consolidation_proposals").document(proposal_id)
@@ -136,7 +137,8 @@ async def authorize_proposal_endpoint(
     prop_data = prop_snap.to_dict() or {}
     current_status = prop_data.get("status")
 
-    approval_ref = client.collection("approvals").document(proposal_id)
+    doc_id = f"{proposal_id}_{request.gate_type.value}"
+    approval_ref = client.collection("approvals").document(doc_id)
     app_snap = approval_ref.get()
     if app_snap.exists:
         existing_app = app_snap.to_dict() or {}
@@ -235,7 +237,10 @@ async def revoke_approval_endpoint(
 
 
 @router.get("/{proposal_id}", response_model=ApprovalStatusResponse, status_code=status.HTTP_200_OK)
-async def get_approval_status_endpoint(proposal_id: str) -> ApprovalStatusResponse:
+async def get_approval_status_endpoint(
+    proposal_id: str,
+    gate_type: str = "PERMISSION_TO_MIGRATE"
+) -> ApprovalStatusResponse:
     """Retrieves current HITL approval gate and expiry details for a proposal."""
     client = _get_firestore_client()
     prop_snap = client.collection("consolidation_proposals").document(proposal_id).get()
@@ -245,11 +250,12 @@ async def get_approval_status_endpoint(proposal_id: str) -> ApprovalStatusRespon
             detail=f"Consolidation proposal '{proposal_id}' was not found.",
         )
 
-    app_snap = client.collection("approvals").document(proposal_id).get()
+    doc_id = f"{proposal_id}_{gate_type}"
+    app_snap = client.collection("approvals").document(doc_id).get()
     if not app_snap.exists:
         return ApprovalStatusResponse(
             proposal_id=proposal_id,
-            gate_type=ApprovalGateType.PERMISSION_TO_MIGRATE.value,
+            gate_type=gate_type,
             approved=False,
             can_delegate=False,
         )

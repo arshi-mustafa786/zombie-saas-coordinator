@@ -39,10 +39,10 @@ pip install -e ".[dev]"
 # 2. Copy env template
 cp .env.example .env
 
-# 3. Run the ADK local dev UI
-adk web zombie_saas_coordinator
+# 3. Run the ADK local dev UI (Root Coordinator with delegating sub-agents)
+adk web adk_app
 
-# 4. Or run in terminal
+# 4. Or run directly in terminal
 adk run zombie_saas_coordinator
 ```
 

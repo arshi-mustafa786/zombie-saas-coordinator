@@ -10,8 +10,11 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from zombie_saas_coordinator.agent import check_approval_status, revoke_approval
 from zombie_saas_coordinator.main import app
+from zombie_saas_coordinator.shared.approvals.approvals import (
+    check_approval_status,
+    revoke_approval,
+)
 from zombie_saas_coordinator.shared.auth.firebase_auth import verify_firebase_auth_token
 from zombie_saas_coordinator.shared.models.approval import (
     ApprovalGateType,
@@ -83,6 +86,7 @@ def _mock_firestore(
     approval_doc.get.return_value = approval_snapshot
     approval_doc.set.return_value = None
     approval_doc.update.return_value = None
+    approval_snapshot.reference = approval_doc
 
     def collection(name: str) -> MagicMock:
         coll = MagicMock()
@@ -90,6 +94,9 @@ def _mock_firestore(
             coll.document.return_value = proposal_doc
         elif name == "approvals":
             coll.document.return_value = approval_doc
+            where_mock = MagicMock()
+            where_mock.get.return_value = [approval_snapshot] if approval_data else []
+            coll.where.return_value = where_mock
         else:
             coll.document.return_value = MagicMock()
         return coll
@@ -209,7 +216,7 @@ def test_check_approval_status_unapproved_blocks_delegation() -> None:
         proposal_data=dummy_prop.model_dump(mode="json"),
         approval_data=None,
     )
-    with patch("zombie_saas_coordinator.agent._get_firestore_client", return_value=client):
+    with patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client):
         result = check_approval_status(
             proposal_id="prop-us5-001",
             required_gate=ApprovalGateType.PERMISSION_TO_MIGRATE.value,
@@ -240,7 +247,7 @@ def test_check_approval_status_approved_permits_delegation() -> None:
         proposal_data=_get_dummy_proposal(status=ProposalStatus.APPROVED).model_dump(mode="json"),
         approval_data=approval_dict,
     )
-    with patch("zombie_saas_coordinator.agent._get_firestore_client", return_value=client):
+    with patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client):
         result = check_approval_status(
             proposal_id="prop-us5-001",
             required_gate=ApprovalGateType.PERMISSION_TO_MIGRATE.value,
@@ -269,7 +276,7 @@ def test_check_approval_status_expired_blocks_delegation() -> None:
         proposal_data=_get_dummy_proposal(status=ProposalStatus.APPROVED).model_dump(mode="json"),
         approval_data=approval_dict,
     )
-    with patch("zombie_saas_coordinator.agent._get_firestore_client", return_value=client):
+    with patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client):
         result = check_approval_status(
             proposal_id="prop-us5-001",
             required_gate=ApprovalGateType.PERMISSION_TO_MIGRATE.value,
@@ -291,8 +298,8 @@ def test_revoke_approval_tool_halts_pipeline() -> None:
     )
     mock_audit = MagicMock()
     with (
-        patch("zombie_saas_coordinator.agent._get_firestore_client", return_value=client),
-        patch("zombie_saas_coordinator.agent._get_audit_logger", return_value=mock_audit),
+        patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client),
+        patch("zombie_saas_coordinator.shared.approvals.approvals._get_audit_logger", return_value=mock_audit),
     ):
         result = revoke_approval(
             proposal_id="prop-us5-001",

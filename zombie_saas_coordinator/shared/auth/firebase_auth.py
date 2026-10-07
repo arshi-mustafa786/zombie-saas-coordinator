@@ -27,14 +27,17 @@ def verify_firebase_auth_token(
 
     decoded: dict[str, Any]
 
+    import os
+    is_test_env = os.getenv("ENVIRONMENT", "").lower() in ("test", "dev")
+
     # In test/dev environment, allow lightweight bypass if token matches prefix
-    if clean_token.startswith("mock-valid-ciso"):
+    if is_test_env and clean_token.startswith("mock-valid-ciso"):
         decoded = {
             "uid": "mock-ciso-uid",
             "email": "ciso@mock.enterprise.com",
             "roles": ["ciso", "admin"],
         }
-    elif clean_token.startswith("mock-viewer"):
+    elif is_test_env and clean_token.startswith("mock-viewer"):
         decoded = {
             "uid": "mock-viewer-uid",
             "email": "viewer@mock.enterprise.com",
