@@ -9,15 +9,21 @@ The root agent implements the HITL (Human-in-the-Loop) execution gate
 and coordinates parallel execution of Architect + Integrator after approval.
 """
 
+import os
+
 from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.architect.agent import architect_agent
 from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
 from zombie_saas_coordinator.agents.integrator.agent import integrator_agent
 
+
+from zombie_saas_coordinator.shared.approvals.approvals import check_approval_status
+
+
 root_agent = Agent(
     name="zombie_saas_coordinator",
-    model="gemini-3.5-flash",
+    model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"),
     description=(
         "Root orchestrator for the Zombie SaaS Consolidator platform. "
         "Coordinates detection, validation, and migration planning for "
@@ -40,6 +46,7 @@ root_agent = Agent(
         "- NEVER modify data in external systems (Trello, Asana) — read-only analysis.\n"
         "- ALL actions must be logged for compliance audit trail.\n"
     ),
+    tools=[check_approval_status],
     sub_agents=[auditor_agent, architect_agent, integrator_agent],
 )
 

@@ -7,6 +7,8 @@ Responsibilities:
 - US-4: Send interactive approval cards (send_approval_card)
 """
 
+import os
+
 from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.auditor.prompt import AUDITOR_SYSTEM_INSTRUCTION
@@ -22,7 +24,7 @@ from zombie_saas_coordinator.agents.auditor.tools import (
 
 auditor_agent = Agent(
     name="auditor_agent",
-    model="gemini-3.5-flash",
+    model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"),
     description=(
         "Scans IdP telemetry and expense events to detect zombie SaaS applications, "
         "generates consolidation proposals with ROI analysis, and dispatches "

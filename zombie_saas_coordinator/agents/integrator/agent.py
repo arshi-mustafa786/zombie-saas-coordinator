@@ -5,6 +5,8 @@ Responsibilities:
          (scan_zapier, scan_make, build_dependency_graph)
 """
 
+import os
+
 from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.integrator.tools import (
@@ -15,7 +17,7 @@ from zombie_saas_coordinator.agents.integrator.tools import (
 
 integrator_agent = Agent(
     name="integrator_agent",
-    model="gemini-3.5-flash",
+    model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"),
     description=(
         "Scans automation hubs (Zapier, Make) for workflow dependencies "
         "on target SaaS applications and builds risk dependency graphs."

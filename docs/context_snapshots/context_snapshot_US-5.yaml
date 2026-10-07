@@ -1,0 +1,41 @@
+story_id: US-5
+story_title: "3-Tier HITL Approval Gates"
+techspec_file: docs/techspecs/TS-5.md
+complexity: M
+layers: [service, db, api]
+agent: root_orchestrator
+framework: google-adk
+
+ancestor_interfaces:
+  - story_id: US-4
+    module: zombie_saas_coordinator/api/callbacks.py
+    status: DONE
+    exposed_endpoints:
+      - "POST /api/v1/callbacks/approval"
+      - "POST /api/v1/notifications/send"
+  - story_id: US-3
+    module: zombie_saas_coordinator/shared/models/proposal.py
+    status: DONE
+    models:
+      - "ConsolidationProposal"
+      - "ProposalStatus"
+
+codebase_context:
+  naming_conventions:
+    module: snake_case
+    class: PascalCase
+    function: snake_case
+  libraries:
+    http: httpx
+    web: fastapi
+    data_validation: pydantic
+    auth: firebase-admin
+    database: sqlalchemy, cloud-sql-python-connector
+    cloud: google-cloud-firestore, google-cloud-logging
+
+constitution:
+  language: python
+  linter: ruff
+  max_public_methods: 7
+  min_cyclomatic_complexity_per_method: 4
+  test_coverage_target: 85

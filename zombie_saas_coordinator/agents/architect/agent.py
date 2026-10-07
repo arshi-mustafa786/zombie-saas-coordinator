@@ -7,6 +7,8 @@ Responsibilities:
 - US-9: Detect mismatches and generate remediations (generate_remediation)
 """
 
+import os
+
 from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.architect.tools import (
@@ -24,7 +26,7 @@ from zombie_saas_coordinator.agents.architect.tools import (
 
 architect_agent = Agent(
     name="architect_agent",
-    model="gemini-3.5-flash",
+    model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"),
     description=(
         "Validates semantic compatibility between source (Trello) and target "
         "(Asana) SaaS platforms by extracting behavioral contracts, diffing "
