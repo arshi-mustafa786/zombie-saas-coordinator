@@ -41,7 +41,9 @@ architect_agent = Agent(
         "PERMISSION_TO_INVESTIGATE for the proposal (US-5). If it returns status "
         '"blocked", stop and report that approval is needed; do not retry or work '
         "around it. Butler rules cannot be read through the Trello API, so contracts "
-        "are inferred from board activity with a confidence score. If the user pastes "
+        "are inferred only from board activity performed by an automation (Butler or "
+        "another app). `observed_patterns` are repeated habits performed by people: "
+        "mention them as habits, never as automation rules. If the user pastes "
         "Butler rule text, pass it in `butler_rules`, or use `parse_automation_rule` "
         "to normalize a single rule into canonical format. Report contracts, warnings "
         "and unparsed rules exactly as returned; never invent rules.\n"

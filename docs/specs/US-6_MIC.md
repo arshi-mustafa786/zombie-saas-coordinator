@@ -7,7 +7,7 @@
 | 3 | `TrelloClient.fetch_board_bundle` | `fetch_board_bundle(board_id: str) -> dict[str, Any]` | `dict[str, Any]` | `TrelloApiError`, `ValueError` | Read-only fetch of board, lists, labels, custom fields, checklists, cards, Power-Ups and paginated activity. |
 | 4 | `validate_board_id` | `validate_board_id(board_id: str) -> str` | `str` | `ValueError` | Accepts only a 24-char hex id or 8-char short link. |
 | 5 | `get_trello_credentials` | `get_trello_credentials() -> tuple[str, str]` | `tuple[str, str]` | `TrelloCredentialsError` | Loads the Trello key/token from env or Secret Manager. |
-| 6 | `infer_contracts` | `infer_contracts(actions: list[dict[str, Any]], board_id: str) -> list[BehavioralContract]` | `list[BehavioralContract]` | `None` | Reports trigger→effect pairs that repeat consistently in board activity. |
+| 6 | `infer_contracts` | `infer_contracts(actions: list[dict[str, Any]], board_id: str) -> InferenceResult` | `InferenceResult(contracts, observed_patterns)` | `None` | Contracts only for effects performed by an automation (`appCreator`); repeated user sequences are returned as weak-evidence patterns. |
 | 7 | `parse_butler_rule` | `parse_butler_rule(text: str) -> tuple[ContractTrigger \| None, list[ContractAction], list[str]]` | `tuple` | `None` | Deterministic Butler grammar; returns trigger, actions and unparsed fragments. |
 
 Deviation from TS-6 draft: `extract_trello_rules` also takes `proposal_id` (needed for the US-5 gate and to link contracts to the proposal) and optional `butler_rules` (Butler rules have no public API). `parse_automation_rule` returns `actions` (a list) because one Butler rule can perform several actions.

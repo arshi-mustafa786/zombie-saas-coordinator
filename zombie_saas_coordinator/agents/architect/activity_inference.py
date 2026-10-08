@@ -2,14 +2,18 @@
 
 Trello has no API for reading Butler rules, but their effects appear in the
 board's action history: e.g. every time a card is moved into "Done", the
-same card is archived a few seconds later. A (trigger -> effect) pair that
-repeats consistently is reported as an inferred contract with a confidence
-score; it is never presented as an exact rule.
+same card is archived a few seconds later *by Butler*.
+
+Timing alone does not prove causation (a person may label a card "Urgent"
+and then move it by hand), so only effects attributed to an app via the
+action's ``appCreator`` count as evidence for a contract. Repeated sequences
+performed by people are returned separately as ``ObservedPattern`` (weak
+evidence) and are never published as contracts.
 """
 
 from collections import Counter, defaultdict
 from datetime import datetime
-from typing import Any
+from typing import Any, NamedTuple
 
 from zombie_saas_coordinator.shared.constants import (
     INFERENCE_MIN_OCCURRENCES,
@@ -21,6 +25,7 @@ from zombie_saas_coordinator.shared.models.contract import (
     BehavioralContract,
     ContractAction,
     ContractTrigger,
+    ObservedPattern,
     ParserType,
     RuleSource,
     TriggerEvent,
@@ -30,8 +35,13 @@ from zombie_saas_coordinator.shared.models.contract import (
 _Key = tuple[str, tuple[tuple[str, str], ...]]
 
 
-def infer_contracts(actions: list[dict[str, Any]], board_id: str) -> list[BehavioralContract]:
-    """Return contracts for trigger->effect pairs that repeat consistently on the board."""
+class InferenceResult(NamedTuple):
+    contracts: list[BehavioralContract]  # automation-attributed: publishable contracts
+    observed_patterns: list[ObservedPattern]  # person-attributed: weak evidence only
+
+
+def infer_contracts(actions: list[dict[str, Any]], board_id: str) -> InferenceResult:
+    """Split repeated trigger->effect pairs into app-performed contracts and user patterns."""
     events_by_card: dict[str, list[dict[str, Any]]] = defaultdict(list)
     # Trello returns newest first; walk oldest first so the stable sort below keeps
     # a trigger ahead of an effect that shares its timestamp.
@@ -41,8 +51,9 @@ def infer_contracts(actions: list[dict[str, Any]], board_id: str) -> list[Behavi
             events_by_card[event["card_id"]].append(event)
 
     trigger_counts: Counter[_Key] = Counter()
-    pair_counts: Counter[tuple[_Key, _Key]] = Counter()
-    pair_app_counts: Counter[tuple[_Key, _Key]] = Counter()
+    app_pairs: Counter[tuple[_Key, _Key]] = Counter()
+    user_pairs: Counter[tuple[_Key, _Key]] = Counter()
+    actors: dict[tuple[_Key, _Key], Counter[str]] = defaultdict(Counter)
 
     for events in events_by_card.values():
         events.sort(key=lambda event: event["at"])
@@ -50,50 +61,70 @@ def infer_contracts(actions: list[dict[str, Any]], board_id: str) -> list[Behavi
             if cause["trigger"] is None:
                 continue
             trigger_counts[cause["trigger"]] += 1
-            seen: set[_Key] = set()
+            # Effects in the window after this trigger; an app-performed one wins.
+            followed: dict[_Key, str | None] = {}
             for effect in events[index + 1 :]:
                 if (effect["at"] - cause["at"]).total_seconds() > INFERENCE_WINDOW_SECONDS:
                     break
                 key = effect["effect"]
-                if key is None or key in seen or _is_same_change(cause["trigger"], key):
+                if key is None or _is_same_change(cause["trigger"], key):
                     continue
-                seen.add(key)
-                pair_counts[(cause["trigger"], key)] += 1
-                if effect["by_app"]:
-                    pair_app_counts[(cause["trigger"], key)] += 1
+                if followed.get(key) is None:
+                    followed[key] = effect["actor"]
+            for key, actor in followed.items():
+                pair = (cause["trigger"], key)
+                if actor:
+                    app_pairs[pair] += 1
+                    actors[pair][actor] += 1
+                else:
+                    user_pairs[pair] += 1
 
     contracts: list[BehavioralContract] = []
-    for (trigger_key, effect_key), observed in sorted(pair_counts.items()):
+    patterns: list[ObservedPattern] = []
+    for pair in sorted(set(app_pairs) | set(user_pairs)):
+        trigger_key, effect_key = pair
         occurrences = trigger_counts[trigger_key]
-        ratio = observed / occurrences
-        if observed < INFERENCE_MIN_OCCURRENCES or ratio < INFERENCE_MIN_RATIO:
-            continue
-        app_fraction = pair_app_counts[(trigger_key, effect_key)] / observed
-        # Effects attributed to an app (Butler) are stronger evidence than user activity.
-        confidence = round(min(ratio, 1.0) * (1.0 if app_fraction >= 0.5 else 0.8), 2)
         trigger = ContractTrigger(
             event=TriggerEvent(trigger_key[0]), conditions=dict(trigger_key[1])
         )
-        contracts.append(
-            BehavioralContract(
-                source=RuleSource.INFERRED_FROM_ACTIVITY,
-                parser=ParserType.ACTIVITY,
-                trigger=trigger,
-                actions=[
-                    ContractAction(type=ActionType(effect_key[0]), params=dict(effect_key[1]))
-                ],
-                scope={"board_id": board_id, **trigger.conditions},
-                confidence=confidence,
-                evidence_count=observed,
-                metadata={
-                    "trigger_occurrences": occurrences,
-                    "observed_ratio": round(ratio, 2),
-                    "app_created_fraction": round(app_fraction, 2),
-                    "window_seconds": INFERENCE_WINDOW_SECONDS,
-                },
+        action = ContractAction(type=ActionType(effect_key[0]), params=dict(effect_key[1]))
+        app_ratio = app_pairs[pair] / occurrences
+
+        if app_pairs[pair] >= INFERENCE_MIN_OCCURRENCES and app_ratio >= INFERENCE_MIN_RATIO:
+            contracts.append(
+                BehavioralContract(
+                    source=RuleSource.INFERRED_FROM_ACTIVITY,
+                    parser=ParserType.ACTIVITY,
+                    trigger=trigger,
+                    actions=[action],
+                    scope={"board_id": board_id, **trigger.conditions},
+                    confidence=round(min(app_ratio, 1.0), 2),
+                    evidence_count=app_pairs[pair],
+                    metadata={
+                        "automation_actor": actors[pair].most_common(1)[0][0],
+                        "trigger_occurrences": occurrences,
+                        "app_attributed_effects": app_pairs[pair],
+                        "user_attributed_effects": user_pairs[pair],
+                        "window_seconds": INFERENCE_WINDOW_SECONDS,
+                    },
+                )
             )
-        )
-    return contracts
+            continue
+
+        observed = app_pairs[pair] + user_pairs[pair]
+        ratio = observed / occurrences
+        if observed >= INFERENCE_MIN_OCCURRENCES and ratio >= INFERENCE_MIN_RATIO:
+            patterns.append(
+                ObservedPattern(
+                    trigger=trigger,
+                    action=action,
+                    occurrences=observed,
+                    trigger_occurrences=occurrences,
+                    ratio=round(min(ratio, 1.0), 2),
+                    app_attributed=app_pairs[pair],
+                )
+            )
+    return InferenceResult(contracts, patterns)
 
 
 def _to_event(action: dict[str, Any]) -> dict[str, Any] | None:
@@ -143,9 +174,22 @@ def _to_event(action: dict[str, Any]) -> dict[str, Any] | None:
         "at": datetime.fromisoformat(date),
         "trigger": trigger,
         "effect": effect,
-        # Actions performed by an app or Power-Up (Butler) carry an appCreator.
-        "by_app": bool(action.get("appCreator")),
+        "actor": _automation_actor(action),
     }
+
+
+def _automation_actor(action: dict[str, Any]) -> str | None:
+    """Who performed the action if it was an app, else None (a person).
+
+    ``appCreator`` is null for actions made with a user's own token and set for
+    actions made by an app; Butler's carries a name. Verify against a live board.
+    """
+    app = action.get("appCreator") or {}
+    if not app.get("id") and not app.get("name"):
+        return None
+    if "butler" in str(app.get("name", "")).casefold():
+        return "butler"
+    return f"app:{app.get('id') or app.get('name')}"
 
 
 def _label_name(label: dict[str, Any]) -> str:

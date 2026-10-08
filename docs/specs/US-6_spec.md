@@ -12,7 +12,7 @@ parent_techspec: docs/techspecs/TS-6.md
 - After a human approves `PERMISSION_TO_INVESTIGATE` (US-5), the Architect Agent reads one Trello board through the Trello REST API (read-only).
 - Records the board structure: lists, labels, custom fields (with dropdown options), checklists, due-date usage and enabled Power-Ups. Card titles and descriptions are never stored.
 - Produces behavioral contracts in a canonical `{trigger, actions, scope}` form from two sources:
-  1. **Inferred from board activity.** Trello has no public API for Butler automation rules, so repeated trigger→effect pairs in the board's action history (e.g. every card moved into "Done" is archived within seconds) are reported with a confidence score.
+  1. **Inferred from automation-attributed board activity.** Trello has no public API for Butler automation rules. A trigger→effect pair in the action history (e.g. every card moved into "Done" is archived within seconds) becomes a contract only when the effect was performed by an app — the action's `appCreator` is set (Butler's carries a name) — at least 3 times and after ≥80% of the trigger's occurrences. Timing alone does not prove causation: sequences performed by people are reported separately as `observed_patterns` (weak evidence) and are never published as contracts.
   2. **Butler rule text supplied by a user.** Rules copied from the Trello UI are parsed by a deterministic Butler grammar; Gemini Pro handles rules the grammar cannot read, and its output is validated against the canonical vocabulary. Anything still unrecognised is kept as an `unparsed` contract for manual review.
 - Stores each extraction as an immutable document in Firestore `behavioral_contracts` (`create`, never overwrite) for US-7.
 - Writes every Trello API call (method, path, status, duration — no credentials) and the extracted rules to Cloud Audit Logs, with a SHA-256 of the stored document.
@@ -26,8 +26,10 @@ parent_techspec: docs/techspecs/TS-6.md
 - AC-6.6: Logs all API calls and extracted rules to Cloud Audit Logs.
 - AC-6.7 (from US-5): Extraction is blocked unless `PERMISSION_TO_INVESTIGATE` is approved, active and unrevoked.
 
-## Known limitation
-Butler rules are not exposed by the Trello REST API. Inferred contracts describe observed behavior, not the rule definition, and carry `source: inferred_from_activity` and a `confidence` below 1.0 when the evidence is weaker. Exact rules require the user to supply the rule text (`butler_rules`).
+## Known limitations
+- Butler rules are not exposed by the Trello REST API. Inferred contracts describe observed automated behavior, not the rule definition, and carry `source: inferred_from_activity`, a `confidence` (share of trigger occurrences followed by the automated effect) and `metadata.automation_actor` (`butler` or `app:<id>`). Exact rules require the user to supply the rule text (`butler_rules`).
+- Attribution relies on `appCreator` being null for a person's actions and set for app actions. This is documented only in the Atlassian developer community, not the official reference; verify against a live board before relying on it.
+- Butler rules that rarely fire, or whose effects were also done by hand, will not reach the thresholds and must be supplied as text.
 
 ## Integration Points
 - Ancestor US-5: `check_approval_status(proposal_id, "PERMISSION_TO_INVESTIGATE")` from `shared/approvals/approvals.py`. If the check raises, `_investigation_gate` fails closed (`GATE_ERROR`).
@@ -39,7 +41,8 @@ Butler rules are not exposed by the Trello REST API. Inferred contracts describe
 - `TriggerEvent`: card_moved_to_list, card_created_in_list, label_added, label_removed, due_marked_complete, card_archived, checklist_completed
 - `ActionType`: archive_card, move_card, add_label, remove_label, mark_due_complete, post_comment, notify, set_due_date, add_member
 - `BoardSnapshot`: board_id, name, url, closed, lists, labels, custom_fields, power_ups, card/checklist/due-date counts, label_usage
-- `ContractExtraction` (Firestore document): extraction_id, proposal_id, board, contracts, api_calls, warnings, extracted_at, extracted_by
+- `ObservedPattern`: trigger, action, occurrences, trigger_occurrences, ratio, app_attributed, note — user habits, **not** contracts; US-7/US-8 must not enforce them
+- `ContractExtraction` (Firestore document): extraction_id, proposal_id, board, contracts, observed_patterns, api_calls, warnings, extracted_at, extracted_by
 
 ## Security
 - Trello key/token come from env (local) or Secret Manager (`trello-api-key`, `trello-api-token`) and are sent only in the `Authorization: OAuth` header, never in URLs, logs, results or Firestore.

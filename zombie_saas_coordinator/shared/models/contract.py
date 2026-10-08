@@ -107,6 +107,26 @@ class BehavioralContract(BaseModel):
         return self
 
 
+class ObservedPattern(BaseModel):
+    """A repeated trigger->effect sequence performed by people, not by an automation.
+
+    Weak evidence only: it may be a team habit rather than a rule, so it is never
+    published as a ``BehavioralContract`` and downstream stories must not enforce it.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    trigger: ContractTrigger
+    action: ContractAction
+    occurrences: int = Field(ge=0, description="Times the effect followed the trigger")
+    trigger_occurrences: int = Field(ge=0)
+    ratio: float = Field(ge=0.0, le=1.0)
+    app_attributed: int = Field(
+        default=0, ge=0, description="Of the occurrences, how many an app performed"
+    )
+    note: str = "Effects were performed by users, not an automation; not a contract."
+
+
 class ListInfo(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -173,6 +193,9 @@ class ContractExtraction(BaseModel):
     proposal_id: str = Field(min_length=1)
     board: BoardSnapshot
     contracts: list[BehavioralContract] = Field(default_factory=list)
+    observed_patterns: list[ObservedPattern] = Field(
+        default_factory=list, description="User habits seen in activity; not contracts"
+    )
     api_calls: list[dict[str, Any]] = Field(
         default_factory=list, description="Trello requests made (no credentials)"
     )

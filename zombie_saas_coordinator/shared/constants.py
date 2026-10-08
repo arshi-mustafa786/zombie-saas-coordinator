@@ -134,8 +134,9 @@ TRELLO_MAX_ACTION_PAGES = 5
 
 # Inferring automations from board activity (Butler rules have no public API).
 INFERENCE_WINDOW_SECONDS = 60  # effect must follow its trigger on the same card
+# Only effects performed by an app (appCreator set) count towards a contract.
 INFERENCE_MIN_OCCURRENCES = 3
-INFERENCE_MIN_RATIO = 0.8  # share of trigger occurrences followed by the effect
+INFERENCE_MIN_RATIO = 0.8  # share of trigger occurrences followed by the automated effect
 
 MAX_RULE_TEXT_LENGTH = 500
 MAX_BUTLER_RULES_PER_CALL = 50

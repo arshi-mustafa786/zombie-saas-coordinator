@@ -17,6 +17,7 @@ import httpx
 import pytest
 
 from zombie_saas_coordinator.agents.architect import tools
+from zombie_saas_coordinator.agents.architect.activity_inference import infer_contracts
 from zombie_saas_coordinator.agents.architect.butler_grammar import parse_butler_rule
 from zombie_saas_coordinator.shared.approvals import approvals as approvals_module
 from zombie_saas_coordinator.shared.constants import (
@@ -40,6 +41,8 @@ PROPOSAL_ID = "prop_abc123"
 API_KEY = "test-trello-key-0001"
 API_TOKEN = "test-trello-token-SECRET-0002"
 T0 = datetime(2026, 10, 1, 9, 0, tzinfo=UTC)
+# Shape of appCreator on actions performed by Butler (null for a person's own actions).
+BUTLER = {"id": "5d1c0b5d6c8ab5a2f0c9e111", "name": "Butler"}
 
 
 # ──────────────────────────────────────────────
@@ -61,7 +64,7 @@ def _move(card: str, list_name: str, at: float, app: bool = False) -> dict[str, 
             "listAfter": {"name": list_name},
         },
     }
-    return {**action, "appCreator": {"id": "butler"}} if app else action
+    return {**action, "appCreator": BUTLER} if app else action
 
 
 def _archive(card: str, at: float, app: bool = False) -> dict[str, Any]:
@@ -70,7 +73,7 @@ def _archive(card: str, at: float, app: bool = False) -> dict[str, Any]:
         "date": _iso(at),
         "data": {"card": {"id": card, "closed": True}, "old": {"closed": False}},
     }
-    return {**action, "appCreator": {"id": "butler"}} if app else action
+    return {**action, "appCreator": BUTLER} if app else action
 
 
 def _label(card: str, name: str, at: float) -> dict[str, Any]:
@@ -258,11 +261,16 @@ def test_extracts_inferred_automations_and_board_structure(
     assert done_archive["evidence_count"] == 4
     assert done_archive["confidence"] == 1.0  # every archive was performed by Butler
     assert done_archive["scope"] == {"board_id": BOARD_ID, "list": "Done"}
+    assert done_archive["metadata"]["automation_actor"] == "butler"
 
-    urgent_move = _contract(result, "label_added", "move_card")
-    assert urgent_move["trigger"]["conditions"] == {"label": "Urgent"}
-    assert urgent_move["actions"][0]["params"] == {"list": "Doing"}
-    assert urgent_move["confidence"] == 0.8  # user-attributed, so weaker evidence
+    # People label a card "Urgent" and then move it themselves: a habit, not a rule.
+    assert len(result["contracts"]) == 1
+    (urgent_move,) = result["observed_patterns"]
+    assert urgent_move["trigger"] == {"event": "label_added", "conditions": {"label": "Urgent"}}
+    assert urgent_move["action"] == {"type": "move_card", "params": {"list": "Doing"}}
+    assert urgent_move["occurrences"] == 3
+    assert urgent_move["app_attributed"] == 0
+    assert any("performed by people" in warning for warning in result["warnings"])
 
     assert result["board"] == {
         "board_id": BOARD_ID,
@@ -358,14 +366,79 @@ def test_board_with_no_automations_returns_empty_contract_list(
     assert result["stored"] is True
 
 
+def _newest_first(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(actions, key=lambda action: action["date"], reverse=True)
+
+
 def test_inconsistent_pattern_is_not_reported() -> None:
     """Done -> archive in only 2 of 4 moves is below the 80% ratio."""
-    actions = [_move("c1", "Done", 0), _archive("c1", 5)]
-    actions += [_move("c2", "Done", 100), _archive("c2", 105)]
+    actions = [_move("c1", "Done", 0), _archive("c1", 5, app=True)]
+    actions += [_move("c2", "Done", 100), _archive("c2", 105, app=True)]
     actions += [_move("c3", "Done", 200), _move("c4", "Done", 300)]
-    from zombie_saas_coordinator.agents.architect.activity_inference import infer_contracts
 
-    assert infer_contracts(list(reversed(actions)), BOARD_ID) == []
+    result = infer_contracts(_newest_first(actions), BOARD_ID)
+
+    assert result.contracts == []
+    assert result.observed_patterns == []
+
+
+def test_consistent_user_habit_is_never_a_contract() -> None:
+    """Reviewer's case: people always label "Urgent" then move the card themselves."""
+    actions: list[dict[str, Any]] = []
+    for index in range(10):
+        card, start = f"c{index}", index * 1000
+        actions += [_label(card, "Urgent", start), _move(card, "Doing", start + 5)]
+
+    result = infer_contracts(_newest_first(actions), BOARD_ID)
+
+    assert result.contracts == []  # 100% consistent, but no automation performed it
+    (pattern,) = result.observed_patterns
+    assert pattern.occurrences == 10
+    assert pattern.ratio == 1.0
+    assert pattern.app_attributed == 0
+
+
+def test_partly_automated_effect_is_not_a_contract() -> None:
+    """Butler archived 2 of 4 cards and people archived the rest: not a reliable rule."""
+    actions: list[dict[str, Any]] = []
+    for index in range(4):
+        card, start = f"c{index}", index * 1000
+        actions += [_move(card, "Done", start), _archive(card, start + 5, app=index < 2)]
+
+    result = infer_contracts(_newest_first(actions), BOARD_ID)
+
+    assert result.contracts == []
+    (pattern,) = result.observed_patterns
+    assert pattern.app_attributed == 2
+
+
+def test_other_apps_are_named_by_id() -> None:
+    zapier = {"id": "app-zapier-0001"}
+    actions: list[dict[str, Any]] = []
+    for index in range(3):
+        card, start = f"c{index}", index * 1000
+        actions += [_move(card, "Done", start), {**_archive(card, start + 5), "appCreator": zapier}]
+
+    (contract,) = infer_contracts(_newest_first(actions), BOARD_ID).contracts
+
+    assert contract.metadata["automation_actor"] == "app:app-zapier-0001"
+    assert contract.metadata["user_attributed_effects"] == 0
+
+
+def test_app_effect_wins_over_user_effect_in_the_same_window() -> None:
+    """A person archives, then Butler re-archives: the occurrence counts as automated."""
+    actions: list[dict[str, Any]] = []
+    for index in range(3):
+        card, start = f"c{index}", index * 1000
+        actions += [
+            _move(card, "Done", start),
+            _archive(card, start + 2),
+            _archive(card, start + 4, app=True),
+        ]
+
+    (contract,) = infer_contracts(_newest_first(actions), BOARD_ID).contracts
+
+    assert contract.evidence_count == 3
 
 
 def test_unparsed_rule_is_kept_for_manual_review(

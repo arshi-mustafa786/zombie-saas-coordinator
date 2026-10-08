@@ -274,8 +274,9 @@ def extract_trello_rules(
         butler_rules: Optional Butler rule texts copied from the Trello UI.
 
     Returns:
-        dict with keys: status, extraction_id, contracts, contracts_count, board,
-        warnings, stored, storage_error, audit_logged, content_sha256.
+        dict with keys: status, extraction_id, contracts, contracts_count,
+        observed_patterns (repeated user habits, NOT contracts), board, warnings,
+        stored, storage_error, audit_logged, content_sha256.
     """
     try:
         board_id = validate_board_id(board_id)
@@ -334,21 +335,28 @@ def extract_trello_rules(
     if not rules:
         warnings.append(
             "Butler rules cannot be read through the Trello API; contracts were inferred from "
-            "board activity. Pass the rule text in butler_rules for exact rules."
+            "automation-attributed board activity. Pass the rule text in butler_rules for "
+            "exact rules."
         )
 
     try:
-        contracts = infer_contracts(bundle.get("actions") or [], board_id)
-        contracts += [_contract_from_text(rule, board_id) for rule in rules]
+        inferred = infer_contracts(bundle.get("actions") or [], board_id)
+        contracts = inferred.contracts + [_contract_from_text(rule, board_id) for rule in rules]
         unparsed = sum(1 for contract in contracts if contract.parser == ParserType.UNPARSED)
         if unparsed:
             warnings.append(
                 f"{unparsed} Butler rule(s) could not be parsed and need manual review."
             )
+        if inferred.observed_patterns:
+            warnings.append(
+                f"{len(inferred.observed_patterns)} repeated pattern(s) were performed by people, "
+                "not an automation; they are reported as observed_patterns, not contracts."
+            )
         extraction = ContractExtraction(
             proposal_id=proposal_id,
             board=_build_snapshot(board_id, bundle),
             contracts=contracts,
+            observed_patterns=inferred.observed_patterns,
             api_calls=trello.calls,
             warnings=warnings,
         )
@@ -389,6 +397,7 @@ def extract_trello_rules(
                 }
                 for contract in record["contracts"]
             ],
+            "observed_patterns_count": len(record["observed_patterns"]),
             "warnings": warnings,
         },
         "NOTICE",
@@ -409,6 +418,7 @@ def extract_trello_rules(
         },
         "contracts": record["contracts"],
         "contracts_count": len(record["contracts"]),
+        "observed_patterns": record["observed_patterns"],
         "warnings": warnings,
         "stored": stored,
         "storage_error": storage_error,
