@@ -14,6 +14,7 @@ SCANS_COLLECTION = "scans"  # US-1 writes, US-3 reads
 SAAS_WHITELIST_COLLECTION = "saas_whitelist"  # US-2 reads
 EXPENSE_EVENTS_COLLECTION = "expense_events"  # US-2 writes, US-3 reads
 PROPOSALS_COLLECTION = "consolidation_proposals"  # US-3 writes, US-4 reads/updates
+BEHAVIORAL_CONTRACTS_COLLECTION = "behavioral_contracts"  # US-6 writes, US-7 reads
 
 # ──────────────────────────────────────────────
 # Cloud Logging audit log names
@@ -22,6 +23,7 @@ PROPOSALS_COLLECTION = "consolidation_proposals"  # US-3 writes, US-4 reads/upda
 IDP_TELEMETRY_AUDIT_LOG = "idp-telemetry-audit"
 EXPENSE_WEBHOOK_AUDIT_LOG = "expense-webhook-audit"
 PROPOSAL_AUDIT_LOG = "consolidation-proposal-audit"
+CONTRACT_EXTRACTION_AUDIT_LOG = "behavioral-contract-audit"
 
 # ──────────────────────────────────────────────
 # US-1: IdP telemetry & redundancy
@@ -110,3 +112,31 @@ US4_PROPOSAL_ALIASES: dict[str, tuple[str, ...]] = {
     "target_platform": ("target_app",),
     "detected_dependencies": ("dependencies",),
 }
+
+# ──────────────────────────────────────────────
+# US-6: Behavioral contract extraction (Trello)
+# ──────────────────────────────────────────────
+
+# US-5 gate that must be approved before any Trello data is read.
+INVESTIGATION_GATE = "PERMISSION_TO_INVESTIGATE"
+
+TRELLO_API_BASE_URL = "https://api.trello.com/1"
+# Secret Manager secret names used on Cloud Run (names, not secrets).
+TRELLO_API_KEY_SECRET_ID = "trello-api-key"  # noqa: S105
+TRELLO_API_TOKEN_SECRET_ID = "trello-api-token"  # noqa: S105
+TRELLO_TIMEOUT_SECONDS = 10.0
+# Retry 429 (rate limit) and transient gateway errors only; 500 fails fast.
+TRELLO_RETRY_STATUSES = frozenset({429, 502, 503, 504})
+TRELLO_MAX_RETRIES = 3
+TRELLO_MAX_RETRY_WAIT_SECONDS = 10.0
+TRELLO_ACTIONS_PAGE_SIZE = 1000  # Trello's maximum for /boards/{id}/actions
+TRELLO_MAX_ACTION_PAGES = 5
+
+# Inferring automations from board activity (Butler rules have no public API).
+INFERENCE_WINDOW_SECONDS = 60  # effect must follow its trigger on the same card
+# Only effects performed by an app (appCreator set) count towards a contract.
+INFERENCE_MIN_OCCURRENCES = 3
+INFERENCE_MIN_RATIO = 0.8  # share of trigger occurrences followed by the automated effect
+
+MAX_RULE_TEXT_LENGTH = 500
+MAX_BUTLER_RULES_PER_CALL = 50
