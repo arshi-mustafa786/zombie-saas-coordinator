@@ -16,10 +16,7 @@ from google.adk.agents import Agent
 from zombie_saas_coordinator.agents.architect.agent import architect_agent
 from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
 from zombie_saas_coordinator.agents.integrator.agent import integrator_agent
-
-
 from zombie_saas_coordinator.shared.approvals.approvals import check_approval_status
-
 
 root_agent = Agent(
     name="zombie_saas_coordinator",

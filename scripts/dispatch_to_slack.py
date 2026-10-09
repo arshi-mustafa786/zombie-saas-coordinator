@@ -1,7 +1,7 @@
 """Dispatch a fresh consolidation proposal interactive card to Slack."""
 
 import os
-import sys
+
 import dotenv
 
 dotenv.load_dotenv()
