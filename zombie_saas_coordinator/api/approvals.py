@@ -32,6 +32,26 @@ from zombie_saas_coordinator.shared.models.proposal import ProposalStatus
 router = APIRouter(prefix="/api/v1/approvals", tags=["approvals", "hitl"])
 
 
+class _SafeAuditLogger:
+    """Fallback logger used when Google ADC or Cloud Logging is unavailable."""
+
+    def __init__(self, logger: Any | None = None) -> None:
+        self._logger = logger
+
+    def __getattr__(self, name: str) -> Any:
+        if self._logger is None:
+            return lambda *args, **kwargs: None
+        return getattr(self._logger, name)
+
+    def log_struct(self, *args: Any, **kwargs: Any) -> None:
+        if self._logger is None:
+            return None
+        try:
+            self._logger.log_struct(*args, **kwargs)
+        except Exception:
+            return None
+
+
 def _get_firestore_client() -> firestore.Client:
     """Build the Firestore client lazily."""
     database = os.getenv("FIRESTORE_DATABASE_ID") or None
@@ -40,8 +60,11 @@ def _get_firestore_client() -> firestore.Client:
 
 def _get_audit_logger() -> Any:  # noqa: ANN401
     """Structured audit logger for HITL authorization events."""
-    client = logging.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))  # type: ignore[no-untyped-call]
-    return client.logger("hitl-approval-audit")  # type: ignore[no-untyped-call]
+    try:
+        client = logging.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))  # type: ignore[no-untyped-call]
+        return _SafeAuditLogger(client.logger("hitl-approval-audit"))  # type: ignore[no-untyped-call]
+    except Exception:
+        return _SafeAuditLogger()
 
 
 def record_approval(
