@@ -10,6 +10,7 @@ Tool ownership by user story:
 import hashlib
 import json
 import os
+import re
 from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
@@ -481,20 +482,166 @@ def extract_trello_rules(
 # US-7: Schema Diffing & Structural Validation
 # ──────────────────────────────────────────────
 
+_TYPE_ALIASES = {
+    "string": "string",
+    "str": "string",
+    "text": "string",
+    "name": "string",
+    "title": "string",
+    "email": "string",
+    "url": "string",
+    "uuid": "string",
+    "bool": "boolean",
+    "boolean": "boolean",
+    "int": "integer",
+    "integer": "integer",
+    "number": "number",
+    "float": "number",
+    "decimal": "number",
+    "double": "number",
+    "date": "date",
+    "datetime": "date",
+    "timestamp": "date",
+    "array": "array",
+    "list": "array",
+    "set": "array",
+    "tuple": "array",
+    "object": "object",
+    "dict": "object",
+    "map": "object",
+    "unknown": "unknown",
+    "none": "unknown",
+}
 
-def diff_schemas(source_schema: dict[str, Any], target_schema: dict[str, Any]) -> dict[str, Any]:
-    """Compares the data schemas of Trello and Asana side-by-side.
-    Maps: card→task, list→section, board→project.
+_FIELD_ALIASES = {
+    "card_title": "name",
+    "task_name": "name",
+    "title": "name",
+    "name": "name",
+    "list_name": "section",
+    "section_name": "section",
+    "list": "section",
+    "section": "section",
+    "board_name": "project",
+    "project_name": "project",
+    "board": "project",
+    "project": "project",
+    "label": "tags",
+    "labels": "tags",
+    "tag": "tags",
+    "tags": "tags",
+    "due_date": "due",
+    "due": "due",
+    "description": "notes",
+    "notes": "notes",
+    "assignee": "owner",
+    "owner": "owner",
+    "priority": "priority",
+    "story_points": "story_points",
+    "custom_field": "custom_field",
+}
 
-    Args:
-        source_schema: Trello schema definition.
-        target_schema: Asana schema definition.
 
-    Returns:
-        dict with keys: mappings, green_count, yellow_count, red_count.
-    """
-    # TODO: Implement in US-7
-    raise NotImplementedError("US-7: diff_schemas")
+def _canonical_field_name(name: str) -> str:
+    cleaned = re.sub(r"[^a-z0-9]+", "_", str(name).lower()).strip("_")
+    return cleaned or "field"
+
+
+def _canonical_type(value: Any) -> str:
+    if value is None:
+        return "unknown"
+
+    if isinstance(value, dict):
+        if "type" in value and isinstance(value["type"], str):
+            return _canonical_type(value["type"])
+        if "kind" in value and isinstance(value["kind"], str):
+            return _canonical_type(value["kind"])
+        return "object"
+
+    if isinstance(value, (list, tuple, set)):
+        return "array"
+
+    if isinstance(value, bool):
+        return "boolean"
+
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return "number"
+
+    text = str(value).strip().lower()
+    if not text:
+        return "unknown"
+    return _TYPE_ALIASES.get(text, text)
+
+
+def _flatten_schema(node: Any, prefix: str = "") -> dict[str, str]:
+    flattened: dict[str, str] = {}
+
+    if not isinstance(node, dict):
+        return flattened
+
+    field_name = node.get("name") if isinstance(node.get("name"), str) else None
+    field_type = node.get("type") if isinstance(node.get("type"), str) else None
+    if field_name and field_type:
+        key = _canonical_field_name(prefix or field_name)
+        flattened[key] = _canonical_type(field_type)
+        return flattened
+
+    for key, value in node.items():
+        if key in {"name", "type", "description", "required", "nullable", "format", "default"}:
+            continue
+
+        nested_prefix = f"{prefix}.{key}" if prefix else str(key)
+
+        if isinstance(value, dict):
+            flattened.update(_flatten_schema(value, nested_prefix))
+        elif isinstance(value, list):
+            if value and all(isinstance(item, dict) for item in value):
+                for index, item in enumerate(value):
+                    item_prefix = f"{nested_prefix}.{index}"
+                    flattened.update(_flatten_schema(item, item_prefix))
+            else:
+                flattened[_canonical_field_name(nested_prefix)] = "array"
+        else:
+            flattened[_canonical_field_name(nested_prefix)] = _canonical_type(value)
+
+    if not flattened and "properties" in node and isinstance(node["properties"], dict):
+        flattened.update(_flatten_schema(node["properties"], prefix))
+    if not flattened and "fields" in node and isinstance(node["fields"], dict):
+        flattened.update(_flatten_schema(node["fields"], prefix))
+    if not flattened and "items" in node and isinstance(node["items"], dict):
+        flattened.update(_flatten_schema(node["items"], prefix))
+
+    return flattened
+
+
+def _find_best_target_match(
+    field_name: str, target_fields: dict[str, str]
+) -> tuple[str | None, str | None]:
+    candidates: list[str] = []
+    canonical = _canonical_field_name(field_name)
+    alias = _FIELD_ALIASES.get(canonical, canonical)
+    candidates.extend([canonical, alias])
+
+    for key in target_fields:
+        key_alias = _FIELD_ALIASES.get(key, key)
+        if key in (canonical, alias) or key_alias in (canonical, alias):
+            return key, target_fields[key]
+
+    for key, value in target_fields.items():
+        if _canonical_field_name(key) in candidates or _canonical_field_name(key) == canonical:
+            return key, value
+
+    return None, None
+
+
+def _equivalent_type(source_type: str, target_type: str) -> bool:
+    if source_type == target_type:
+        return True
+    if source_type in {"number", "integer"} and target_type in {"number", "integer"}:
+        return True
+    if source_type == "boolean" and target_type == "boolean":
+        return True
+    return source_type == "array" and target_type == "array"
 
 
 def classify_mapping(field_name: str, source_type: str, target_type: str) -> dict[str, Any]:
@@ -509,8 +656,152 @@ def classify_mapping(field_name: str, source_type: str, target_type: str) -> dic
     Returns:
         dict with keys: classification, reason.
     """
-    # TODO: Implement in US-7
-    raise NotImplementedError("US-7: classify_mapping")
+    normalized_field = _canonical_field_name(field_name)
+    source_norm = _canonical_type(source_type)
+    target_norm = _canonical_type(target_type)
+
+    if source_norm == "unknown" or target_norm == "unknown":
+        return {
+            "classification": "Red",
+            "status": "red",
+            "reason": (
+                "One side of the mapping is unknown or missing, "
+                "so the field cannot be validated safely."
+            ),
+        }
+
+    if _equivalent_type(source_norm, target_norm):
+        return {
+            "classification": "Green",
+            "status": "green",
+            "reason": "Direct type equivalent detected; no transformation is required.",
+        }
+
+    label_tokens = ("label", "tag", "custom_field", "field")
+    label_like = any(token in normalized_field for token in label_tokens)
+    if source_norm == "array" and target_norm == "string":
+        return {
+            "classification": "Yellow",
+            "status": "yellow",
+            "reason": (
+                "List values must be transformed into a tag/string representation "
+                "during migration."
+            ),
+        }
+    if label_like and target_norm in {"string", "array"}:
+        return {
+            "classification": "Yellow",
+            "status": "yellow",
+            "reason": (
+                "Labels/tags may need to be flattened, merged, or mapped into a "
+                "custom field or tag field."
+            ),
+        }
+    if source_norm in {"number", "integer"} and target_norm == "string":
+        return {
+            "classification": "Yellow",
+            "status": "yellow",
+            "reason": (
+                "Numeric data may require string formatting or a derived "
+                "custom field in Asana."
+            ),
+        }
+    if source_norm in {"string", "date"} and target_norm in {"number", "integer"}:
+        return {
+            "classification": "Yellow",
+            "status": "yellow",
+            "reason": "The field may require coercion or custom parsing before it can map cleanly.",
+        }
+
+    return {
+        "classification": "Red",
+        "status": "red",
+        "reason": (
+            "No safe equivalent mapping exists between the source field and "
+            "target field types."
+        ),
+    }
+
+
+def diff_schemas(source_schema: dict[str, Any], target_schema: dict[str, Any]) -> dict[str, Any]:
+    """Compares the data schemas of Trello and Asana side-by-side.
+    Maps: card→task, list→section, board→project.
+
+    Args:
+        source_schema: Trello schema definition.
+        target_schema: Asana schema definition.
+
+    Returns:
+        dict with keys: mappings, green_count, yellow_count, red_count.
+    """
+    if not isinstance(source_schema, dict) or not isinstance(target_schema, dict):
+        raise ValueError("source_schema and target_schema must both be dictionaries")
+
+    source_fields = _flatten_schema(source_schema)
+    target_fields = _flatten_schema(target_schema)
+
+    mappings: list[dict[str, Any]] = []
+    processed_targets: set[str] = set()
+
+    for source_field, source_type in source_fields.items():
+        target_field, target_type = _find_best_target_match(source_field, target_fields)
+        if target_field is None or target_type is None:
+            result = classify_mapping(source_field, source_type, "unknown")
+            result.update(
+                {
+                    "source_field": source_field,
+                    "target_field": None,
+                    "source_type": source_type,
+                    "target_type": "unknown",
+                }
+            )
+            mappings.append(result)
+            continue
+
+        result = classify_mapping(source_field, source_type, target_type)
+        result.update(
+            {
+                "source_field": source_field,
+                "target_field": target_field,
+                "source_type": source_type,
+                "target_type": target_type,
+            }
+        )
+        mappings.append(result)
+        processed_targets.add(target_field)
+
+    for target_field, target_type in target_fields.items():
+        if target_field in processed_targets:
+            continue
+        result = {
+            "source_field": None,
+            "target_field": target_field,
+            "source_type": "unknown",
+            "target_type": target_type,
+            "classification": "Red",
+            "status": "red",
+            "reason": (
+                "Target field has no equivalent in the source schema; "
+                "manual review is required."
+            ),
+        }
+        mappings.append(result)
+
+    counts = {"green": 0, "yellow": 0, "red": 0}
+    for item in mappings:
+        status = str(item.get("status") or item.get("classification", "")).lower()
+        if status in counts:
+            counts[status] += 1
+
+    return {
+        "mappings": mappings,
+        "green": counts["green"],
+        "yellow": counts["yellow"],
+        "red": counts["red"],
+        "green_count": counts["green"],
+        "yellow_count": counts["yellow"],
+        "red_count": counts["red"],
+    }
 
 
 # ──────────────────────────────────────────────
