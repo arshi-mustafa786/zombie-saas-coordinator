@@ -861,13 +861,16 @@ def _check_asana_automation(mapped_status: str, action_type: str) -> bool:
     status_lower = mapped_status.lower()
     asana_text = json.dumps(data).lower()
 
-    if "completed" in status_lower and action_lower in {"archive", "notify", "move"}:
+    if "completed" in status_lower and any(
+        act in action_lower for act in ("archive", "notify", "move", "complete")
+    ):
         # Asana natively supports these actions on task completion via Rules
         return True
-    if action_lower == "notify" and "notification" in asana_text:
+    if "notify" in action_lower and "notification" in asana_text:
         return True
     return (
-        action_lower == "custom_field_change" and "custom_fields" in asana_text
+        ("custom_field" in action_lower or action_lower == "custom_field_change")
+        and "custom_fields" in asana_text
     )
 
 
@@ -876,6 +879,7 @@ def _build_simulation_prompt(
     schema_diff: dict[str, Any],
     asana_capability: bool,
     mapped_status: str,
+    trello_status: str = "",
 ) -> str:
     """Constructs the Gemini Pro chain-of-thought prompt for behavioral equivalence.
 
@@ -888,6 +892,7 @@ def _build_simulation_prompt(
         schema_diff: The schema diff dict from US-7.
         asana_capability: Whether Asana natively supports the action.
         mapped_status: The Asana-equivalent status for the Trello trigger.
+        trello_status: The source Trello status or list name.
 
     Returns:
         A fully constructed prompt string.
@@ -895,6 +900,7 @@ def _build_simulation_prompt(
     # Encode contract and schema_diff as JSON to contain any injected content
     contract_json = json.dumps(contract, ensure_ascii=True, indent=2)
     schema_json = json.dumps(schema_diff, ensure_ascii=True, indent=2)
+    source_status = trello_status or contract.get("trigger", {}).get("to", "")
 
     return (
         "You are a SaaS migration expert analyzing behavioral equivalence "
@@ -904,7 +910,7 @@ def _build_simulation_prompt(
         "## Schema Diff Report\n"
         f"```json\n{schema_json}\n```\n\n"
         "## Trigger Status Mapping\n"
-        f"Trello status '{contract.get('trigger', {}).get('to', '')}' "
+        f"Trello status '{source_status}' "
         f"maps to Asana status '{mapped_status}'\n\n"
         "## Asana Native Capability Check\n"
         f"Asana API confirms native support for this transition+action: {asana_capability}\n\n"
@@ -1014,19 +1020,62 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
         raise ValueError("contract is missing required field: trigger")
 
     contract_id: str = contract["contract_id"]
-    trigger: dict[str, Any] = contract["trigger"]
-    action: dict[str, Any] = contract.get("action", {})
-    action_type: str = action.get("type", "")
+    trigger: Any = contract["trigger"]
+
+    # Handle unparsed Butler rules (from US-6 grammar/gemini fallback)
+    if trigger is None or str(contract.get("parser", "")).lower() == "unparsed":
+        unparsed_result: dict[str, Any] = {
+            "contract_id": contract_id,
+            "classification": CLASSIFICATION_INCOMPATIBLE,
+            "reasoning": (
+                "Unparsed Butler automation rule cannot be verified for behavioral "
+                "equivalence; flagged for quarantine and manual remediation."
+            ),
+            "remediation_needed": True,
+            "quarantine": True,
+            "simulated_at": datetime.now(UTC).isoformat(),
+            "system_identity": SYSTEM_IDENTITY,
+        }
+        try:
+            _persist_result(unparsed_result)
+        except Exception:
+            unparsed_result["firestore_write_error"] = True
+        return unparsed_result
+
+    # Extract action type from contract.action (single) or contract.actions (list, US-6)
+    action_type = ""
+    if "action" in contract and isinstance(contract["action"], dict):
+        action_type = str(contract["action"].get("type", ""))
+    elif "actions" in contract and isinstance(contract["actions"], list) and contract["actions"]:
+        first_action = contract["actions"][0]
+        if isinstance(first_action, dict):
+            action_type = str(first_action.get("type", ""))
 
     # ── Step 2: Map Trello status → Asana status (AC-8.2) ─────────────────
-    trello_to_status: str = trigger.get("to", "")
+    trello_to_status = ""
+    if isinstance(trigger, dict):
+        if "to" in trigger and isinstance(trigger["to"], str):
+            trello_to_status = trigger["to"]
+        elif "conditions" in trigger and isinstance(trigger["conditions"], dict):
+            trello_to_status = str(
+                trigger["conditions"].get("list")
+                or trigger["conditions"].get("to")
+                or ""
+            )
+        elif "event" in trigger and isinstance(trigger["event"], str):
+            event_val = trigger["event"].lower()
+            if "complete" in event_val:
+                trello_to_status = "Done"
+
     mapped_status: str = _map_status(trello_to_status)
 
     # ── Step 3: Check Asana native capability (AC-8.3, read-only) ─────────
     asana_capable: bool = _check_asana_automation(mapped_status, action_type)
 
     # ── Step 4: Build prompt and call Gemini Pro ───────────────────────────
-    prompt = _build_simulation_prompt(contract, schema_diff, asana_capable, mapped_status)
+    prompt = _build_simulation_prompt(
+        contract, schema_diff, asana_capable, mapped_status, trello_status=trello_to_status
+    )
 
     try:
         gemini_result = _call_gemini(prompt)

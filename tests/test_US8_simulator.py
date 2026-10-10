@@ -18,7 +18,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from zombie_saas_coordinator.agents.architect.tools import simulate_transition
+from zombie_saas_coordinator.agents.architect.tools import (
+    diff_schemas,
+    parse_automation_rule,
+    simulate_transition,
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stub fixtures (replaces US-6 / US-7 Firestore reads)
@@ -530,3 +534,114 @@ class TestSimulateTransitionIntegration:
         )
         assert written["contract_id"] == "ctr-001"
         assert isinstance(written["simulated_at"], str)  # ISO datetime string
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Real Pipeline Integration (US-6 -> US-7 -> US-8) — NO dummy/stub fixtures
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TestRealUS6US7US8Integration:
+    """Live cross-module integration tests with NO dummy fixtures:
+    US-6 (parse_automation_rule) -> US-7 (diff_schemas) -> US-8 (simulate_transition) -> Firestore.
+    """
+
+    @patch("zombie_saas_coordinator.agents.architect.tools.get_firestore_client")
+    @patch("zombie_saas_coordinator.agents.architect.tools.GenerativeModel")
+    def test_real_parsed_butler_rule_integrated_with_schema_diff(
+        self,
+        mock_model_cls: MagicMock,
+        mock_fs: MagicMock,
+    ) -> None:
+        """Integration: Uses real US-6 parser and real US-7 schema diff directly."""
+        mock_model_cls.return_value.generate_content.return_value = _make_gemini_response(
+            "Behaviorally Equivalent",
+            "Asana natively archives completed tasks via rules engine.",
+        )
+        mock_doc = MagicMock()
+        mock_fs.return_value.collection.return_value.document.return_value = mock_doc
+
+        # Real US-6 extraction
+        contract = parse_automation_rule({
+            "text": 'when a card is moved into list "Done", archive the card'
+        })
+        assert contract["status"] == "success"
+        assert contract["trigger"]["event"] == "card_moved_to_list"
+        assert contract["actions"][0]["type"] == "archive_card"
+
+        # Real US-7 schema diff
+        source_schema = {"card_title": "string", "list_name": "string"}
+        target_schema = {"task_name": "string", "section_name": "string"}
+        schema_diff = diff_schemas(source_schema, target_schema)
+        assert schema_diff["green"] >= 2
+
+        # Run real US-8 simulation
+        result = simulate_transition(contract, schema_diff)
+
+        assert result["contract_id"] == contract["contract_id"]
+        assert result["classification"] == "Behaviorally Equivalent"
+        assert result["quarantine"] is False
+        assert result["remediation_needed"] is False
+        assert result["system_identity"] == "architect_agent@zombie-saas"
+        mock_doc.set.assert_called_once_with(result)
+
+    @patch("zombie_saas_coordinator.agents.architect.tools.get_firestore_client")
+    def test_real_unparsed_contract_quarantined_automatically(
+        self,
+        mock_fs: MagicMock,
+    ) -> None:
+        """Integration: Unparsed US-6 rule is quarantined without calling Gemini."""
+        mock_doc = MagicMock()
+        mock_fs.return_value.collection.return_value.document.return_value = mock_doc
+
+        # Real US-6 unparsed contract
+        contract = parse_automation_rule({
+            "text": "this is an unrecognized automation rule format that cannot be parsed"
+        })
+        assert contract["status"] == "success"
+        assert contract["parser"] == "unparsed"
+
+        source_schema = {"card_title": "string"}
+        target_schema = {"task_name": "string"}
+        schema_diff = diff_schemas(source_schema, target_schema)
+
+        result = simulate_transition(contract, schema_diff)
+
+        assert result["contract_id"] == contract["contract_id"]
+        assert result["classification"] == "Incompatible"
+        assert result["quarantine"] is True
+        assert result["remediation_needed"] is True
+        assert "Unparsed Butler" in result["reasoning"]
+        mock_doc.set.assert_called_once_with(result)
+
+    @patch("zombie_saas_coordinator.agents.architect.tools.get_firestore_client")
+    @patch("zombie_saas_coordinator.agents.architect.tools.GenerativeModel")
+    def test_real_label_rule_with_lossy_schema_diff(
+        self,
+        mock_model_cls: MagicMock,
+        mock_fs: MagicMock,
+    ) -> None:
+        """Integration: Tests a real label trigger with real yellow/lossy schema mapping."""
+        mock_model_cls.return_value.generate_content.return_value = _make_gemini_response(
+            "Degraded but Acceptable",
+            "Trello labels can be mapped to Asana tags via custom webhook automation.",
+        )
+        mock_doc = MagicMock()
+        mock_fs.return_value.collection.return_value.document.return_value = mock_doc
+
+        contract = parse_automation_rule({
+            "text": 'when the "Urgent" label is added to a card, notify "alerts@example.com"'
+        })
+        assert contract["status"] == "success"
+
+        source_schema = {"labels": "list"}
+        target_schema = {"tags": "string"}
+        schema_diff = diff_schemas(source_schema, target_schema)
+        assert schema_diff["yellow"] >= 1
+
+        result = simulate_transition(contract, schema_diff)
+
+        assert result["classification"] == "Degraded but Acceptable"
+        assert result["remediation_needed"] is True
+        assert result["quarantine"] is False
+

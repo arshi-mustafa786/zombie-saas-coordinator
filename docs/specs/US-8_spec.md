@@ -34,28 +34,32 @@ ancestor_stories: [US-6, US-7]
 
 ## Integration Points
 
-- **US-6 (extract_trello_rules):** Provides the `contract` dict.
-  Expected shape: {trigger: str, action: str, scope: str, metadata: dict}.
+- **US-6 (extract_trello_rules, parse_automation_rule):** Provides the `contract` dict
+  (canonical `BehavioralContract` model).
+  Expected shape: {contract_id: str, trigger: {event: str, conditions: dict}, actions: list[{type: str, params: dict}], scope: dict, metadata: dict}.
 - **US-7 (diff_schemas):** Provides the `schema_diff` dict.
-  Expected shape: {mappings: list[{source_field, target_field, classification}], green_count, yellow_count, red_count}.
-- **Gemini Pro (Vertex AI):** Called via google-cloud-aiplatform SDK for chain-of-thought reasoning.
+  Expected shape: {mappings: list[{source_field, target_field, classification}], green: int, yellow: int, red: int, green_count: int, yellow_count: int, red_count: int}.
+- **Gemini Pro (Vertex AI):** Called for chain-of-thought reasoning on behavioral equivalence.
 - **Asana API:** Queried read-only to confirm automation capability existence.
 - **Firestore simulation_results:** Written to by this tool; read by US-9.
 
-> **Note (US-6/US-7 not yet merged):** During development of US-8, Firestore reads from
-> `behavioral_contracts` and `schema_diffs` are replaced by in-memory stub fixtures.
-> The production code paths remain correct; stubs are test-only.
+> **Integration Status:** US-6 (`extract_trello_rules`, `parse_automation_rule`) and US-7 (`diff_schemas`, `classify_mapping`)
+> are fully merged into main. `simulate_transition` directly integrates with canonical `BehavioralContract`
+> models and schema diff reports produced by US-6 and US-7 without any dummy shims.
 
 ## Data Contracts
 
-### Input - contract (from US-6)
+### Input - contract (from US-6 BehavioralContract)
 ```json
 {
-  "contract_id": "ctr-001",
-  "trigger": {"type": "status_change", "from": "In Progress", "to": "Done"},
-  "action": {"type": "archive", "target": "card"},
-  "scope": "board",
-  "metadata": {"butler_rule_id": "rule-abc"}
+  "contract_id": "bc_392977364d3e",
+  "source": "butler_rule_text",
+  "parser": "grammar",
+  "trigger": {"event": "card_moved_to_list", "conditions": {"list": "Done"}},
+  "actions": [{"type": "archive_card", "params": {}}],
+  "scope": {"list": "Done"},
+  "confidence": 1.0,
+  "metadata": {}
 }
 ```
 
