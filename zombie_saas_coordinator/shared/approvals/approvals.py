@@ -14,6 +14,26 @@ from google.cloud import firestore, logging
 from zombie_saas_coordinator.shared.models.proposal import ProposalStatus
 
 
+class _SafeAuditLogger:
+    """Fallback logger used when Google ADC or Cloud Logging is unavailable."""
+
+    def __init__(self, logger: Any | None = None) -> None:
+        self._logger = logger
+
+    def __getattr__(self, name: str) -> Any:
+        if self._logger is None:
+            return lambda *args, **kwargs: None
+        return getattr(self._logger, name)
+
+    def log_struct(self, *args: Any, **kwargs: Any) -> None:
+        if self._logger is None:
+            return None
+        try:
+            self._logger.log_struct(*args, **kwargs)
+        except Exception:
+            return None
+
+
 def _get_firestore_client() -> firestore.Client:
     """Build the Firestore client lazily."""
     database = os.getenv("FIRESTORE_DATABASE_ID") or None
@@ -22,8 +42,11 @@ def _get_firestore_client() -> firestore.Client:
 
 def _get_audit_logger() -> Any:
     """Structured audit logger for HITL approval gates."""
-    client = logging.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))
-    return client.logger("hitl-approval-audit")
+    try:
+        client = logging.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))
+        return _SafeAuditLogger(client.logger("hitl-approval-audit"))
+    except Exception:
+        return _SafeAuditLogger()
 
 
 def check_approval_status(
