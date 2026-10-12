@@ -15,6 +15,7 @@ SAAS_WHITELIST_COLLECTION = "saas_whitelist"  # US-2 reads
 EXPENSE_EVENTS_COLLECTION = "expense_events"  # US-2 writes, US-3 reads
 PROPOSALS_COLLECTION = "consolidation_proposals"  # US-3 writes, US-4 reads/updates
 BEHAVIORAL_CONTRACTS_COLLECTION = "behavioral_contracts"  # US-6 writes, US-7 reads
+SEMANTIC_MISMATCHES_COLLECTION = "semantic_mismatches"  # US-9 writes
 
 # ──────────────────────────────────────────────
 # Cloud Logging audit log names
@@ -24,6 +25,7 @@ IDP_TELEMETRY_AUDIT_LOG = "idp-telemetry-audit"
 EXPENSE_WEBHOOK_AUDIT_LOG = "expense-webhook-audit"
 PROPOSAL_AUDIT_LOG = "consolidation-proposal-audit"
 CONTRACT_EXTRACTION_AUDIT_LOG = "behavioral-contract-audit"
+SEMANTIC_MISMATCH_AUDIT_LOG = "semantic-mismatch-audit"
 
 # ──────────────────────────────────────────────
 # US-1: IdP telemetry & redundancy
