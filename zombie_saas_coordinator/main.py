@@ -15,6 +15,7 @@ from fastapi import FastAPI
 from zombie_saas_coordinator.api.approvals import router as approvals_router
 from zombie_saas_coordinator.api.callbacks import router as callbacks_router
 from zombie_saas_coordinator.api.proposals import router as proposals_router
+from zombie_saas_coordinator.api.quarantine import router as quarantine_router
 from zombie_saas_coordinator.api.scanner import router as scanner_router
 from zombie_saas_coordinator.api.webhooks import router as webhooks_router
 
@@ -30,6 +31,7 @@ app.include_router(callbacks_router)
 app.include_router(proposals_router)
 app.include_router(scanner_router)
 app.include_router(approvals_router)
+app.include_router(quarantine_router)
 
 
 @app.get("/health")

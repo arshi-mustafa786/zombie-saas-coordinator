@@ -16,14 +16,18 @@ from google.adk.agents import Agent
 from zombie_saas_coordinator.agents.architect.agent import architect_agent
 from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
 from zombie_saas_coordinator.shared.approvals.approvals import check_approval_status
+from zombie_saas_coordinator.shared.quarantine.service import (
+    check_disposal_eligibility,
+    quarantine_source_data,
+)
 
 root_agent = Agent(
     name="zombie_saas_coordinator",
     model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"),
     description=(
         "Root orchestrator for the Zombie SaaS Consolidator platform. "
-        "Coordinates detection, validation, and migration planning for "
-        "redundant SaaS applications."
+        "Coordinates detection, validation, migration planning, and fail-safe "
+        "quarantine/disposal for redundant SaaS applications."
     ),
     instruction=(
         "You are the Zombie SaaS Coordinator, the root orchestrator of a "
@@ -35,13 +39,19 @@ root_agent = Agent(
         "WAIT for human approval (HITL gate). Use `check_approval_status` to verify.\n"
         "3. Once approved, delegate to the **architect_agent** for semantic contract validation "
         "(US-6 behavioral contracts, US-7 schema diffing, and US-8 state-transition simulation).\n"
-        "4. Summarize the validation findings into a migration readiness report.\n\n"
+        "4. Summarize the validation findings into a migration readiness report.\n"
+        "5. After migration execution, ensure source data is placed into `SOURCE_QUARANTINED` "
+        "via `quarantine_source_data`. Verifiable destruction is blocked until multi-signature "
+        "DISPOSAL_APPROVED is verified via `check_disposal_eligibility` "
+        "with no legal holds or exceptions.\n\n"
         "## CRITICAL RULES\n"
         "- NEVER proceed past step 2 without explicit human approval.\n"
-        "- NEVER modify data in external systems (Trello, Asana) — read-only analysis.\n"
+        "- NEVER destroy source data without verified multi-signature DISPOSAL_APPROVED state.\n"
+        "- NEVER modify data in external systems (Trello, Asana) — "
+        "read-only analysis until verified.\n"
         "- ALL actions must be logged for compliance audit trail.\n"
     ),
-    tools=[check_approval_status],
+    tools=[check_approval_status, check_disposal_eligibility, quarantine_source_data],
     sub_agents=[auditor_agent, architect_agent],
 )
 

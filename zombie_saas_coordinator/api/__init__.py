@@ -7,6 +7,13 @@ Each route module is created by the user story that introduces it:
 - US-5: approvals.py  (HITL authorization endpoint)
 """
 
-from zombie_saas_coordinator.api import scanner, webhooks
+from zombie_saas_coordinator.api import (
+    approvals,
+    callbacks,
+    proposals,
+    quarantine,
+    scanner,
+    webhooks,
+)
 
-__all__ = ["scanner", "webhooks"]
+__all__ = ["approvals", "callbacks", "proposals", "quarantine", "scanner", "webhooks"]
