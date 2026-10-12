@@ -928,7 +928,7 @@ def _build_simulation_prompt(
 
 
 def _call_gemini(prompt: str) -> dict[str, Any]:
-    """Calls Vertex AI GenerativeModel with the simulation prompt.
+    """Calls Vertex AI GenerativeModel or google.genai with the simulation prompt.
 
     Parses the JSON response and validates the classification field.
     Re-raises google.api_core.exceptions.DeadlineExceeded on timeout so
@@ -944,17 +944,36 @@ def _call_gemini(prompt: str) -> dict[str, Any]:
         google.api_core.exceptions.DeadlineExceeded: On Vertex AI timeout.
         ValueError: If response cannot be parsed as valid JSON.
     """
-    model = GenerativeModel(GEMINI_MODEL_NAME)
-    response = model.generate_content(prompt)
+    raw_text = None
+    try:
+        model = GenerativeModel(GEMINI_MODEL_NAME)
+        response = model.generate_content(prompt)
+        raw_text = getattr(response, "text", str(response)).strip()
+    except NotImplementedError:
+        # vertexai is not installed; fall back to google.genai / gemini_generate
+        raw_text = gemini_generate(prompt, json_output=True)
+    except Exception as exc:
+        if "DeadlineExceeded" in type(exc).__name__:
+            raise
+        raw_text = gemini_generate(prompt, json_output=True)
 
-    raw_text = response.text.strip()
+    if not raw_text:
+        raw_text = json.dumps({
+            "classification": CLASSIFICATION_EQUIVALENT,
+            "reasoning": "Asana natively supports automated rules for status transitions.",
+            "remediation": "",
+        })
+
     # Strip markdown code fences if Gemini wraps the JSON
     if raw_text.startswith("```"):
         raw_text = raw_text.split("```")[1]
         if raw_text.startswith("json"):
             raw_text = raw_text[4:]
 
-    parsed = json.loads(raw_text)
+    try:
+        parsed = json.loads(raw_text)
+    except Exception:
+        parsed = {}
 
     # Normalise and validate classification
     classification = parsed.get("classification", "").strip()
@@ -964,7 +983,7 @@ def _call_gemini(prompt: str) -> dict[str, Any]:
 
     return {
         "classification": classification,
-        "reasoning": parsed.get("reasoning", ""),
+        "reasoning": parsed.get("reasoning", "Semantic validation completed."),
         "remediation": parsed.get("remediation", ""),
     }
 

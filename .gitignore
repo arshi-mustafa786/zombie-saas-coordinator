@@ -46,3 +46,7 @@ temp_body.md
 
 # Ruff
 .ruff_cache/
+
+
+#adk 
+.adk/
