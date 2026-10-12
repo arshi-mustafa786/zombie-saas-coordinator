@@ -1019,41 +1019,48 @@ def _persist_result(result: dict[str, Any]) -> None:
 
 
 def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -> dict[str, Any]:
-    """Simulates a Trello automation against Asana and returns a compatibility verdict.
+    """Simulates the execution of a behavioral contract in Asana.
 
-    This supports both the newer structured US-8 contract format and the older
-    lightweight contract shape used by the legacy safety tests.
+    Pipeline:
+    1. Validates required contract fields (contract_id, trigger).
+    2. Maps the Trello trigger status to its Asana equivalent (AC-8.2).
+    3. Queries Asana API (read-only) to check native automation support (AC-8.3).
+    4. Builds a chain-of-thought prompt and calls Gemini Pro (AC-8.1).
+    5. Classifies result as Behaviorally Equivalent / Degraded / Incompatible (AC-8.4).
+    6. Sets quarantine=True for Incompatible results (AC-8.5).
+    7. Persists the full result to Firestore simulation_results (AC-8.6).
+
+    Args:
+        contract: A behavioral contract from extract_trello_rules (US-6).
+                  Required keys: contract_id, trigger.
+        schema_diff: The schema diff report from diff_schemas (US-7).
+
+    Returns:
+        On success: dict with keys classification, reasoning, remediation,
+                    remediation_needed, quarantine, contract_id, simulated_at,
+                    system_identity.
+        On Vertex AI timeout: dict with error=True, retry=True.
+        On Firestore write failure: classification dict is still returned plus
+                                    firestore_write_error=True.
+
+    Raises:
+        ValueError: If contract is missing contract_id or trigger.
     """
     import google.api_core.exceptions as gcp_exc
 
+    # ── Step 1: Validate required contract fields ──────────────────────────
     if not isinstance(contract, dict):
         raise ValueError("contract must be a dictionary")
     if not isinstance(schema_diff, dict):
         raise ValueError("schema_diff must be a dictionary")
 
-    is_legacy_test_mode = bool(contract.get("_legacy_test_mode", False))
-
-    # Backward-compatible fallback for earlier lightweight test harness with action-only strings.
-    if "trigger" not in contract and isinstance(contract.get("action"), str):
-        contract = {**contract, "trigger": {"event": "status_change", "to": "Done"}}
-
+    if "contract_id" not in contract:
+        raise ValueError("contract is missing required field: contract_id")
     if "trigger" not in contract:
         raise ValueError("contract is missing required field: trigger")
 
-    trigger = contract.get("trigger")
-
-    # PRODUCTION VALIDATION: contract_id is required for all real contracts.
-    has_contract_id = "contract_id" in contract and contract["contract_id"] not in (None, "")
-
-    if not has_contract_id and not is_legacy_test_mode:
-        raise ValueError(
-            "contract is missing required field: contract_id "
-            "(use _legacy_test_mode=True to bypass for tests only)"
-        )
-
-    contract_id = str(contract.get("contract_id") or hashlib.sha256(
-        json.dumps(contract, sort_keys=True, default=str).encode("utf-8")
-    ).hexdigest())
+    contract_id: str = contract["contract_id"]
+    trigger: Any = contract["trigger"]
 
     # Handle unparsed Butler rules (from US-6 grammar/gemini fallback)
     if trigger is None or str(contract.get("parser", "")).lower() == "unparsed":
@@ -1082,69 +1089,10 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
             unparsed_result["firestore_write_error"] = True
         return unparsed_result
 
-    # Legacy heuristic compatibility: some tests only assert on a simple classification.
-    contract_text = json.dumps(contract, sort_keys=True, default=str).lower()
-    mapping_items = schema_diff.get("mappings", [])
-    if not isinstance(mapping_items, list):
-        mapping_items = []
-
-    red_mapping = any(
-        str(item.get("classification", "")).lower() == "red" or item.get("target_field") is None
-        for item in mapping_items
-        if isinstance(item, dict)
-    )
-    yellow_mapping = any(
-        str(item.get("classification", "")).lower() == "yellow"
-        for item in mapping_items
-        if isinstance(item, dict)
-    )
-
-    archive_tokens = ("archive", "archived", "move to archive")
-    archive_requested = any(token in contract_text for token in archive_tokens)
-    notify_tokens = ("notify", "notification", "alert", "slack", "teams")
-    notification_requested = any(token in contract_text for token in notify_tokens)
-    custom_tokens = ("custom field", "custom_field", "label", "tag")
-    custom_field_requested = any(token in contract_text for token in custom_tokens)
-    completed_state = any(token in contract_text for token in ("done", "completed", "closed"))
-
-    if archive_requested and (red_mapping or (completed_state and archive_requested)):
-        legacy_classification = "Incompatible"
-        legacy_reasoning = (
-            "Asana does not provide a native auto-archive equivalent for completed items. "
-            "The source automation cannot be satisfied without an external trigger or "
-            "custom workflow."
-        )
-        legacy_remediation = (
-            "Create a Zapier/Make webhook triggered when a task reaches Completed and move the "
-            "task into an Archive section; keep a manual review step for edge cases."
-        )
-    elif (notification_requested and custom_field_requested) or yellow_mapping:
-        legacy_classification = "Degraded but Acceptable"
-        legacy_reasoning = (
-            "The behavior can be approximated through a custom field or channel notification "
-            "workflow, but it requires a third-party automation layer to preserve the "
-            "original behavior."
-        )
-        legacy_remediation = (
-            "Use a custom field change trigger in Zapier/Make to notify the team channel and add "
-            "a fallback manual review for failed notifications."
-        )
-    else:
-        legacy_classification = "Behaviorally Equivalent"
-        legacy_reasoning = (
-            "The mapped status and downstream action are equivalent in Asana without requiring a "
-            "custom workflow or data loss workaround."
-        )
-        legacy_remediation = (
-            "No remediation required; native Asana status automation is sufficient."
-        )
-
     # Extract action type from contract.action (single) or contract.actions (list, US-6)
     action_type = ""
     if "action" in contract and isinstance(contract["action"], dict):
         action_type = str(contract["action"].get("type", ""))
-    elif "action" in contract and isinstance(contract["action"], str):
-        action_type = contract["action"]
     elif "actions" in contract and isinstance(contract["actions"], list) and contract["actions"]:
         first_action = contract["actions"][0]
         if isinstance(first_action, dict):
@@ -1171,29 +1119,18 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
     # ── Step 3: Check Asana native capability (AC-8.3, read-only) ─────────
     asana_capable: bool = _check_asana_automation(mapped_status, action_type)
 
-    # PRODUCTION PATH vs LEGACY COMPATIBILITY
-    if is_legacy_test_mode:
-        # Heuristic classification for legacy tests (no external network calls)
-        classification = legacy_classification
-        reasoning = legacy_reasoning
-        remediation = legacy_remediation
-    else:
-        # ── Step 4: Build prompt and call Gemini Pro ───────────────────────────
-        prompt = _build_simulation_prompt(
-            contract, schema_diff, asana_capable, mapped_status, trello_status=trello_to_status
-        )
+    # ── Step 4: Build prompt and call Gemini Pro ───────────────────────────
+    prompt = _build_simulation_prompt(
+        contract, schema_diff, asana_capable, mapped_status, trello_status=trello_to_status
+    )
 
-        try:
-            gemini_result = _call_gemini(prompt)
-        except gcp_exc.DeadlineExceeded:
-            return {"error": True, "retry": True}
-
-        # Production path: Gemini result takes precedence
-        classification = str(gemini_result.get("classification") or legacy_classification)
-        reasoning = str(gemini_result.get("reasoning") or legacy_reasoning)
-        remediation = str(gemini_result.get("remediation") or legacy_remediation)
+    try:
+        gemini_result = _call_gemini(prompt)
+    except gcp_exc.DeadlineExceeded:
+        return {"error": True, "retry": True}
 
     # ── Step 5 & 6: Derive remediation_needed and quarantine flags ─────────
+    classification: str = gemini_result["classification"]
     is_incompatible = classification == CLASSIFICATION_INCOMPATIBLE
     is_degraded = classification == CLASSIFICATION_DEGRADED
     remediation_needed = is_incompatible or is_degraded
@@ -1203,15 +1140,15 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
     result: dict[str, Any] = {
         "contract_id": contract_id,
         "classification": classification,
-        "reasoning": reasoning,
-        "remediation": remediation,
+        "reasoning": gemini_result["reasoning"],
+        "remediation": gemini_result.get("remediation", ""),
         "remediation_needed": remediation_needed,
         "quarantine": quarantine,
         "simulated_at": datetime.now(UTC).isoformat(),
         "system_identity": SYSTEM_IDENTITY,
         "status": classification.lower().replace(" ", "_"),
         "contract": contract,
-        "target_capability_gap": reasoning,
+        "target_capability_gap": gemini_result["reasoning"],
         "requires_manual_review": classification != "Behaviorally Equivalent",
     }
 
@@ -1283,7 +1220,6 @@ def _generate_code_skeleton(
     contract: dict[str, Any],
     gap: str,
     remediation_hint: str,
-    is_test_mode: bool = False,
 ) -> str:
     """Generates a concrete Zapier/Make webhook code skeleton using Gemini Pro,
     falling back to a sanitized structured template."""
@@ -1304,30 +1240,29 @@ def _generate_code_skeleton(
     clean_action = _sanitize_text(action_name)
     clean_trigger = _sanitize_text(trigger_name)
 
-    if not is_test_mode:
-        prompt = (
-            "You are an automation integration engineer creating a Zapier/Make webhook "
-            "configuration to bridge an unsupported SaaS workflow.\n\n"
-            f"Source Contract: {json.dumps(contract, default=str)}\n"
-            f"Capability Gap: {gap}\n"
-            f"Remediation Strategy: {remediation_hint}\n\n"
-            "Output ONLY the YAML/pseudocode webhook configuration block. "
-            "Do not include explanation text or markdown wrappers."
-        )
-        try:
-            generated = gemini_generate(prompt, json_output=False)
-            if generated and len(generated.strip()) > 20:
-                clean_gen = generated.strip()
-                if clean_gen.startswith("```"):
-                    lines = clean_gen.split("\n")
-                    if lines[0].startswith("```"):
-                        lines = lines[1:]
-                    if lines and lines[-1].strip() == "```":
-                        lines = lines[:-1]
-                    clean_gen = "\n".join(lines).strip()
-                return clean_gen
-        except Exception:  # noqa: S110
-            pass
+    prompt = (
+        "You are an automation integration engineer creating a Zapier/Make webhook "
+        "configuration to bridge an unsupported SaaS workflow.\n\n"
+        f"Source Contract: {json.dumps(contract, default=str)}\n"
+        f"Capability Gap: {gap}\n"
+        f"Remediation Strategy: {remediation_hint}\n\n"
+        "Output ONLY the YAML/pseudocode webhook configuration block. "
+        "Do not include explanation text or markdown wrappers."
+    )
+    try:
+        generated = gemini_generate(prompt, json_output=False)
+        if generated and len(generated.strip()) > 20:
+            clean_gen = generated.strip()
+            if clean_gen.startswith("```"):
+                lines = clean_gen.split("\n")
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                clean_gen = "\n".join(lines).strip()
+            return clean_gen
+    except Exception:  # noqa: S110
+        pass
 
     return f"""# Zapier / Make webhook fallback for the unsupported automation
 trigger:
@@ -1410,13 +1345,7 @@ def generate_remediation(simulation_result: dict[str, Any]) -> dict[str, Any]:
             "an external archive workflow."
         )
 
-    is_test_mode = bool(
-        contract.get("_legacy_test_mode", False)
-        or simulation_result.get("_legacy_test_mode", False)
-    )
-    code_skeleton = _generate_code_skeleton(
-        contract, gap, remediation_hint, is_test_mode=is_test_mode
-    )
+    code_skeleton = _generate_code_skeleton(contract, gap, remediation_hint)
 
     report: dict[str, Any] = {
         "contract_id": contract_id,
