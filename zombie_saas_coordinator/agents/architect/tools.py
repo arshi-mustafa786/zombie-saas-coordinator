@@ -1028,9 +1028,14 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
         raise ValueError("contract is missing required field: trigger")
 
     trigger = contract.get("trigger")
+    
+    # PRODUCTION VALIDATION: contract_id is required for all real contracts.
+    # Do NOT make this dependent on trigger type. All contracts must be explicitly identified.
     has_contract_id = "contract_id" in contract and contract["contract_id"] not in (None, "")
-    if not has_contract_id and not isinstance(trigger, str):
-        raise ValueError("contract is missing required field: contract_id")
+    is_legacy_test_mode = contract.get("_legacy_test_mode", False)
+    
+    if not has_contract_id and not is_legacy_test_mode:
+        raise ValueError("contract is missing required field: contract_id (use _legacy_test_mode=True to bypass for tests only)")
 
     contract_id = str(contract.get("contract_id") or hashlib.sha256(
         json.dumps(contract, sort_keys=True, default=str).encode("utf-8")
@@ -1157,12 +1162,16 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
     except gcp_exc.DeadlineExceeded:
         return {"error": True, "retry": True}
 
-    legacy_contract_shape = not isinstance(trigger, dict) or "contract_id" not in contract
-    if legacy_contract_shape:
+    # PRODUCTION PATH: Always use Gemini result for real contracts.
+    # LEGACY COMPATIBILITY: Only apply heuristics if explicitly requested for backward-compat tests.
+    # Do NOT silently override Gemini based on missing metadata.
+    if is_legacy_test_mode and (not isinstance(trigger, dict) or not has_contract_id):
+        # Explicit legacy test compatibility: use heuristic classification
         classification = legacy_classification
         reasoning = legacy_reasoning
         remediation = legacy_remediation
     else:
+        # Production path: Gemini result takes precedence
         classification = str(gemini_result.get("classification") or legacy_classification)
         reasoning = str(gemini_result.get("reasoning") or legacy_reasoning)
         remediation = str(gemini_result.get("remediation") or legacy_remediation)

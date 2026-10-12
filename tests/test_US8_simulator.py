@@ -4,9 +4,13 @@ from zombie_saas_coordinator.agents.architect.tools import simulate_transition
 
 
 def test_simulate_transition_detects_incompatible_auto_archive_behavior() -> None:
+    # This test validates the LEGACY HEURISTIC behavior (archive → Incompatible)
+    # Production contracts use Gemini; legacy behavior is opt-in only
     contract = {
+        "contract_id": "test-archive-rule-001",
+        "_legacy_test_mode": True,  # Enable heuristic classification for testing
         "rule_name": "Archive done cards",
-        "trigger": "status == Done",
+        "trigger": "status == Done",  # String trigger for legacy test
         "action": "archive card",
         "scope": "board",
     }
@@ -25,8 +29,12 @@ def test_simulate_transition_detects_incompatible_auto_archive_behavior() -> Non
 
 
 def test_simulate_transition_accepts_acceptable_custom_field_notification() -> None:
+    # This test validates the LEGACY HEURISTIC behavior (notification + custom_field → Degraded but Acceptable)
+    # Production contracts use Gemini; legacy behavior is opt-in only
     contract = {
-        "trigger": "custom field == Urgent",
+        "contract_id": "test-notify-rule-002",
+        "_legacy_test_mode": True,  # Enable heuristic classification for testing
+        "trigger": "custom field == Urgent",  # String trigger for legacy test
         "action": "notify team channel",
     }
     schema_diff = {
