@@ -1,4 +1,6 @@
-"""ADK entry point for Root Agent (zombie_saas_coordinator)."""
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from zombie_saas_coordinator.agent import root_agent
 

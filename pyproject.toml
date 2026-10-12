@@ -48,6 +48,7 @@ ignore = ["S101"]  # Allow assert in tests
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["N999"]  # Allow test_US{N}_*.py story naming convention
+"scripts/*" = ["E402", "E501", "S310"]  # Allow script runner patterns and longer demo print lines
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -56,3 +57,10 @@ asyncio_mode = "auto"
 [tool.mypy]
 python_version = "3.11"
 strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "firebase_admin",
+    "firebase_admin.*",
+]
+ignore_missing_imports = true

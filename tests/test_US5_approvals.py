@@ -207,6 +207,8 @@ def test_approval_record_expired_check() -> None:
 
 
 _FS_CLIENT_PATCH = "zombie_saas_coordinator.api.approvals._get_firestore_client"
+_SHARED_FS_PATCH = "zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client"
+_SHARED_AUDIT_PATCH = "zombie_saas_coordinator.shared.approvals.approvals._get_audit_logger"
 
 
 def test_check_approval_status_unapproved_blocks_delegation() -> None:
@@ -216,7 +218,7 @@ def test_check_approval_status_unapproved_blocks_delegation() -> None:
         proposal_data=dummy_prop.model_dump(mode="json"),
         approval_data=None,
     )
-    with patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client):
+    with patch(_SHARED_FS_PATCH, return_value=client):
         result = check_approval_status(
             proposal_id="prop-us5-001",
             required_gate=ApprovalGateType.PERMISSION_TO_MIGRATE.value,
@@ -247,7 +249,7 @@ def test_check_approval_status_approved_permits_delegation() -> None:
         proposal_data=_get_dummy_proposal(status=ProposalStatus.APPROVED).model_dump(mode="json"),
         approval_data=approval_dict,
     )
-    with patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client):
+    with patch(_SHARED_FS_PATCH, return_value=client):
         result = check_approval_status(
             proposal_id="prop-us5-001",
             required_gate=ApprovalGateType.PERMISSION_TO_MIGRATE.value,
@@ -276,7 +278,7 @@ def test_check_approval_status_expired_blocks_delegation() -> None:
         proposal_data=_get_dummy_proposal(status=ProposalStatus.APPROVED).model_dump(mode="json"),
         approval_data=approval_dict,
     )
-    with patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client):
+    with patch(_SHARED_FS_PATCH, return_value=client):
         result = check_approval_status(
             proposal_id="prop-us5-001",
             required_gate=ApprovalGateType.PERMISSION_TO_MIGRATE.value,
@@ -298,8 +300,8 @@ def test_revoke_approval_tool_halts_pipeline() -> None:
     )
     mock_audit = MagicMock()
     with (
-        patch("zombie_saas_coordinator.shared.approvals.approvals._get_firestore_client", return_value=client),
-        patch("zombie_saas_coordinator.shared.approvals.approvals._get_audit_logger", return_value=mock_audit),
+        patch(_SHARED_FS_PATCH, return_value=client),
+        patch(_SHARED_AUDIT_PATCH, return_value=mock_audit),
     ):
         result = revoke_approval(
             proposal_id="prop-us5-001",
@@ -313,7 +315,9 @@ def test_revoke_approval_tool_halts_pipeline() -> None:
 
 
 def test_revoke_approval_rejects_anonymous_caller() -> None:
-    """revoke_approval raises ValueError if revoker_info has no uid (AC-5.6 prompt injection guard)."""
+    """revoke_approval raises ValueError if revoker_info has no uid
+    (AC-5.6 prompt injection guard).
+    """
     with pytest.raises(ValueError, match="non-empty 'uid'"):
         revoke_approval(
             proposal_id="prop-us5-001",

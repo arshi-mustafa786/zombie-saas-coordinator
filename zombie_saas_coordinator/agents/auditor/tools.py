@@ -453,7 +453,7 @@ def _find_app(scan: dict[str, Any], app_id: str) -> dict[str, Any] | None:
     for app in scan.get("apps", []):
         identifiers = (str(app.get("app_id", "")), str(app.get("app_name", "")))
         if wanted in (identifier.casefold() for identifier in identifiers):
-            return app
+            return dict(app) if isinstance(app, dict) else None
     return None
 
 
@@ -870,7 +870,7 @@ def generate_proposal(app_id: str, tenant_id: str) -> dict[str, Any]:
 # ──────────────────────────────────────────────
 
 
-def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
+def send_approval_card(proposal_id: str, channel: str = "") -> dict[str, Any]:
     """Dispatches an interactive approval card to the specified
     Slack/Teams channel for a given consolidation proposal. The card
     includes: summary, target platform, estimated savings, dependencies,
@@ -878,7 +878,8 @@ def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
 
     Args:
         proposal_id: The proposal to send for approval.
-        channel: Slack channel ID or Teams channel webhook URL.
+        channel: Slack webhook URL (must be HTTPS hooks.slack.com), or channel identifier.
+                 If a non-URL name is given, defaults to SLACK_WEBHOOK_URL environment variable.
 
     Returns:
         dict with keys: sent (bool), message_id, proposal_id.
@@ -897,9 +898,15 @@ def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
     data = snapshot.to_dict() or {}
     proposal = ConsolidationProposal.model_validate(data)
 
+    target_channel = channel.strip() if channel else ""
+    if not target_channel.startswith("https://"):
+        env_webhook = os.getenv("SLACK_WEBHOOK_URL", "").strip()
+        if env_webhook.startswith("https://"):
+            target_channel = env_webhook
+
     payload = slack.build_slack_approval_card(proposal)
     try:
-        dispatch_result = slack.dispatch_slack_message(channel, payload)
+        dispatch_result = slack.dispatch_slack_message(target_channel, payload)
     except slack.SSRFSecurityError as exc:
         return {
             "sent": False,
@@ -910,7 +917,7 @@ def send_approval_card(proposal_id: str, channel: str) -> dict[str, Any]:
     audit_entry = {
         "event_type": "APPROVAL_CARD_DISPATCHED",
         "proposal_id": proposal_id,
-        "channel": channel,
+        "channel": target_channel or channel,
         "sent": dispatch_result.get("sent", False),
         "timestamp": datetime.now(UTC).isoformat(),
     }

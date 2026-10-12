@@ -1,14 +1,14 @@
 """Script to create a fresh consolidation proposal in Firestore."""
 
-from datetime import UTC, datetime, timedelta
 import uuid
+from datetime import UTC, datetime, timedelta
+
 import dotenv
 
 dotenv.load_dotenv()
 
 from zombie_saas_coordinator.shared.db.firestore_client import get_firestore_client
 from zombie_saas_coordinator.shared.models.proposal import (
-    ComplianceSensitivity,
     ConsolidationProposal,
     ProposalStatus,
     RecommendationType,
