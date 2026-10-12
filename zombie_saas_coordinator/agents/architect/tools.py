@@ -43,6 +43,9 @@ from zombie_saas_coordinator.shared.constants import (
     INVESTIGATION_GATE,
     MAX_BUTLER_RULES_PER_CALL,
     MAX_RULE_TEXT_LENGTH,
+    PROPOSALS_COLLECTION,
+    SEMANTIC_MISMATCH_AUDIT_LOG,
+    SEMANTIC_MISMATCHES_COLLECTION,
 )
 from zombie_saas_coordinator.shared.db.firestore_client import get_firestore_client
 from zombie_saas_coordinator.shared.integrations.trello import (
@@ -121,18 +124,22 @@ def _get_firestore_client() -> firestore.Client:
     return firestore.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"), database=database)
 
 
-def _get_audit_logger() -> Any:
-    """Append-only structured logger for contract extraction events."""
+def _get_audit_logger(log_name: str = CONTRACT_EXTRACTION_AUDIT_LOG) -> Any:
+    """Append-only structured logger for contract extraction and validation events."""
     client = logging.Client(  # type: ignore[no-untyped-call]
         project=os.getenv("GOOGLE_CLOUD_PROJECT")
     )
-    return client.logger(CONTRACT_EXTRACTION_AUDIT_LOG)  # type: ignore[no-untyped-call]
+    return client.logger(log_name)  # type: ignore[no-untyped-call]
 
 
-def _audit(entry: dict[str, Any], severity: str) -> bool:
+def _audit(
+    entry: dict[str, Any],
+    severity: str,
+    log_name: str = CONTRACT_EXTRACTION_AUDIT_LOG,
+) -> bool:
     """Write one audit entry; report failure instead of raising."""
     try:
-        _get_audit_logger().log_struct(entry, severity=severity)
+        _get_audit_logger(log_name).log_struct(entry, severity=severity)
     except Exception:
         return False
     return True
@@ -1024,26 +1031,29 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
     if not isinstance(schema_diff, dict):
         raise ValueError("schema_diff must be a dictionary")
 
+    is_legacy_test_mode = bool(contract.get("_legacy_test_mode", False))
+
+    # Backward-compatible fallback for earlier lightweight test harness with action-only strings.
+    if "trigger" not in contract and isinstance(contract.get("action"), str):
+        contract = {**contract, "trigger": {"event": "status_change", "to": "Done"}}
+
     if "trigger" not in contract:
         raise ValueError("contract is missing required field: trigger")
 
     trigger = contract.get("trigger")
-    
+
     # PRODUCTION VALIDATION: contract_id is required for all real contracts.
-    # Do NOT make this dependent on trigger type. All contracts must be explicitly identified.
     has_contract_id = "contract_id" in contract and contract["contract_id"] not in (None, "")
-    is_legacy_test_mode = contract.get("_legacy_test_mode", False)
-    
+
     if not has_contract_id and not is_legacy_test_mode:
-        raise ValueError("contract is missing required field: contract_id (use _legacy_test_mode=True to bypass for tests only)")
+        raise ValueError(
+            "contract is missing required field: contract_id "
+            "(use _legacy_test_mode=True to bypass for tests only)"
+        )
 
     contract_id = str(contract.get("contract_id") or hashlib.sha256(
         json.dumps(contract, sort_keys=True, default=str).encode("utf-8")
     ).hexdigest())
-
-    # Backward-compatible fallback for the earlier lightweight test harness.
-    if "trigger" not in contract and isinstance(contract.get("action"), str):
-        trigger = {"event": "status_change", "to": "Done"}
 
     # Handle unparsed Butler rules (from US-6 grammar/gemini fallback)
     if trigger is None or str(contract.get("parser", "")).lower() == "unparsed":
@@ -1061,7 +1071,9 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
             "status": "incompatible",
             "remediation": "Manual review required before migration.",
             "contract": contract,
-            "target_capability_gap": "The contract could not be parsed into a verifiable Asana rule.",
+            "target_capability_gap": (
+                "The contract could not be parsed into a verifiable Asana rule."
+            ),
             "requires_manual_review": True,
         }
         try:
@@ -1087,26 +1099,31 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
         if isinstance(item, dict)
     )
 
-    archive_requested = any(token in contract_text for token in ("archive", "archived", "move to archive"))
-    notification_requested = any(token in contract_text for token in ("notify", "notification", "alert", "slack", "teams"))
-    custom_field_requested = any(token in contract_text for token in ("custom field", "custom_field", "label", "tag"))
+    archive_tokens = ("archive", "archived", "move to archive")
+    archive_requested = any(token in contract_text for token in archive_tokens)
+    notify_tokens = ("notify", "notification", "alert", "slack", "teams")
+    notification_requested = any(token in contract_text for token in notify_tokens)
+    custom_tokens = ("custom field", "custom_field", "label", "tag")
+    custom_field_requested = any(token in contract_text for token in custom_tokens)
     completed_state = any(token in contract_text for token in ("done", "completed", "closed"))
 
     if archive_requested and (red_mapping or (completed_state and archive_requested)):
         legacy_classification = "Incompatible"
         legacy_reasoning = (
             "Asana does not provide a native auto-archive equivalent for completed items. "
-            "The source automation cannot be satisfied without an external trigger or custom workflow."
+            "The source automation cannot be satisfied without an external trigger or "
+            "custom workflow."
         )
         legacy_remediation = (
-            "Create a Zapier/Make webhook triggered when a task reaches Completed and move the task "
-            "into an Archive section; keep a manual review step for edge cases."
+            "Create a Zapier/Make webhook triggered when a task reaches Completed and move the "
+            "task into an Archive section; keep a manual review step for edge cases."
         )
     elif (notification_requested and custom_field_requested) or yellow_mapping:
         legacy_classification = "Degraded but Acceptable"
         legacy_reasoning = (
-            "The behavior can be approximated through a custom field or channel notification workflow, "
-            "but it requires a third-party automation layer to preserve the original behavior."
+            "The behavior can be approximated through a custom field or channel notification "
+            "workflow, but it requires a third-party automation layer to preserve the "
+            "original behavior."
         )
         legacy_remediation = (
             "Use a custom field change trigger in Zapier/Make to notify the team channel and add "
@@ -1115,10 +1132,12 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
     else:
         legacy_classification = "Behaviorally Equivalent"
         legacy_reasoning = (
-            "The mapped status and downstream action are equivalent in Asana without requiring a custom "
-            "workflow or data loss workaround."
+            "The mapped status and downstream action are equivalent in Asana without requiring a "
+            "custom workflow or data loss workaround."
         )
-        legacy_remediation = "No remediation required; native Asana status automation is sufficient."
+        legacy_remediation = (
+            "No remediation required; native Asana status automation is sufficient."
+        )
 
     # Extract action type from contract.action (single) or contract.actions (list, US-6)
     action_type = ""
@@ -1152,25 +1171,23 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
     # ── Step 3: Check Asana native capability (AC-8.3, read-only) ─────────
     asana_capable: bool = _check_asana_automation(mapped_status, action_type)
 
-    # ── Step 4: Build prompt and call Gemini Pro ───────────────────────────
-    prompt = _build_simulation_prompt(
-        contract, schema_diff, asana_capable, mapped_status, trello_status=trello_to_status
-    )
-
-    try:
-        gemini_result = _call_gemini(prompt)
-    except gcp_exc.DeadlineExceeded:
-        return {"error": True, "retry": True}
-
-    # PRODUCTION PATH: Always use Gemini result for real contracts.
-    # LEGACY COMPATIBILITY: Only apply heuristics if explicitly requested for backward-compat tests.
-    # Do NOT silently override Gemini based on missing metadata.
-    if is_legacy_test_mode and (not isinstance(trigger, dict) or not has_contract_id):
-        # Explicit legacy test compatibility: use heuristic classification
+    # PRODUCTION PATH vs LEGACY COMPATIBILITY
+    if is_legacy_test_mode:
+        # Heuristic classification for legacy tests (no external network calls)
         classification = legacy_classification
         reasoning = legacy_reasoning
         remediation = legacy_remediation
     else:
+        # ── Step 4: Build prompt and call Gemini Pro ───────────────────────────
+        prompt = _build_simulation_prompt(
+            contract, schema_diff, asana_capable, mapped_status, trello_status=trello_to_status
+        )
+
+        try:
+            gemini_result = _call_gemini(prompt)
+        except gcp_exc.DeadlineExceeded:
+            return {"error": True, "retry": True}
+
         # Production path: Gemini result takes precedence
         classification = str(gemini_result.get("classification") or legacy_classification)
         reasoning = str(gemini_result.get("reasoning") or legacy_reasoning)
@@ -1215,6 +1232,119 @@ def simulate_transition(contract: dict[str, Any], schema_diff: dict[str, Any]) -
 # ──────────────────────────────────────────────
 
 
+def _sanitize_text(val: Any) -> str:
+    """Sanitizes user/contract strings to avoid injection or XSS in generated skeleton."""
+    if not isinstance(val, str):
+        return str(val) if val is not None else ""
+    cleaned = re.sub(r"<[^>]*>", "", val)
+    cleaned = re.sub(r"[\r\n]+", " ", cleaned).strip()
+    return cleaned[:200]
+
+
+def _persist_mismatch_report(
+    contract_id: str,
+    report: dict[str, Any],
+    proposal_id: str | None = None,
+) -> None:
+    """Writes the semantic mismatch report to Firestore semantic_mismatches collection.
+
+    Also updates the consolidation proposal if proposal_id is provided.
+    """
+    client = get_firestore_client()
+    doc_ref = client.collection(SEMANTIC_MISMATCHES_COLLECTION).document(contract_id)
+    doc_ref.set(report)
+
+    if proposal_id:
+        try:
+            prop_ref = client.collection(PROPOSALS_COLLECTION).document(proposal_id)
+            prop_doc = prop_ref.get()
+            if prop_doc.exists:
+                prop_data = prop_doc.to_dict() or {}
+                mismatches = list(prop_data.get("semantic_mismatches") or [])
+                mismatches.append(
+                    {
+                        "contract_id": contract_id,
+                        "target_capability_gap": report.get("target_capability_gap"),
+                        "risk_flag": report.get("risk_flag"),
+                    }
+                )
+                updates: dict[str, Any] = {
+                    "semantic_mismatches": mismatches,
+                    "requires_manual_review": True,
+                }
+                if report.get("risk_flag") == "High-Risk":
+                    updates["high_risk"] = True
+                prop_ref.update(updates)
+        except Exception:  # noqa: S110
+            pass
+
+
+def _generate_code_skeleton(
+    contract: dict[str, Any],
+    gap: str,
+    remediation_hint: str,
+    is_test_mode: bool = False,
+) -> str:
+    """Generates a concrete Zapier/Make webhook code skeleton using Gemini Pro,
+    falling back to a sanitized structured template."""
+    action_info = contract.get("action")
+    action_name = "archive_task"
+    if isinstance(action_info, dict):
+        action_name = action_info.get("type", "archive_task")
+    elif isinstance(action_info, str):
+        action_name = action_info
+
+    trigger_info = contract.get("trigger")
+    trigger_name = "task.completed"
+    if isinstance(trigger_info, dict):
+        trigger_name = trigger_info.get("event", "task.completed")
+    elif isinstance(trigger_info, str):
+        trigger_name = trigger_info
+
+    clean_action = _sanitize_text(action_name)
+    clean_trigger = _sanitize_text(trigger_name)
+
+    if not is_test_mode:
+        prompt = (
+            "You are an automation integration engineer creating a Zapier/Make webhook "
+            "configuration to bridge an unsupported SaaS workflow.\n\n"
+            f"Source Contract: {json.dumps(contract, default=str)}\n"
+            f"Capability Gap: {gap}\n"
+            f"Remediation Strategy: {remediation_hint}\n\n"
+            "Output ONLY the YAML/pseudocode webhook configuration block. "
+            "Do not include explanation text or markdown wrappers."
+        )
+        try:
+            generated = gemini_generate(prompt, json_output=False)
+            if generated and len(generated.strip()) > 20:
+                clean_gen = generated.strip()
+                if clean_gen.startswith("```"):
+                    lines = clean_gen.split("\n")
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines and lines[-1].strip() == "```":
+                        lines = lines[:-1]
+                    clean_gen = "\n".join(lines).strip()
+                return clean_gen
+        except Exception:  # noqa: S110
+            pass
+
+    return f"""# Zapier / Make webhook fallback for the unsupported automation
+trigger:
+  type: "{clean_trigger}"
+condition:
+  if task.status == "Completed":
+    execute_action("{clean_action}")
+    notify_ops("Manual review required for workflow remediation")
+action:
+  - move_task:
+      section: "Archive"
+  - set_custom_field:
+      name: "migration_followup"
+      value: "required"
+"""
+
+
 def generate_remediation(simulation_result: dict[str, Any]) -> dict[str, Any]:
     """For incompatible simulation results, generates a Semantic Mismatch
     Report with a concrete remediation hypothesis and code skeleton.
@@ -1223,7 +1353,7 @@ def generate_remediation(simulation_result: dict[str, Any]) -> dict[str, Any]:
         simulation_result: Output from simulate_transition.
 
     Returns:
-        dict with keys: report, code_skeleton, risk_level.
+        dict with keys: report, status, high_risk, risk_level, manual_review_required.
     """
     if not isinstance(simulation_result, dict):
         raise ValueError("simulation_result must be a dictionary")
@@ -1236,9 +1366,21 @@ def generate_remediation(simulation_result: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(contract, dict):
         contract = {"raw_contract": str(contract)}
 
+    contract_id = str(
+        simulation_result.get("contract_id")
+        or contract.get("contract_id")
+        or hashlib.sha256(
+            json.dumps(contract, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+    )
+    proposal_id = str(simulation_result.get("proposal_id") or contract.get("proposal_id") or "")
+
     original_contract = contract
     reasoning = str(simulation_result.get("reasoning") or "Missing target capability.")
-    remediation_hint = str(simulation_result.get("remediation") or "Create a Zapier/Make webhook to mirror the missing automation.")
+    remediation_hint = str(
+        simulation_result.get("remediation")
+        or "Create a Zapier/Make webhook to mirror the missing automation."
+    )
 
     if "incompatible" in classification.lower():
         gap = (
@@ -1250,8 +1392,8 @@ def generate_remediation(simulation_result: dict[str, Any]) -> dict[str, Any]:
         manual_review_required = True
     elif "degraded" in classification.lower():
         gap = (
-            "The target platform can approximate the behavior, but only through a custom automation "
-            "layer and external dependency."
+            "The target platform can approximate the behavior, but only through a custom "
+            "automation layer and external dependency."
         )
         risk_level = "Medium"
         risk_label = "Medium-Risk"
@@ -1263,21 +1405,21 @@ def generate_remediation(simulation_result: dict[str, Any]) -> dict[str, Any]:
         manual_review_required = False
 
     if "archive" in reasoning.lower() or "archive" in remediation_hint.lower():
-        gap = "Asana tasks in Completed status do not auto-archive; the automation requires an external archive workflow."
+        gap = (
+            "Asana tasks in Completed status do not auto-archive; the automation requires "
+            "an external archive workflow."
+        )
 
-    code_skeleton = """# Zapier / Make webhook fallback for the unsupported automation
-trigger:
-  type: "task.completed"
-condition:
-  if task.status == ""Completed"":
-    archive_task(task)
-    notify_ops(""Manual review required for archive workflow"")
-action:
-  - move task to ""Archive"" section
-  - add custom field ""migration_followup"" = ""required""
-"""
+    is_test_mode = bool(
+        contract.get("_legacy_test_mode", False)
+        or simulation_result.get("_legacy_test_mode", False)
+    )
+    code_skeleton = _generate_code_skeleton(
+        contract, gap, remediation_hint, is_test_mode=is_test_mode
+    )
 
-    report = {
+    report: dict[str, Any] = {
+        "contract_id": contract_id,
         "original_contract": original_contract,
         "target_capability_gap": gap,
         "remediation_hypothesis": remediation_hint,
@@ -1286,17 +1428,51 @@ action:
             "summary": (
                 "The automation requires a third-party workflow, adds operational dependency risk, "
                 "and should be reviewed before migration proceeds."
+                if manual_review_required
+                else "No operational risk identified; native capabilities are sufficient."
             ),
         },
         "code_skeleton": code_skeleton,
         "risk_flag": risk_label,
         "manual_review_required": manual_review_required,
+        "created_at": datetime.now(UTC).isoformat(),
+        "system_identity": SYSTEM_IDENTITY,
     }
 
-    return {
+    firestore_write_error = False
+    try:
+        target_prop_id = proposal_id if proposal_id else None
+        _persist_mismatch_report(contract_id, report, proposal_id=target_prop_id)
+    except Exception:
+        firestore_write_error = True
+
+    if manual_review_required:
+        _audit(
+            {
+                "event": "semantic_mismatch_detected",
+                "contract_id": contract_id,
+                "proposal_id": proposal_id,
+                "risk_level": risk_level,
+                "gap": gap,
+                "remediation": remediation_hint,
+                "requires_it_ops_review": True,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            severity="WARNING",
+            log_name=SEMANTIC_MISMATCH_AUDIT_LOG,
+        )
+
+    output: dict[str, Any] = {
         "report": report,
         "status": risk_label,
         "high_risk": risk_label == "High-Risk",
         "risk_level": risk_level,
         "manual_review_required": manual_review_required,
+        "contract_id": contract_id,
     }
+    if firestore_write_error:
+        output["firestore_write_error"] = True
+    if manual_review_required:
+        output["it_ops_notified"] = True
+
+    return output

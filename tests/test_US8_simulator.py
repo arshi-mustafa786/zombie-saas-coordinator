@@ -1,6 +1,17 @@
 """Tests for US-8 behavioral transition simulation."""
 
-from zombie_saas_coordinator.agents.architect.tools import simulate_transition
+# ruff: noqa: S106, S107
+
+from typing import Any
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from zombie_saas_coordinator.agents.architect.tools import (
+    diff_schemas,
+    parse_automation_rule,
+    simulate_transition,
+)
 
 
 def test_simulate_transition_detects_incompatible_auto_archive_behavior() -> None:
@@ -29,7 +40,7 @@ def test_simulate_transition_detects_incompatible_auto_archive_behavior() -> Non
 
 
 def test_simulate_transition_accepts_acceptable_custom_field_notification() -> None:
-    # This test validates the LEGACY HEURISTIC behavior (notification + custom_field → Degraded but Acceptable)
+    # This test validates legacy heuristic behavior (notification + custom_field → Degraded)
     # Production contracts use Gemini; legacy behavior is opt-in only
     contract = {
         "contract_id": "test-notify-rule-002",
@@ -39,7 +50,11 @@ def test_simulate_transition_accepts_acceptable_custom_field_notification() -> N
     }
     schema_diff = {
         "mappings": [
-            {"source_field": "custom_field", "target_field": "custom_field", "classification": "yellow"},
+            {
+                "source_field": "custom_field",
+                "target_field": "custom_field",
+                "classification": "yellow",
+            },
         ]
     }
 
@@ -48,31 +63,28 @@ def test_simulate_transition_accepts_acceptable_custom_field_notification() -> N
     assert result["classification"] in {"Degraded but Acceptable", "Behaviorally Equivalent"}
 
 
-"""Tests for US-8: State-Transition Simulation (Semantic Validation).
+def test_simulate_transition_supports_legacy_action_only_contract() -> None:
+    # Verifies that older action-only string contracts without a trigger gracefully fall back
+    contract = {
+        "contract_id": "test-legacy-action-003",
+        "_legacy_test_mode": True,
+        "action": "archive card",
+    }
+    schema_diff = {
+        "mappings": [
+            {"source_field": "archive", "target_field": None, "classification": "red"},
+        ]
+    }
 
-QA Agent (TestSmith) — RED phase.
-These tests are written BEFORE implementation. All tests in this file
-must FAIL (raise NotImplementedError or assertion errors) until
-simulate_transition is implemented.
+    result = simulate_transition(contract, schema_diff)
 
-Stub strategy for US-6/US-7 dependencies:
-  - US-6 behavioral contracts and US-7 schema diffs are provided as
-    in-memory fixture dicts. No Firestore reads happen in these tests.
-  - Gemini Pro and Asana API calls are mocked via pytest-mock.
-"""
+    assert result["classification"] == "Incompatible"
+    assert "archive" in result["reasoning"].lower()
 
-# ruff: noqa: S106, S107
 
-from typing import Any
-from unittest.mock import MagicMock, patch
-
-import pytest
-
-from zombie_saas_coordinator.agents.architect.tools import (
-    diff_schemas,
-    parse_automation_rule,
-    simulate_transition,
-)
+# ─────────────────────────────────────────────────────────────────────────────
+# State-Transition Simulation (Semantic Validation) Stub tests
+# ─────────────────────────────────────────────────────────────────────────────
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stub fixtures (replaces US-6 / US-7 Firestore reads)
