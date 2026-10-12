@@ -43,8 +43,8 @@ def _get_firestore_client() -> firestore.Client:
 def _get_audit_logger() -> Any:
     """Structured audit logger for HITL approval gates."""
     try:
-        client = logging.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))
-        return _SafeAuditLogger(client.logger("hitl-approval-audit"))
+        client = logging.Client(project=os.getenv("GOOGLE_CLOUD_PROJECT"))  # type: ignore[no-untyped-call]
+        return _SafeAuditLogger(client.logger("hitl-approval-audit"))  # type: ignore[no-untyped-call]
     except Exception:
         return _SafeAuditLogger()
 
@@ -255,9 +255,16 @@ def revoke_approval(
                 "revoke_reason": clean_reason,
             },
         )
-    except Exception:
+    except Exception as exc:
         # Cloud SQL sync failure is non-fatal — Firestore is the source of truth.
-        pass
+        _get_audit_logger().log_struct(
+            {
+                "event_type": "CLOUDSQL_REVOCATION_SYNC_FAILED",
+                "proposal_id": proposal_id,
+                "error": str(exc),
+            },
+            severity="WARNING",
+        )
 
     return {
         "revoked": True,

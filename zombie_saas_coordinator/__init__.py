@@ -7,4 +7,8 @@ Usage:
     adk deploy cloud_run zombie_saas_coordinator
 """
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from zombie_saas_coordinator.agent import agent, root_agent  # noqa: F401

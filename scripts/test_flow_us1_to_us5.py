@@ -130,6 +130,7 @@ def run_us3() -> str:
 
     # Seed mock proposal in Firestore state store for full flow testing
     from datetime import UTC, datetime
+
     from zombie_saas_coordinator.shared.models.proposal import (
         ConsolidationProposal,
         ProposalStatus,
@@ -208,9 +209,9 @@ def run_us5(proposal_id: str) -> None:
 
     # 5.1 Check initial status before human authorization
     status, body = send_request("GET", f"/api/v1/approvals/{proposal_id}")
-    print(f"--- 5.1 Initial Gate Status (Pre-Approval) ---")
+    print("--- 5.1 Initial Gate Status (Pre-Approval) ---")
     print(f"[+] Gate Approved: {body.get('approved')} (Can Delegate: {body.get('can_delegate')})")
-    print(f"[+] Gate Policy: Root Orchestrator is BLOCKED from delegating to Architect/Integrator.")
+    print("[+] Gate Policy: Root Orchestrator is BLOCKED from delegating to Architect/Integrator.")
 
     # 5.2 Authorize proposal via SSO token (CISO role)
     auth_payload = {
@@ -219,7 +220,7 @@ def run_us5(proposal_id: str) -> None:
         "notes": "Verified by CISO: Asana enterprise seats available, automations verified.",
     }
     status, body = send_request("POST", f"/api/v1/approvals/{proposal_id}/authorize", payload=auth_payload)
-    print(f"\n--- 5.2 CISO SSO Authorization ---")
+    print("\n--- 5.2 CISO SSO Authorization ---")
     print(f"[+] HTTP Status: {status} OK")
     print(f"[+] Approved: {body.get('approved')}")
     print(f"[+] Gate Tier: {body.get('gate_type')}")
@@ -228,10 +229,10 @@ def run_us5(proposal_id: str) -> None:
 
     # 5.3 Verify gate is now OPEN
     status, body = send_request("GET", f"/api/v1/approvals/{proposal_id}")
-    print(f"\n--- 5.3 Post-Approval Verification ---")
+    print("\n--- 5.3 Post-Approval Verification ---")
     print(f"[+] Gate Approved: {body.get('approved')}")
     print(f"[+] Can Delegate: {body.get('can_delegate')}")
-    print(f"[+] Gate Policy: Root Orchestrator is now PERMITTED to launch downstream migration agents.")
+    print("[+] Gate Policy: Root Orchestrator is now PERMITTED to launch downstream migration agents.")
 
     # 5.4 Test Emergency Revocation / Halt
     revoke_payload = {
@@ -239,11 +240,11 @@ def run_us5(proposal_id: str) -> None:
         "reason": "Security Alert: Suspicious API token detected on Trello board.",
     }
     status, body = send_request("POST", f"/api/v1/approvals/{proposal_id}/revoke", payload=revoke_payload)
-    print(f"\n--- 5.4 Emergency Halt (Revoke Approval) ---")
+    print("\n--- 5.4 Emergency Halt (Revoke Approval) ---")
     print(f"[+] HTTP Status: {status} OK")
     print(f"[+] Approval Revoked: {body.get('revoked')}")
     print(f"[+] Halt Reason: {body.get('reason')}")
-    print(f"[+] Pipeline Status: Downstream execution IMMEDIATELY halted.")
+    print("[+] Pipeline Status: Downstream execution IMMEDIATELY halted.")
 
 
 def main() -> None:

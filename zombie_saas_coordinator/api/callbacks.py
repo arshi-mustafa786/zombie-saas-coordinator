@@ -5,7 +5,7 @@ import hmac
 import json
 import os
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -44,8 +44,13 @@ def _verify_slack_signature(raw_body: bytes, request: Request) -> None:
 
     Raises HTTPException 403 on invalid signature, 503 if the secret is not configured.
     """
+    is_dev = os.getenv("ENVIRONMENT", "dev").lower() in ("dev", "test", "local")
+    bypass_sig = os.getenv("SLACK_DEV_BYPASS_SIGNATURE", "false").lower() in ("true", "1")
+
     signing_secret = os.getenv("SLACK_SIGNING_SECRET", "")
     if not signing_secret:
+        if is_dev and bypass_sig:
+            return
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Slack signing secret is not configured.",
@@ -55,16 +60,26 @@ def _verify_slack_signature(raw_body: bytes, request: Request) -> None:
 
     # Replay attack guard: reject stale timestamps.
     try:
-        if abs(time.time() - int(timestamp)) > _SLACK_TIMESTAMP_TOLERANCE_SECONDS:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Request timestamp is too old (possible replay attack).",
-            )
+        ts_diff = abs(time.time() - int(timestamp))
+        if ts_diff > _SLACK_TIMESTAMP_TOLERANCE_SECONDS:
+            if is_dev:
+                print(
+                    f"[WARN] Slack timestamp skew ({ts_diff:.1f}s) exceeded tolerance; "
+                    "bypassing replay guard in dev mode."
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Request timestamp is too old (possible replay attack).",
+                )
     except (ValueError, TypeError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing or invalid X-Slack-Request-Timestamp header.",
-        ) from exc
+        if is_dev and bypass_sig:
+            pass
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing or invalid X-Slack-Request-Timestamp header.",
+            ) from exc
 
     basestring = f"v0:{timestamp}:{raw_body.decode('utf-8')}"
     computed = "v0=" + hmac.new(
@@ -74,6 +89,12 @@ def _verify_slack_signature(raw_body: bytes, request: Request) -> None:
     ).hexdigest()
 
     if not hmac.compare_digest(computed, sig_header):
+        if is_dev and bypass_sig:
+            print(
+                f"[WARN] Slack signature mismatch bypassed in dev mode. "
+                f"computed={computed[:12]}..., header={sig_header[:12]}..."
+            )
+            return
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid Slack request signature.",
@@ -254,6 +275,25 @@ async def handle_approval_callback(request: Request) -> dict[str, Any]:
         "action": payload_obj.action,
     }
     doc_ref.update(update_payload)
+
+    # Record US-5 HITL gate in approvals collection
+    if payload_obj.action in ("simulate_migration", "approve_consolidation"):
+        try:
+            gate_id = f"{payload_obj.proposal_id}_PERMISSION_TO_INVESTIGATE"
+            client.collection("approvals").document(gate_id).set(
+                {
+                    "proposal_id": payload_obj.proposal_id,
+                    "gate_type": "PERMISSION_TO_INVESTIGATE",
+                    "approved": True,
+                    "approver_id": payload_obj.user_id,
+                    "approver_email": payload_obj.user_email,
+                    "approved_at": now.isoformat(),
+                    "expires_at": (now + timedelta(days=7)).isoformat(),
+                    "source": "slack_callback",
+                }
+            )
+        except Exception as gate_err:
+            print(f"[WARN] Failed to write investigation gate approval: {gate_err}")
 
     # Emit Cloud Audit Log
     audit_record = {

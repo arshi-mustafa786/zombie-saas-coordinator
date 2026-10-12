@@ -1,0 +1,49 @@
+story_id: US-8
+story_title: "State-Transition Simulation (Semantic Validation)"
+techspec_file: docs/techspecs/TS-8.md
+complexity: L
+layers: [service, api, db]
+agent: architect_agent
+framework: google-adk
+
+ancestor_interfaces:
+  - story_id: US-6
+    module: zombie_saas_coordinator/agents/architect/tools.py
+    status: DONE
+    functions:
+      - "extract_trello_rules(proposal_id, board_id, butler_rules=None)"
+      - "parse_automation_rule(raw_rule)"
+    models:
+      - "BehavioralContract, ContractTrigger, ContractAction, ContractExtraction"
+  - story_id: US-7
+    module: zombie_saas_coordinator/agents/architect/tools.py
+    status: DONE
+    functions:
+      - "diff_schemas(source_schema, target_schema)"
+      - "classify_mapping(field_name, source_type, target_type)"
+
+exposed_interfaces:
+  agent_tools:
+    - "simulate_transition(contract, schema_diff)"
+  firestore_collections:
+    - "simulation_results (SimulationResult, signed system_identity)"
+  agent_registration:
+    - "architect_agent (tools: [..., simulate_transition, ...])"
+
+codebase_context:
+  naming_conventions:
+    module: snake_case
+    class: PascalCase
+    function: snake_case
+  libraries:
+    http: httpx
+    data_validation: pydantic
+    llm: vertexai / google-genai
+    cloud: google-cloud-firestore, google-cloud-logging
+
+constitution:
+  language: python
+  linter: ruff
+  max_public_methods: 7
+  min_cyclomatic_complexity_per_method: 4
+  test_coverage_target: 85
