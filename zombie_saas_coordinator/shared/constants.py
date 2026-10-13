@@ -150,6 +150,14 @@ MAX_BUTLER_RULES_PER_CALL = 50
 DEPENDENCY_GRAPHS_COLLECTION = "dependency_graphs"  # US-10 writes
 DEPENDENCY_SCAN_AUDIT_LOG = "automation-hub-audit"
 
+# ──────────────────────────────────────────────
+# US-11: Migration execution & reconciliation
+# ──────────────────────────────────────────────
+
+MIGRATION_MANIFESTS_COLLECTION = "migration_manifests"
+MIGRATION_EXCEPTION_REPORTS_COLLECTION = "migration_exception_reports"
+MIGRATION_RECONCILIATION_AUDIT_LOG = "migration-reconciliation-audit"
+
 # Shared HTTP behaviour for both hubs.
 HUB_TIMEOUT_SECONDS = 15.0
 HUB_RETRY_STATUSES = frozenset({429, 502, 503, 504})

@@ -17,6 +17,10 @@ from zombie_saas_coordinator.agents.architect.agent import architect_agent
 from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
 from zombie_saas_coordinator.agents.integrator.agent import integrator_agent
 from zombie_saas_coordinator.shared.approvals.approvals import check_approval_status
+from zombie_saas_coordinator.shared.services.reconciliation import (
+    execute_migration,
+    reconcile_migration,
+)
 
 root_agent = Agent(
     name="zombie_saas_coordinator",
@@ -39,14 +43,16 @@ root_agent = Agent(
         "4. Also delegate to the **integrator_agent** to scan Zapier and Make for automation "
         "workflows that depend on the app (US-10). This is independent of step 3.\n"
         "5. Summarize the validation findings and the automation dependencies into a single "
-        "migration readiness report.\n\n"
+        "migration readiness report.\n"
+        "6. After a separate PERMISSION_TO_MIGRATE approval, use execute_migration and "
+        "reconcile_migration to create cryptographic cutover evidence.\n\n"
         "## CRITICAL RULES\n"
         "- NEVER proceed past step 2 without explicit human approval.\n"
         "- NEVER modify data in external systems (Trello, Asana, Zapier, Make) — "
         "read-only analysis.\n"
         "- ALL actions must be logged for compliance audit trail.\n"
     ),
-    tools=[check_approval_status],
+    tools=[check_approval_status, execute_migration, reconcile_migration],
     sub_agents=[auditor_agent, architect_agent, integrator_agent],
 )
 
