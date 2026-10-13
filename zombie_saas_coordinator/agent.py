@@ -15,6 +15,7 @@ from google.adk.agents import Agent
 
 from zombie_saas_coordinator.agents.architect.agent import architect_agent
 from zombie_saas_coordinator.agents.auditor.agent import auditor_agent
+from zombie_saas_coordinator.agents.integrator.agent import integrator_agent
 from zombie_saas_coordinator.shared.approvals.approvals import check_approval_status
 
 root_agent = Agent(
@@ -35,14 +36,18 @@ root_agent = Agent(
         "WAIT for human approval (HITL gate). Use `check_approval_status` to verify.\n"
         "3. Once approved, delegate to the **architect_agent** for semantic contract validation "
         "(US-6 behavioral contracts, US-7 schema diffing, and US-8 state-transition simulation).\n"
-        "4. Summarize the validation findings into a migration readiness report.\n\n"
+        "4. Also delegate to the **integrator_agent** to scan Zapier and Make for automation "
+        "workflows that depend on the app (US-10). This is independent of step 3.\n"
+        "5. Summarize the validation findings and the automation dependencies into a single "
+        "migration readiness report.\n\n"
         "## CRITICAL RULES\n"
         "- NEVER proceed past step 2 without explicit human approval.\n"
-        "- NEVER modify data in external systems (Trello, Asana) — read-only analysis.\n"
+        "- NEVER modify data in external systems (Trello, Asana, Zapier, Make) — "
+        "read-only analysis.\n"
         "- ALL actions must be logged for compliance audit trail.\n"
     ),
     tools=[check_approval_status],
-    sub_agents=[auditor_agent, architect_agent],
+    sub_agents=[auditor_agent, architect_agent, integrator_agent],
 )
 
 # Alias for ADK loader compatibility
