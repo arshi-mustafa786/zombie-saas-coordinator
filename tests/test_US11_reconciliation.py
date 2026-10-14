@@ -2,6 +2,7 @@
 
 # ruff: noqa: N999, S106
 
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import Mock
 
@@ -11,6 +12,7 @@ from fastapi.testclient import TestClient
 from zombie_saas_coordinator.main import app
 from zombie_saas_coordinator.shared.models.manifest import MigrationPhase
 from zombie_saas_coordinator.shared.services.reconciliation import (
+    canonical_hash,
     create_manifest,
     execute_migration,
     reconcile_migration,
@@ -108,6 +110,23 @@ def test_execute_rejects_manifest_with_different_scope() -> None:
         execute_migration("board-other", "project-1", manifest.model_dump(mode="json"))
 
 
+def test_hash_normalizes_datetime_to_a_stable_utc_representation() -> None:
+    naive = {"occurred_at": datetime(2026, 10, 14, 10, 0, 0)}
+    aware = {"occurred_at": datetime(2026, 10, 14, 10, 0, 0, tzinfo=UTC)}
+
+    assert canonical_hash(naive) == canonical_hash(aware)
+
+
+def test_reconciliation_isolates_target_records_without_ids() -> None:
+    result = reconcile_migration(
+        _executed_manifest(),
+        [{"data": {"name": "Prepare cutover", "status": "open"}}],
+    )
+
+    codes = {item["code"] for item in result["report"]["exceptions"]}
+    assert "TARGET_RECORD_ID_MISSING" in codes
+
+
 def test_reconcile_endpoint_returns_exception_report(monkeypatch: pytest.MonkeyPatch) -> None:
     from zombie_saas_coordinator.api import reconciliation
 
@@ -130,3 +149,29 @@ def test_reconcile_endpoint_returns_exception_report(monkeypatch: pytest.MonkeyP
 
     assert response.status_code == 200
     assert response.json()["report"]["reconciled"] is False
+
+
+def test_execute_endpoint_accepts_json_body_and_checks_approval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from zombie_saas_coordinator.api import reconciliation
+
+    executed = _executed_manifest()
+    document = Mock()
+    document.get.return_value.exists = True
+    document.get.return_value.to_dict.return_value = executed
+    collection = Mock()
+    collection.document.return_value = document
+    firestore = Mock()
+    firestore.collection.return_value = collection
+    monkeypatch.setattr(reconciliation, "get_firestore_client", lambda: firestore)
+    monkeypatch.setattr(reconciliation, "_migration_authority", lambda token: None)
+    monkeypatch.setattr(reconciliation, "_require_active_migration_approval", lambda _: None)
+
+    response = TestClient(app).post(
+        f"/api/v1/reconciliation/{executed['manifest_id']}/execute",
+        json={"firebase_token": "test"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["manifest"]["phase"] == MigrationPhase.MIGRATING.value

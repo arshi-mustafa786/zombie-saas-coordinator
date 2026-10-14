@@ -2,8 +2,12 @@
 
 import hashlib
 import json
-from datetime import UTC, datetime
+from base64 import b64encode
+from datetime import UTC, date, datetime
+from decimal import Decimal
+from enum import Enum
 from typing import Any
+from uuid import UUID
 
 from google.cloud import logging
 
@@ -22,9 +26,35 @@ from zombie_saas_coordinator.shared.models.manifest import (
 )
 
 
+def _normalize_for_hash(value: Any) -> Any:
+    """Convert values to stable cross-runtime representations before hashing."""
+    if isinstance(value, datetime):
+        timestamp = value if value.tzinfo else value.replace(tzinfo=UTC)
+        return timestamp.astimezone(UTC).isoformat().replace("+00:00", "Z")
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return format(value.normalize(), "f")
+    if isinstance(value, UUID):
+        return str(value)
+    if isinstance(value, bytes):
+        return {"__bytes_base64__": b64encode(value).decode("ascii")}
+    if isinstance(value, Enum):
+        return _normalize_for_hash(value.value)
+    if isinstance(value, dict):
+        return {str(key): _normalize_for_hash(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_normalize_for_hash(item) for item in value]
+    if isinstance(value, set):
+        return sorted(_normalize_for_hash(item) for item in value)
+    return value
+
+
 def canonical_hash(record: dict[str, Any]) -> str:
     """Return a stable SHA-256 digest for a record's migration-relevant fields."""
-    canonical = json.dumps(record, sort_keys=True, separators=(",", ":"), default=str)
+    canonical = json.dumps(
+        _normalize_for_hash(record), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
@@ -96,10 +126,29 @@ def reconcile_migration(
 ) -> dict[str, Any]:
     """Compare count, field digest, attachment, and comment evidence after migration."""
     parsed = MigrationManifest.model_validate(manifest)
-    by_id = {
-        str(record.get("id") or record.get("target_id") or ""): record for record in target_records
-    }
     exceptions: list[ReconciliationException] = []
+    by_id: dict[str, dict[str, Any]] = {}
+    for index, record in enumerate(target_records):
+        target_id = str(record.get("id") or record.get("target_id") or "").strip()
+        if not target_id:
+            exceptions.append(
+                ReconciliationException(
+                    code="TARGET_RECORD_ID_MISSING",
+                    message=f"target record at index {index} has no id or target_id",
+                    retryable=True,
+                )
+            )
+        elif target_id in by_id:
+            exceptions.append(
+                ReconciliationException(
+                    code="DUPLICATE_TARGET_RECORD_ID",
+                    target_id=target_id,
+                    message="multiple target records share the same target identifier",
+                    retryable=True,
+                )
+            )
+        else:
+            by_id[target_id] = record
     verified = 0
 
     if len(parsed.items) != len(target_records):
@@ -107,15 +156,14 @@ def reconcile_migration(
             ReconciliationException(
                 code="COUNT_MISMATCH",
                 message=(
-                    f"source has {len(parsed.items)} records but target has "
-                    f"{len(target_records)}"
+                    f"source has {len(parsed.items)} records but target has {len(target_records)}"
                 ),
                 retryable=True,
             )
         )
 
     for item in parsed.items:
-        target = by_id.get(item.target_id or "")
+        target = by_id.get(item.target_id) if item.target_id else None
         if target is None:
             exceptions.append(
                 ReconciliationException(
