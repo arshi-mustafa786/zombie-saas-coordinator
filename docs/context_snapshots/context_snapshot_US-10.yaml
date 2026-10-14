@@ -1,0 +1,62 @@
+story_id: US-10
+story_title: "Automation Hub Scanning"
+techspec_file: docs/techspecs/TS-10.md
+complexity: M
+layers: [service, api, db]
+agent: integrator_agent
+framework: google-adk
+
+ancestor_interfaces:
+  - story_id: US-5
+    module: zombie_saas_coordinator/shared/approvals/approvals.py
+    status: DONE
+    functions:
+      - "check_approval_status(proposal_id, required_gate='PERMISSION_TO_INVESTIGATE')"
+    notes: "Both scans fail closed (GATE_ERROR) if the approval check raises."
+  - story_id: US-6
+    module: zombie_saas_coordinator/shared/integrations/trello.py
+    status: DONE
+    notes: "Hub clients follow the same shape: header auth, call log, retries, pagination."
+
+exposed_interfaces:
+  agent_tools:
+    - "scan_zapier(proposal_id, app_name)"
+    - "scan_make(proposal_id, app_name)"
+    - "build_dependency_graph(proposal_id, source_app, workflows)"
+  firestore_collections:
+    - "dependency_graphs (DependencyScan, immutable; terminal node, nothing reads it yet)"
+  audit_logs:
+    - "automation-hub-audit"
+  models:
+    - "zombie_saas_coordinator/shared/models/dependency.py: DependentWorkflow, DependencyGraph, DependencyScan"
+
+external_apis:
+  zapier:
+    base_url: "https://api.zapier.com/v2"
+    endpoint: "GET /zaps?expand=steps.action"
+    auth: "OAuth 2.0 bearer token, zap:all scope"
+  make:
+    base_url: "https://{zone}.make.com/api/v2"
+    endpoints: ["GET /scenarios?teamId=...", "GET /scenarios/{id}/blueprint"]
+    auth: "Authorization: Token <api token>, scenarios:read scope"
+
+codebase_context:
+  naming_conventions:
+    module: snake_case
+    class: PascalCase
+    function: snake_case
+  libraries:
+    http: httpx
+    data_validation: pydantic
+    cloud: google-cloud-firestore, google-cloud-logging, google-cloud-secret-manager
+  shared_modules_added:
+    - "shared/integrations/zapier.py"
+    - "shared/integrations/make.py"
+    - "shared/models/dependency.py"
+
+constitution:
+  language: python
+  linter: ruff
+  max_public_methods: 7
+  min_cyclomatic_complexity_per_method: 4
+  test_coverage_target: 85

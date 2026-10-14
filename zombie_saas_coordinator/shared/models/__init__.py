@@ -15,6 +15,13 @@ from zombie_saas_coordinator.shared.models.approval import (
     RevokeApprovalRequest,
 )
 from zombie_saas_coordinator.shared.models.expense import ExpenseEvent, SubscriptionAssessment
+from zombie_saas_coordinator.shared.models.manifest import (
+    MigrationItem,
+    MigrationManifest,
+    MigrationPhase,
+    ReconciliationException,
+    ReconciliationReport,
+)
 from zombie_saas_coordinator.shared.models.proposal import (
     ComplianceSensitivity,
     ConsolidationProposal,
@@ -57,6 +64,11 @@ __all__ = [
     "SavingsBreakdown",
     "ExpenseEvent",
     "SubscriptionAssessment",
+    "MigrationItem",
+    "MigrationManifest",
+    "MigrationPhase",
+    "ReconciliationException",
+    "ReconciliationReport",
     "ApprovalGateType",
     "ApprovalRecord",
     "ApprovalStatusResponse",

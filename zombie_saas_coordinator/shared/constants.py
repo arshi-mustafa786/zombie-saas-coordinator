@@ -17,6 +17,7 @@ PROPOSALS_COLLECTION = "consolidation_proposals"  # US-3 writes, US-4 reads/upda
 BEHAVIORAL_CONTRACTS_COLLECTION = "behavioral_contracts"  # US-6 writes, US-7 reads
 QUARANTINE_RECORDS_COLLECTION = "quarantine_records"  # US-12 writes & reads
 DISPOSAL_CERTIFICATES_COLLECTION = "disposal_certificates"  # US-12 writes & reads
+SEMANTIC_MISMATCHES_COLLECTION = "semantic_mismatches"  # US-9 writes
 
 # ──────────────────────────────────────────────
 # Cloud Logging audit log names
@@ -27,6 +28,7 @@ EXPENSE_WEBHOOK_AUDIT_LOG = "expense-webhook-audit"
 PROPOSAL_AUDIT_LOG = "consolidation-proposal-audit"
 CONTRACT_EXTRACTION_AUDIT_LOG = "behavioral-contract-audit"
 DATA_DISPOSAL_AUDIT_LOG = "data-disposal-audit"
+SEMANTIC_MISMATCH_AUDIT_LOG = "semantic-mismatch-audit"
 
 # ──────────────────────────────────────────────
 # US-12: Quarantine and disposal
@@ -150,3 +152,66 @@ INFERENCE_MIN_RATIO = 0.8  # share of trigger occurrences followed by the automa
 
 MAX_RULE_TEXT_LENGTH = 500
 MAX_BUTLER_RULES_PER_CALL = 50
+
+# ──────────────────────────────────────────────
+# US-10: Automation hub scanning (Zapier, Make)
+# ──────────────────────────────────────────────
+
+DEPENDENCY_GRAPHS_COLLECTION = "dependency_graphs"  # US-10 writes
+DEPENDENCY_SCAN_AUDIT_LOG = "automation-hub-audit"
+
+# ──────────────────────────────────────────────
+# US-11: Migration execution & reconciliation
+# ──────────────────────────────────────────────
+
+MIGRATION_MANIFESTS_COLLECTION = "migration_manifests"
+MIGRATION_EXCEPTION_REPORTS_COLLECTION = "migration_exception_reports"
+MIGRATION_RECONCILIATION_AUDIT_LOG = "migration-reconciliation-audit"
+
+# Shared HTTP behaviour for both hubs.
+HUB_TIMEOUT_SECONDS = 15.0
+HUB_RETRY_STATUSES = frozenset({429, 502, 503, 504})
+HUB_MAX_RETRIES = 3
+HUB_MAX_RETRY_WAIT_SECONDS = 10.0
+MAX_WORKFLOWS_PER_SCAN = 1000  # cap so one huge account cannot exhaust memory
+MAX_TEXT_FIELD_LENGTH = 200  # hub-supplied names are untrusted; bound before storing
+MAX_BLUEPRINT_DEPTH = 10  # nested Make router branches to walk
+
+# Zapier: OAuth 2.0 bearer token with the zap:all scope.
+ZAPIER_API_BASE_URL = "https://api.zapier.com/v2"
+ZAPIER_TOKEN_SECRET_ID = "zapier-access-token"  # noqa: S105
+ZAPIER_PAGE_SIZE = 100
+ZAPIER_MAX_PAGES = 10
+
+# Make: API token (header "Authorization: Token ..."), host is zone-specific.
+MAKE_API_ZONE = "eu1.make.com"
+MAKE_TOKEN_SECRET_ID = "make-api-token"  # noqa: S105
+MAKE_PAGE_SIZE = 100
+MAKE_MAX_PAGES = 10
+# Zones Make actually serves; anything else is rejected (SSRF guard).
+MAKE_ALLOWED_ZONE_SUFFIX = ".make.com"
+
+# Criticality heuristics for build_dependency_graph.
+SCHEDULE_APP_KEYWORDS = frozenset({"schedule", "cron", "clock", "timer", "rss"})
+CUSTOMER_FACING_APP_KEYWORDS = frozenset(
+    {
+        "gmail",
+        "outlook",
+        "mail",
+        "sendgrid",
+        "mailchimp",
+        "postmark",
+        "salesforce",
+        "hubspot",
+        "pipedrive",
+        "zendesk",
+        "intercom",
+        "freshdesk",
+        "stripe",
+        "paypal",
+        "chargebee",
+        "twilio",
+        "sms",
+        "whatsapp",
+    }
+)

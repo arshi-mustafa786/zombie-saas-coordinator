@@ -218,7 +218,8 @@ def cloud(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
         return {"approved": True, "status": "APPROVED"}
 
     monkeypatch.setattr(tools, "_get_firestore_client", lambda: firestore_client)
-    monkeypatch.setattr(tools, "_get_audit_logger", lambda: audit_logger)
+    # US-9 gave _get_audit_logger a log_name argument, so the stub must accept it.
+    monkeypatch.setattr(tools, "_get_audit_logger", lambda log_name=None: audit_logger)
     monkeypatch.setattr(tools, "_investigation_gate", approved_gate)
     return SimpleNamespace(firestore=firestore_client, audit=audit_logger, gate_calls=gate_calls)
 
