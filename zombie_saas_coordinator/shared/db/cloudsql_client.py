@@ -196,3 +196,99 @@ def record_revocation_in_cloudsql(
     }
     with engine.begin() as conn:
         conn.execute(update_revocation_sql, params)
+
+
+def record_quarantine_in_cloudsql(
+    quarantine_data: dict[str, Any],
+    engine: Engine | None = None,
+) -> None:
+    """Records or updates quarantine record in Cloud SQL."""
+    if engine is None:
+        try:
+            engine = get_cloudsql_engine()
+        except KeyError:
+            return
+
+    from sqlalchemy import text
+
+    insert_quarantine_sql = text(
+        """
+        INSERT INTO quarantine_records (
+            proposal_id, app_id, app_name, status, quarantined_at,
+            retention_days, expires_at, legal_hold, legal_hold_reason,
+            migration_completed, required_signatures
+        )
+        VALUES (
+            :proposal_id, :app_id, :app_name, :status, :quarantined_at,
+            :retention_days, :expires_at, :legal_hold, :legal_hold_reason,
+            :migration_completed, :required_signatures
+        )
+        ON CONFLICT (proposal_id) DO UPDATE SET
+            status = EXCLUDED.status,
+            legal_hold = EXCLUDED.legal_hold,
+            legal_hold_reason = EXCLUDED.legal_hold_reason,
+            migration_completed = EXCLUDED.migration_completed;
+        """
+    )
+
+    params = {
+        "proposal_id": quarantine_data.get("proposal_id", ""),
+        "app_id": quarantine_data.get("app_id", ""),
+        "app_name": quarantine_data.get("app_name", ""),
+        "status": str(quarantine_data.get("status", "")),
+        "quarantined_at": quarantine_data.get("quarantined_at"),
+        "retention_days": quarantine_data.get("retention_days", 90),
+        "expires_at": quarantine_data.get("expires_at"),
+        "legal_hold": quarantine_data.get("legal_hold", False),
+        "legal_hold_reason": quarantine_data.get("legal_hold_reason"),
+        "migration_completed": quarantine_data.get("migration_completed", True),
+        "required_signatures": quarantine_data.get("required_signatures", 2),
+    }
+
+    with engine.begin() as conn:
+        conn.execute(insert_quarantine_sql, params)
+
+
+def record_disposal_in_cloudsql(
+    disposal_data: dict[str, Any],
+    engine: Engine | None = None,
+) -> None:
+    """Records verifiable destruction certificate in Cloud SQL."""
+    if engine is None:
+        try:
+            engine = get_cloudsql_engine()
+        except KeyError:
+            return
+
+    from sqlalchemy import text
+
+    insert_disposal_sql = text(
+        """
+        INSERT INTO disposal_certificates (
+            certificate_id, proposal_id, app_id, app_name, disposed_at,
+            executor_id, executor_email, verification_hash, items_purged_count, status
+        )
+        VALUES (
+            :certificate_id, :proposal_id, :app_id, :app_name, :disposed_at,
+            :executor_id, :executor_email, :verification_hash, :items_purged_count, :status
+        )
+        ON CONFLICT (certificate_id) DO NOTHING;
+        """
+    )
+
+    params = {
+        "certificate_id": disposal_data.get("certificate_id", ""),
+        "proposal_id": disposal_data.get("proposal_id", ""),
+        "app_id": disposal_data.get("app_id", ""),
+        "app_name": disposal_data.get("app_name", ""),
+        "disposed_at": disposal_data.get("disposed_at"),
+        "executor_id": disposal_data.get("executor_id", ""),
+        "executor_email": disposal_data.get("executor_email"),
+        "verification_hash": disposal_data.get("verification_hash", ""),
+        "items_purged_count": disposal_data.get("items_purged_count", 0),
+        "status": disposal_data.get("status", "VERIFIED_DESTROYED"),
+    }
+
+    with engine.begin() as conn:
+        conn.execute(insert_disposal_sql, params)
+

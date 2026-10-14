@@ -15,6 +15,8 @@ SAAS_WHITELIST_COLLECTION = "saas_whitelist"  # US-2 reads
 EXPENSE_EVENTS_COLLECTION = "expense_events"  # US-2 writes, US-3 reads
 PROPOSALS_COLLECTION = "consolidation_proposals"  # US-3 writes, US-4 reads/updates
 BEHAVIORAL_CONTRACTS_COLLECTION = "behavioral_contracts"  # US-6 writes, US-7 reads
+QUARANTINE_RECORDS_COLLECTION = "quarantine_records"  # US-12 writes & reads
+DISPOSAL_CERTIFICATES_COLLECTION = "disposal_certificates"  # US-12 writes & reads
 SEMANTIC_MISMATCHES_COLLECTION = "semantic_mismatches"  # US-9 writes
 
 # ──────────────────────────────────────────────
@@ -25,7 +27,15 @@ IDP_TELEMETRY_AUDIT_LOG = "idp-telemetry-audit"
 EXPENSE_WEBHOOK_AUDIT_LOG = "expense-webhook-audit"
 PROPOSAL_AUDIT_LOG = "consolidation-proposal-audit"
 CONTRACT_EXTRACTION_AUDIT_LOG = "behavioral-contract-audit"
+DATA_DISPOSAL_AUDIT_LOG = "data-disposal-audit"
 SEMANTIC_MISMATCH_AUDIT_LOG = "semantic-mismatch-audit"
+
+# ──────────────────────────────────────────────
+# US-12: Quarantine and disposal
+# ──────────────────────────────────────────────
+
+DEFAULT_QUARANTINE_RETENTION_DAYS = 90
+DEFAULT_DISPOSAL_REQUIRED_SIGNATURES = 2
 
 # ──────────────────────────────────────────────
 # US-1: IdP telemetry & redundancy

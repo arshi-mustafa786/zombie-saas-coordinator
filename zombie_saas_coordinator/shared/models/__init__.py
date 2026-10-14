@@ -30,6 +30,18 @@ from zombie_saas_coordinator.shared.models.proposal import (
     RiskAssessment,
     SavingsBreakdown,
 )
+from zombie_saas_coordinator.shared.models.quarantine import (
+    DisposalCertificate,
+    DisposalExecuteRequest,
+    DisposalSignature,
+    DisposalSignRequest,
+    LegalHoldRequest,
+    QuarantineRecord,
+    QuarantineSourceRequest,
+    QuarantineStatus,
+    ResolveExceptionRequest,
+    ValidationExceptionItem,
+)
 from zombie_saas_coordinator.shared.models.telemetry import (
     AppTelemetry,
     IdpAuthError,
@@ -62,4 +74,14 @@ __all__ = [
     "ApprovalStatusResponse",
     "AuthorizeProposalRequest",
     "RevokeApprovalRequest",
+    "QuarantineStatus",
+    "DisposalSignature",
+    "ValidationExceptionItem",
+    "QuarantineRecord",
+    "DisposalCertificate",
+    "QuarantineSourceRequest",
+    "LegalHoldRequest",
+    "DisposalSignRequest",
+    "DisposalExecuteRequest",
+    "ResolveExceptionRequest",
 ]

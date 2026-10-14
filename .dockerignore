@@ -1,0 +1,16 @@
+.venv/
+.git/
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+.ruff_cache/
+.mypy_cache/
+.env
+gcp-credentials.json
+tests/
+traces/
+docs/
+scripts/
