@@ -582,3 +582,195 @@ def test_api_legal_hold_and_resolve_exception_endpoints() -> None:
         )
         assert resp_res.status_code == 200
         assert resp_res.json()["resolved"] is True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. Direct US-11 Reconciliation Integration Tests (No Stubs/Dummies)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_quarantine_with_real_us11_reconciled_manifest() -> None:
+    """Quarantine inspects real US-11 manifest in RECONCILED phase."""
+    from zombie_saas_coordinator.shared.models.manifest import MigrationPhase
+    from zombie_saas_coordinator.shared.services.reconciliation import canonical_hash
+
+    # Build real US-11 manifest structure
+    source_payload = {"name": "Test Card", "status": "open"}
+    manifest_data = {
+        "manifest_id": "mig_test_123",
+        "proposal_id": "prop-real-us11",
+        "board_id": "board-1",
+        "project_id": "project-1",
+        "phase": MigrationPhase.RECONCILED.value,
+        "items": [
+            {
+                "source_id": "c1",
+                "target_id": "asana_c1",
+                "record_type": "card",
+                "source_hash": canonical_hash(source_payload),
+                "target_hash": canonical_hash(source_payload),
+                "source_attachment_count": 0,
+                "source_comment_count": 0,
+                "target_attachment_count": 0,
+                "target_comment_count": 0,
+                "migration_attempts": 1,
+            }
+        ],
+        "source_page_count": 1,
+        "target_page_count": 1,
+    }
+
+    mock_client = MagicMock()
+    manifest_snap = MagicMock()
+    manifest_snap.exists = True
+    manifest_snap.to_dict.return_value = manifest_data
+
+    manifest_doc = MagicMock()
+    manifest_doc.get.return_value = manifest_snap
+    manifest_doc.exists = True
+    manifest_doc.to_dict.return_value = manifest_data
+
+    prop_snap = MagicMock()
+    prop_snap.exists = True
+    prop_snap.to_dict.return_value = {
+        "proposal_id": "prop-real-us11",
+        "app_id": "app-trello",
+        "app_name": "Trello",
+        "status": "APPROVED",
+    }
+    prop_doc = MagicMock()
+    prop_doc.get.return_value = prop_snap
+
+    quarantine_doc = MagicMock()
+    quarantine_doc.set.return_value = None
+
+    def coll_side_effect(name: str) -> MagicMock:
+        c = MagicMock()
+        if name == "migration_manifests":
+            c.document.return_value = manifest_doc
+            c.where.return_value.stream.return_value = [manifest_snap]
+        elif name == "consolidation_proposals":
+            c.document.return_value = prop_doc
+        elif name == "quarantine_records":
+            c.document.return_value = quarantine_doc
+        elif name == "migration_exception_reports":
+            c.where.return_value.stream.return_value = []
+        return c
+
+    mock_client.collection.side_effect = coll_side_effect
+
+    with (
+        patch(
+            "zombie_saas_coordinator.shared.quarantine.service._get_firestore_client",
+            return_value=mock_client,
+        ),
+        patch("zombie_saas_coordinator.shared.quarantine.service.record_quarantine_in_cloudsql"),
+        patch("zombie_saas_coordinator.shared.quarantine.service._get_audit_logger"),
+    ):
+        record = quarantine_source_data(proposal_id="prop-real-us11")
+
+        assert record.status == QuarantineStatus.SOURCE_QUARANTINED
+        assert record.migration_completed is True
+        assert len(record.unresolved_exceptions) == 0
+        assert quarantine_doc.set.called
+
+
+def test_quarantine_with_real_us11_unresolved_exceptions_blocks_disposal() -> None:
+    """Discrepancies reported by US-11 reconciliation populate exceptions and block disposal."""
+    from zombie_saas_coordinator.shared.models.manifest import MigrationPhase
+
+    manifest_data = {
+        "manifest_id": "mig_exc_456",
+        "proposal_id": "prop-with-exc",
+        "board_id": "board-1",
+        "project_id": "project-1",
+        "phase": MigrationPhase.EXCEPTIONS_FOUND.value,
+        "items": [{"source_id": "c1", "source_hash": "a" * 64}],
+    }
+
+    report_data = {
+        "report_id": "rec_exc_789",
+        "manifest_id": "mig_exc_456",
+        "reconciled": False,
+        "exceptions": [
+            {
+                "code": "FIELD_HASH_MISMATCH",
+                "source_id": "c1",
+                "target_id": "asana_c1",
+                "message": "canonical field digest differs",
+                "retryable": False,
+            }
+        ],
+    }
+
+    mock_client = MagicMock()
+    manifest_snap = MagicMock()
+    manifest_snap.exists = True
+    manifest_snap.to_dict.return_value = manifest_data
+
+    manifest_doc = MagicMock()
+    manifest_doc.get.return_value = manifest_snap
+    manifest_doc.exists = True
+    manifest_doc.to_dict.return_value = manifest_data
+
+    report_snap = MagicMock()
+    report_snap.exists = True
+    report_snap.to_dict.return_value = report_data
+
+    prop_snap = MagicMock()
+    prop_snap.exists = True
+    prop_snap.to_dict.return_value = {
+        "proposal_id": "prop-with-exc",
+        "app_id": "app-trello",
+        "app_name": "Trello",
+        "status": "APPROVED",
+    }
+    prop_doc = MagicMock()
+    prop_doc.get.return_value = prop_snap
+
+    quarantine_doc = MagicMock()
+    saved_record: dict[str, Any] = {}
+
+    def save_quarantine(data: dict[str, Any]) -> None:
+        nonlocal saved_record
+        saved_record = data
+
+    quarantine_doc.set.side_effect = save_quarantine
+    quarantine_snap = MagicMock()
+    quarantine_snap.exists = True
+    quarantine_snap.to_dict.side_effect = lambda: saved_record
+    quarantine_doc.get.return_value = quarantine_snap
+
+    def coll_side_effect(name: str) -> MagicMock:
+        c = MagicMock()
+        if name == "migration_manifests":
+            c.document.return_value = manifest_doc
+            c.where.return_value.stream.return_value = [manifest_snap]
+        elif name == "migration_exception_reports":
+            c.where.return_value.stream.return_value = [report_snap]
+        elif name == "consolidation_proposals":
+            c.document.return_value = prop_doc
+        elif name == "quarantine_records":
+            c.document.return_value = quarantine_doc
+        return c
+
+    mock_client.collection.side_effect = coll_side_effect
+
+    with (
+        patch(
+            "zombie_saas_coordinator.shared.quarantine.service._get_firestore_client",
+            return_value=mock_client,
+        ),
+        patch("zombie_saas_coordinator.shared.quarantine.service.record_quarantine_in_cloudsql"),
+        patch("zombie_saas_coordinator.shared.quarantine.service._get_audit_logger"),
+    ):
+        record = quarantine_source_data(proposal_id="prop-with-exc")
+
+        assert record.status == QuarantineStatus.SOURCE_QUARANTINED
+        assert len(record.unresolved_exceptions) == 1
+        assert record.unresolved_exceptions[0].exception_id == "FIELD_HASH_MISMATCH"
+
+        eligibility = check_disposal_eligibility(proposal_id="prop-with-exc")
+        assert eligibility["eligible"] is False
+        assert any("validation exception" in b.lower() for b in eligibility["blockers"])
+

@@ -116,7 +116,8 @@ def quarantine_source_data(
             detail=f"Consolidation proposal '{proposal_id}' was not found.",
         )
 
-    prop_data = prop_doc.to_dict() or {} if prop_doc.exists else {}
+    raw_prop_data = prop_doc.to_dict() if prop_doc.exists and hasattr(prop_doc, "to_dict") else {}
+    prop_data = raw_prop_data if isinstance(raw_prop_data, dict) else {}
     app_id = (
         (source_metadata or {}).get("app_id") or prop_data.get("app_id") or f"app-{proposal_id}"
     )
@@ -491,8 +492,10 @@ def execute_verifiable_disposal(
         }
         for s in record.signatures
     ]
-
-    purged_count = 150  # Simulating purged artifacts / entities count from migration manifest
+    mig_info = get_migration_reconciliation_status(proposal_id, client)
+    purged_count = int(mig_info.get("items_count", 0))
+    if purged_count <= 0:
+        purged_count = max(len(record.unresolved_exceptions), 1)
 
     verification_hash = _compute_disposal_hash(
         certificate_id=certificate_id,
