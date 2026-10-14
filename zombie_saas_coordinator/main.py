@@ -9,6 +9,8 @@ Exposes HTTP endpoints for:
 The ADK agents are invoked from these endpoints as needed.
 """
 
+from typing import Any
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
@@ -40,3 +42,19 @@ app.include_router(reconciliation_router)
 async def health_check() -> dict[str, str]:
     """Health check endpoint for Cloud Run."""
     return {"status": "healthy", "service": "zombie-saas-coordinator"}
+
+
+@app.get("/readiness")
+async def readiness_check() -> dict[str, Any]:
+    """Readiness probe endpoint for Cloud Run container validation."""
+    checks: dict[str, str] = {"service": "ready"}
+    try:
+        from zombie_saas_coordinator.shared.db.firestore_client import get_firestore_client
+
+        db = get_firestore_client()
+        if db:
+            checks["firestore"] = "connected"
+    except Exception as exc:
+        checks["firestore"] = f"degraded: {exc}"
+    return {"status": "ready", "checks": checks}
+
