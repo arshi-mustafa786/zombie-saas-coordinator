@@ -3,29 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zombie SaaS Consolidator — CISO & IT Ops Command Center</title>
+  <title>Zombie SaaS Consolidator — Autonomous Multi-Agent Migration Platform</title>
   <link rel="stylesheet" href="/static/styles.css">
-  <!-- Fallback local css link if opened as file:// -->
-  <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧟</text></svg>">
 </head>
 <body>
 
-  <!-- App Header -->
+  <!-- Top Navigation Bar -->
   <header class="app-header">
     <div class="brand">
       <div class="brand-icon">🧟</div>
       <div>
         <h1>Zombie SaaS Consolidator</h1>
-        <div class="subtitle">Autonomous Multi-Agent SDLC Sentinel • Google Cloud Platform</div>
+        <div class="subtitle">Autonomous Multi-Agent Platform • Google Cloud & ADK</div>
       </div>
-    </div>
-
-    <!-- Live API Base URL Configurator -->
-    <div class="endpoint-selector-bar">
-      <label for="api-base-url-input">Target Service:</label>
-      <input type="text" id="api-base-url-input" value="https://zombie-saas-coordinator-339447006828.asia-south1.run.app" placeholder="https://..." />
-      <button id="btn-refresh-connection" class="btn btn-secondary btn-sm" title="Test Connection">Ping</button>
     </div>
 
     <div class="header-status-group">
@@ -39,265 +30,206 @@
         <span id="firestore-label">Firestore: Checking...</span>
       </div>
 
-      <button id="btn-run-autopilot" class="btn btn-primary">
-        <span>⚡ Run Autopilot Demo</span>
-      </button>
+      <!-- Hidden endpoint override for local testing flexibility -->
+      <input type="hidden" id="api-base-url-input" value="https://zombie-saas-coordinator-339447006828.asia-south1.run.app" />
     </div>
   </header>
 
   <!-- Main Container -->
   <main class="dashboard-container">
 
-    <!-- Executive Metrics Grid -->
-    <section class="metrics-grid">
-      <div class="glass-panel metric-card cyan">
-        <div class="metric-title">Zombie Subscriptions</div>
-        <div class="metric-value" id="metric-zombie-count">2 Active</div>
-        <div class="metric-sub">Detected via IdP & Expense Telemetry</div>
+    <!-- Hero: Autonomous Platform Sentinel -->
+    <section class="hero-banner">
+      <div class="hero-content">
+        <h2>Autonomous SaaS License Consolidation</h2>
+        <p>
+          Specialized AI agents continuously detect shadow IT, extract automation contracts, simulate schema mappings, 
+          and catalog external dependencies. The system runs autonomously end-to-end, pausing strictly for executive CISO authorization.
+        </p>
       </div>
 
-      <div class="glass-panel metric-card amber">
-        <div class="metric-title">Average Inactivity Ratio</div>
-        <div class="metric-value" id="metric-inactive-ratio">75%</div>
-        <div class="metric-sub">>60 Days Zero Login Threshold</div>
-      </div>
-
-      <div class="glass-panel metric-card emerald">
-        <div class="metric-title">Recoverable Annual Spend</div>
-        <div class="metric-value" id="metric-annual-savings">$8,100 / yr</div>
-        <div class="metric-sub">Calculated via Auditor Agent ROI</div>
-      </div>
-
-      <div class="glass-panel metric-card purple">
-        <div class="metric-title">Governance & HITL Gate</div>
-        <div class="metric-value" id="metric-hitl-status">READY</div>
-        <div class="metric-sub" id="metric-hitl-sub">Awaiting Human Authorization</div>
+      <div>
+        <button id="btn-trigger-orchestration" class="btn btn-primary" style="font-size: 1rem; padding: 0.9rem 1.8rem;">
+          <span id="btn-orchestration-icon">⚡</span>
+          <span id="btn-orchestration-text">Trigger Autonomous Triage</span>
+        </button>
       </div>
     </section>
 
-    <!-- 6-Stage Vertical Slices Grid -->
-    <div class="stages-grid">
+    <!-- Multi-Agent Collaboration Network -->
+    <section>
+      <div class="section-title">
+        <span>🤖</span>
+        <span>Multi-Agent Orchestration Topology</span>
+      </div>
+      <div class="section-desc">
+        Specialized agents reason in parallel under the root coordinator to eliminate manual consolidation overhead.
+      </div>
 
-      <!-- STAGE 1: Detection & Ingestion -->
-      <section class="glass-panel stage-card" id="stage-1-card">
-        <div class="stage-header">
-          <div>
-            <span class="stage-number">Stage 1 • US-1 & US-2</span>
-            <h2 class="stage-title">Scheduled IdP & Expense Ingestion</h2>
-            <div class="stage-desc">Scans Okta/Workspace for inactivity and ingests HMAC corporate card charges.</div>
-          </div>
-          <span class="tag tag-cyan">Pull & Push Triggers</span>
-        </div>
-
-        <div class="stage-body">
-          <div id="stage-1-telemetry-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <div class="telemetry-item">
-              <div class="app-badge">📋 Trello (Atlassian)</div>
-              <div><span class="tag tag-red">75% Inactive Seats</span> <span class="tag tag-amber">Redundant: Asana</span></div>
-            </div>
-            <div class="telemetry-item">
-              <div class="app-badge">💬 Slack (Salesforce)</div>
-              <div><span class="tag tag-red">88% Inactive Seats</span> <span class="tag tag-amber">Redundant: Teams</span></div>
-            </div>
-            <div class="telemetry-item">
-              <div class="app-badge">🚀 Jira Software (Atlassian)</div>
-              <div><span class="tag tag-green">Enterprise Standard</span></div>
+      <div class="orchestration-graph">
+        <!-- Root Supervisor Node -->
+        <div class="root-coordinator-node">
+          <div class="root-info">
+            <div class="agent-icon-badge">👑</div>
+            <div>
+              <div class="agent-name">Root Coordinator Agent</div>
+              <div class="agent-role">Gemini 2.0 Pro • Google Agent Development Kit (ADK)</div>
             </div>
           </div>
-
-          <div id="stage-1-expense-result" class="code-box" style="display: none;"></div>
+          <div class="agent-status-tag" id="root-status-badge">Sentinel Active • Idle</div>
         </div>
 
-        <div class="stage-actions">
-          <button id="btn-trigger-idp-scan" class="btn btn-secondary btn-sm">
-            <span>🔍 Trigger IdP Scan (US-1)</span>
-          </button>
-          <button id="btn-trigger-expense-webhook" class="btn btn-secondary btn-sm">
-            <span>💳 Ingest Brex Expense (US-2)</span>
-          </button>
-        </div>
-      </section>
+        <!-- 3 Delegated Sub-Agents -->
+        <div class="sub-agents-grid">
 
-      <!-- STAGE 2: Proposal Generation -->
-      <section class="glass-panel stage-card" id="stage-2-card">
-        <div class="stage-header">
-          <div>
-            <span class="stage-number">Stage 2 • US-3</span>
-            <h2 class="stage-title">Auditor Agent Consolidation Proposal</h2>
-            <div class="stage-desc">Synthesizes ROI math, risk factors, and cryptographic proposal signatures.</div>
-          </div>
-          <span class="tag tag-cyan" id="proposal-status-tag">PENDING</span>
-        </div>
-
-        <div class="stage-body">
-          <div id="proposal-view-box" class="slack-card-preview">
-            <div class="slack-header">
-              <span>📄 Proposal ID:</span> <span id="prop-id-label" style="font-family: monospace; color: var(--accent-cyan);">prop-trello-init</span>
-            </div>
-            <div class="slack-fields-grid">
+          <!-- Auditor Agent -->
+          <div class="glass-panel agent-card auditor">
+            <div class="agent-header">
               <div>
-                <div class="slack-field-label">Target Migration</div>
-                <div class="slack-field-val">Trello → Asana</div>
+                <div class="agent-name">Auditor Agent</div>
+                <div class="agent-role" style="color: var(--accent-cyan);">Gemini Flash • Discovery & ROI</div>
               </div>
+              <span class="agent-status-tag" id="auditor-status-tag">Ready</span>
+            </div>
+            <div class="agent-task">
+              Monitors IdP inactivity logs and corporate card expense streams to detect shadow IT and calculate recoverable spend.
+            </div>
+            <div class="agent-findings" id="auditor-findings-box">
+              Awaiting trigger...
+            </div>
+            <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+              <button class="btn btn-secondary" id="btn-open-idp-modal" style="font-size: 0.74rem; padding: 5px 10px; border-color: rgba(56, 189, 248, 0.4); color: var(--accent-cyan); display: flex; align-items: center; gap: 4px;">
+                <span>🔍 Inspect & Customize IdP Logs</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Architect Agent -->
+          <div class="glass-panel agent-card architect">
+            <div class="agent-header">
               <div>
-                <div class="slack-field-label">Projected Annual Savings</div>
-                <div class="slack-field-val" style="color: var(--accent-emerald);" id="prop-savings-val">$8,100.00 / yr</div>
+                <div class="agent-name">Architect Agent</div>
+                <div class="agent-role" style="color: var(--accent-purple);">Gemini 2.0 Pro • Semantic Reasoning</div>
               </div>
+              <span class="agent-status-tag" id="architect-status-tag">Ready</span>
+            </div>
+            <div class="agent-task">
+              Extracts behavioral automation rules, diffs schemas, and synthesizes webhook remediation hypotheses.
+            </div>
+            <div class="agent-findings" id="architect-findings-box">
+              Awaiting trigger...
+            </div>
+          </div>
+
+          <!-- Integrator Agent -->
+          <div class="glass-panel agent-card integrator">
+            <div class="agent-header">
               <div>
-                <div class="slack-field-label">Multi-Factor Risk Score</div>
-                <div class="slack-field-val" id="prop-risk-val">28 / 100 (Low Risk)</div>
+                <div class="agent-name">Integrator Agent</div>
+                <div class="agent-role" style="color: var(--accent-amber);">Gemini Flash • Dependency Graph</div>
               </div>
-              <div>
-                <div class="slack-field-label">Auditor Recommendation</div>
-                <div class="slack-field-val" id="prop-rec-val">Proceed to Full Consolidation</div>
-              </div>
+              <span class="agent-status-tag" id="integrator-status-tag">Ready</span>
             </div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);" id="prop-summary-val">
-              High seat redundancy detected. Active automated dependencies identified in Zapier.
+            <div class="agent-task">
+              Crawls Zapier and Make automation hubs to identify interconnected workflows before decommissioning.
+            </div>
+            <div class="agent-findings" id="integrator-findings-box">
+              Awaiting trigger...
             </div>
           </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Consolidation Dossier & CISO Governance Gate -->
+    <section class="glass-panel dossier-card" id="dossier-card">
+      <div class="dossier-header">
+        <div>
+          <div class="dossier-title">Consolidation Dossier</div>
+          <div class="dossier-route" id="dossier-route-label">Source App: Trello (15 Seats) ──► Target Standard: Asana</div>
+        </div>
+        <div class="agent-status-tag" id="dossier-status-badge">AWAITING TRIAGE</div>
+      </div>
+
+      <!-- 3-Pillar Intelligence Grid -->
+      <div class="dossier-pillars-grid">
+        <div class="pillar-card">
+          <div class="pillar-title">Financial Recovery</div>
+          <div class="pillar-value" style="color: var(--accent-emerald);" id="dossier-savings-val">$8,100 / yr</div>
+          <div class="pillar-desc" id="dossier-savings-sub">75% of seats idle (>60 days zero logins). Imminent renewal flagged.</div>
         </div>
 
-        <div class="stage-actions">
-          <button id="btn-create-fresh-proposal" class="btn btn-secondary btn-sm">
-            <span>⚡ Generate Fresh Proposal (US-3)</span>
+        <div class="pillar-card">
+          <div class="pillar-title">Semantic Validation</div>
+          <div class="pillar-value" style="color: var(--accent-purple);" id="dossier-semantic-val">1 Mismatch Mitigated</div>
+          <div class="pillar-desc" id="dossier-semantic-sub">Auto-Archive rule simulated with Gemini. Fallback webhook generated.</div>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-title">Workflow Integrations</div>
+          <div class="pillar-value" style="color: var(--accent-amber);" id="dossier-integrations-val">3 Zaps Mapped</div>
+          <div class="pillar-desc" id="dossier-integrations-sub">Downstream pipelines (Drive, Slack, Sheets) cataloged for safe migration.</div>
+        </div>
+      </div>
+
+      <!-- The Single Human Governance Gate -->
+      <div class="hitl-gate-container" id="hitl-gate-box">
+        <div class="hitl-gate-text">
+          <h3>🛡️ Human-in-the-Loop (HITL) Executive Governance Gate</h3>
+          <p id="hitl-gate-subtext">
+            All AI agents have completed analysis. As CISO / IT Director, authorize autonomous cutover and verifiable quarantine:
+          </p>
+        </div>
+
+        <div class="hitl-actions">
+          <button id="btn-hitl-approve" class="btn btn-success" disabled>
+            <span>✅ Approve & Execute Migration</span>
+          </button>
+          <button id="btn-hitl-defer" class="btn btn-secondary" disabled>
+            <span>⏸️ Whitelist Application</span>
           </button>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- STAGE 3: Interactive HITL Gate -->
-      <section class="glass-panel stage-card" id="stage-3-card">
-        <div class="stage-header">
-          <div>
-            <span class="stage-number">Stage 3 • US-4 & US-5</span>
-            <h2 class="stage-title">Human-in-the-Loop (HITL) Gate</h2>
-            <div class="stage-desc">Interactive approval notifications (Slack/Teams) with Firebase Auth SSO roles.</div>
+    <!-- Autonomous Execution & Cryptographic Proof Section -->
+    <section class="proof-section" id="proof-section">
+      <div class="section-title">
+        <span>📜</span>
+        <span>Cryptographic Proof & Fail-Safe Decommissioning</span>
+      </div>
+      <div class="section-desc">
+        Deterministic verification guarantees zero data loss before verifiable destruction.
+      </div>
+
+      <div class="proof-grid">
+        <div class="glass-panel proof-card">
+          <div class="agent-header">
+            <div class="agent-name">Cryptographic Cutover Manifest</div>
+            <span class="tag tag-green" id="manifest-tag">100% MATCH</span>
           </div>
-          <span class="tag tag-amber" id="hitl-badge-label">Awaiting Decision</span>
+          <div class="proof-code" id="proof-manifest-box"></div>
         </div>
 
-        <div class="stage-body">
-          <div class="slack-card-preview" style="border-left-color: var(--accent-indigo);">
-            <div class="slack-header">
-              <span>🔔 [CISO ALERT] Redundant SaaS Approval Card</span>
-            </div>
-            <div style="font-size: 0.8rem; color: var(--text-main);">
-              <strong>Trello</strong> has been inactive for >60 days across 75% of assigned seats. Authorize investigation or dry-run simulation:
-            </div>
-            <div id="hitl-feedback-msg" class="code-box" style="display: none;"></div>
+        <div class="glass-panel proof-card">
+          <div class="agent-header">
+            <div class="agent-name">Fail-Safe Quarantine & Compliance Lock</div>
+            <span class="tag tag-cyan">QUARANTINED (90D)</span>
           </div>
+          <div class="proof-code" id="proof-quarantine-box"></div>
         </div>
 
-        <div class="stage-actions">
-          <button id="btn-hitl-simulate" class="btn btn-secondary btn-sm">
-            <span>🧪 [Simulate Migration]</span>
-          </button>
-          <button id="btn-hitl-authorize-investigate" class="btn btn-primary btn-sm">
-            <span>🛡️ [Authorize Investigation (US-5)]</span>
-          </button>
-          <button id="btn-hitl-grant-migration" class="btn btn-success btn-sm">
-            <span>✅ [Approve Cutover]</span>
-          </button>
-        </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- STAGE 4: Semantic Reasoning & Integrations -->
-      <section class="glass-panel stage-card" id="stage-4-card">
-        <div class="stage-header">
-          <div>
-            <span class="stage-number">Stage 4 • US-6 to US-10</span>
-            <h2 class="stage-title">Architect & Integrator Agents</h2>
-            <div class="stage-desc">Behavioral contract diffing, state simulation, and Zapier/Make dependency scanning.</div>
-          </div>
-          <span class="tag tag-purple">Gemini Reasoning</span>
-        </div>
-
-        <div class="stage-body">
-          <div id="architect-results-box" class="code-box">
-            // Click "Run Architect Agent" to extract Butler automation contracts,
-            // diff schemas, and simulate state-transition behavior...
-          </div>
-        </div>
-
-        <div class="stage-actions">
-          <button id="btn-run-architect" class="btn btn-secondary btn-sm">
-            <span>🧠 Run Architect Agent (US-6-9)</span>
-          </button>
-          <button id="btn-run-integrator" class="btn btn-secondary btn-sm">
-            <span>🕸️ Scan Automation Hubs (US-10)</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- STAGE 5: Cryptographic Cutover & Reconciliation -->
-      <section class="glass-panel stage-card" id="stage-5-card">
-        <div class="stage-header">
-          <div>
-            <span class="stage-number">Stage 5 • US-11</span>
-            <h2 class="stage-title">Cryptographic Reconciliation</h2>
-            <div class="stage-desc">SHA-256 hashed migration manifests, card-to-task cutover, and zero-loss proof.</div>
-          </div>
-          <span class="tag tag-emerald" id="reconciliation-tag">READY</span>
-        </div>
-
-        <div class="stage-body">
-          <div id="reconciliation-results-box" class="code-box">
-            // Click below to generate cryptographic SHA-256 Manifest
-            // and execute deterministic field reconciliation...
-          </div>
-        </div>
-
-        <div class="stage-actions">
-          <button id="btn-create-manifest" class="btn btn-success btn-sm">
-            <span>📦 Create Manifest & Reconcile (US-11)</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- STAGE 6: Fail-Safe Quarantine & Disposal -->
-      <section class="glass-panel stage-card" id="stage-6-card">
-        <div class="stage-header">
-          <div>
-            <span class="stage-number">Stage 6 • US-12</span>
-            <h2 class="stage-title">Quarantine & Multi-Sig Disposal</h2>
-            <div class="stage-desc">90-day retention lock, legal hold safeguards, and verified Certificate of Destruction.</div>
-          </div>
-          <span class="tag tag-cyan" id="quarantine-status-tag">SECURE</span>
-        </div>
-
-        <div class="stage-body">
-          <div id="quarantine-results-box" class="code-box">
-            // Click to lock source data into SOURCE_QUARANTINED status,
-            // test legal holds, and verify multi-signature disposal eligibility...
-          </div>
-        </div>
-
-        <div class="stage-actions">
-          <button id="btn-quarantine-source" class="btn btn-secondary btn-sm">
-            <span>🔒 Quarantine Source (90d Lock)</span>
-          </button>
-          <button id="btn-toggle-legal-hold" class="btn btn-secondary btn-sm">
-            <span>⚖️ Toggle Legal Hold</span>
-          </button>
-          <button id="btn-multisig-sign" class="btn btn-primary btn-sm">
-            <span>✍️ Multi-Sig Sign (CISO)</span>
-          </button>
-          <button id="btn-execute-disposal" class="btn btn-danger btn-sm">
-            <span>🔥 Verifiable Destruction</span>
-          </button>
-        </div>
-      </section>
-
-    </div>
-
-    <!-- Live Terminal / Audit Console -->
+    <!-- Real-time Agent Thought & Event Feed -->
     <section class="audit-console-container">
       <div class="console-header">
         <div class="console-title">
-          <span>📟 Live Agent Telemetry & Cloud Audit Logs</span>
-          <span class="tag tag-cyan" id="console-stream-status">STREAM ACTIVE</span>
+          <span>📟 Live Agent Reasoning & Cloud Audit Stream</span>
         </div>
-        <button id="btn-clear-logs" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">Clear Console</button>
+        <button id="btn-clear-logs" class="btn btn-secondary" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;">Clear Stream</button>
       </div>
       <div class="console-logs" id="console-logs-container">
         <!-- Logs dynamically injected here -->
@@ -306,8 +238,49 @@
 
   </main>
 
-  <script src="/static/app.js"></script>
-  <!-- Fallback local script link if opened as file:// -->
-  <script src="app.js"></script>
+  <!-- IdP Telemetry Inspection & Editing Modal -->
+  <div id="idp-modal-backdrop" class="modal-backdrop" style="display: none;">
+    <div class="modal-container glass-panel">
+      <div class="modal-header">
+        <div>
+          <h3 style="margin: 0; font-size: 1.15rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+            <span>🛡️ Enterprise IdP Telemetry Stream</span>
+            <span class="tag tag-cyan" style="font-size: 0.65rem;">SAML 2.0 / OIDC</span>
+          </h3>
+          <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+            Live Okta & Google Workspace authentication logs. Edit or add apps below to test dynamic agent reasoning.
+          </p>
+        </div>
+        <button id="btn-close-idp-modal" class="modal-close-btn">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="editor-toolbar">
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">Payload: idp_audit_stream.json</span>
+          <div style="display: flex; gap: 6px;">
+            <button id="btn-add-sample-app" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px;">
+              <span>+ Add App (e.g. Miro)</span>
+            </button>
+            <button id="btn-reset-idp-logs" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px;">
+              <span>Reset Baseline</span>
+            </button>
+          </div>
+        </div>
+        <textarea id="idp-json-editor" class="idp-code-editor" spellcheck="false"></textarea>
+        <div id="idp-editor-status" style="margin-top: 4px; font-size: 0.75rem; color: var(--accent-cyan);">
+          Valid JSON ready for autonomous agent ingestion.
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button id="btn-cancel-idp-modal" class="btn btn-secondary">Close</button>
+        <button id="btn-save-run-idp" class="btn btn-primary">
+          <span>⚡ Save & Trigger Autonomous Triage</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js" onerror="this.onerror=null;this.src='app.js';"></script>
 </body>
 </html>

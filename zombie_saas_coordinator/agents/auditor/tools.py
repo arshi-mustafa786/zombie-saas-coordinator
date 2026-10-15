@@ -133,7 +133,11 @@ def _fetch_idp_application_telemetry(
     ]
 
 
-def scan_idp_logs(tenant_id: str, days: int = DEFAULT_SCAN_WINDOW_DAYS) -> dict[str, Any]:
+def scan_idp_logs(
+    tenant_id: str,
+    days: int = DEFAULT_SCAN_WINDOW_DAYS,
+    raw_apps: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Fetches SAML/OIDC login events from the identity provider
     via Firebase Authentication federation. Returns a list of
     applications with their login activity over the specified period.
@@ -141,11 +145,13 @@ def scan_idp_logs(tenant_id: str, days: int = DEFAULT_SCAN_WINDOW_DAYS) -> dict[
     Args:
         tenant_id: The tenant identifier to scope the scan.
         days: Number of days of inactivity to check (default: 60).
+        raw_apps: Optional custom telemetry records to evaluate.
 
     Returns:
         dict with keys: status, apps (list of app activity records).
     """
-    raw_apps = _fetch_idp_application_telemetry(tenant_id, days)
+    if raw_apps is None:
+        raw_apps = _fetch_idp_application_telemetry(tenant_id, days)
     processed_apps: list[dict[str, Any]] = []
 
     for raw_app in raw_apps:

@@ -85,7 +85,17 @@ async def scan_idp_endpoint(
 
 
     try:
-        scan_output = tools.scan_idp_logs(tenant_id=payload.tenant_id, days=payload.days)
+        if payload.raw_apps is not None:
+            scan_output = tools.scan_idp_logs(
+                tenant_id=payload.tenant_id,
+                days=payload.days,
+                raw_apps=payload.raw_apps,
+            )
+        else:
+            scan_output = tools.scan_idp_logs(
+                tenant_id=payload.tenant_id,
+                days=payload.days,
+            )
     except IdpAuthError as auth_err:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

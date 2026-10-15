@@ -48,7 +48,9 @@ def deploy_cloud_run(
                         {"name": "GEMINI_MODEL", "value": "gemini-3.1-flash-lite"},
                         {"name": "GEMINI_API_KEY", "value": "AQ.Ab8RN6L-YeHhDBneZfn2PQPFWd7XdyQ7X37xphfNYCr8ChVOeQ"},
                         {"name": "DEPLOY_TIMESTAMP", "value": str(int(time.time()))},
+                        {"name": "ENVIRONMENT", "value": "production"},
                     ],
+
                     "livenessProbe": {
                         "httpGet": {
                             "path": "/health",
