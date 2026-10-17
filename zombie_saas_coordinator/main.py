@@ -63,6 +63,10 @@ if dashboard_dir.exists():
     async def serve_dashboard() -> FileResponse:
         return FileResponse(str(dashboard_dir / "index.html"))
 
+    @app.get("/enterprise_production_idp_logs.json", include_in_schema=False)
+    async def serve_enterprise_idp_logs() -> FileResponse:
+        return FileResponse(str(dashboard_dir / "enterprise_production_idp_logs.json"))
+
 
 
 @app.get("/health")

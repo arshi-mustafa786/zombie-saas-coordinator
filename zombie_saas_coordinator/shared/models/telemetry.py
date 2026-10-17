@@ -48,7 +48,10 @@ class IdPScanRequest(BaseModel):
 
     tenant_id: str = Field(min_length=1, max_length=128)
     days: int = Field(default=60, ge=1, le=365)
-    raw_apps: list[dict[str, Any]] | None = Field(default=None, description="Optional custom IdP telemetry records to analyze")
+    raw_apps: list[dict[str, Any]] | None = Field(
+        default=None,
+        description="Optional custom IdP telemetry records to analyze",
+    )
 
 
 

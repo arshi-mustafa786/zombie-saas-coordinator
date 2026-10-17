@@ -30,8 +30,8 @@
         <span id="firestore-label">Firestore: Checking...</span>
       </div>
 
-      <!-- Hidden endpoint override for local testing flexibility -->
-      <input type="hidden" id="api-base-url-input" value="https://zombie-saas-coordinator-339447006828.asia-south1.run.app" />
+      <!-- Hidden endpoint override for local testing flexibility; empty defaults to window.location.origin -->
+      <input type="hidden" id="api-base-url-input" value="" />
     </div>
   </header>
 
@@ -146,47 +146,117 @@
     <section class="glass-panel dossier-card" id="dossier-card">
       <div class="dossier-header">
         <div>
-          <div class="dossier-title">Consolidation Dossier</div>
-          <div class="dossier-route" id="dossier-route-label">Source App: Trello (15 Seats) ──► Target Standard: Asana</div>
+          <div class="dossier-title">Consolidation Proposal Dossier</div>
+          <div class="dossier-route" id="dossier-route-label">
+            <span style="color: var(--text-muted);">Initializing telemetry and candidate application analysis...</span>
+          </div>
         </div>
         <div class="agent-status-tag" id="dossier-status-badge">AWAITING TRIAGE</div>
+      </div>
+
+      <!-- Dynamic Identified Apps Selector -->
+      <div id="identified-apps-section" style="margin: 14px 0 16px 0; padding: 12px 14px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="font-size: 0.76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px;">
+            <span>🎯</span>
+            <span>Identified Zombie Apps from IdP Logs</span>
+          </div>
+          <span id="flagged-apps-badge" class="tag tag-rose" style="font-size: 0.68rem;">0 Flagged</span>
+        </div>
+        <div id="flagged-apps-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Awaiting IdP scan results...</span>
+        </div>
       </div>
 
       <!-- 3-Pillar Intelligence Grid -->
       <div class="dossier-pillars-grid">
         <div class="pillar-card">
           <div class="pillar-title">Financial Recovery</div>
-          <div class="pillar-value" style="color: var(--accent-emerald);" id="dossier-savings-val">$8,100 / yr</div>
-          <div class="pillar-desc" id="dossier-savings-sub">75% of seats idle (>60 days zero logins). Imminent renewal flagged.</div>
+          <div class="pillar-value" style="color: var(--accent-emerald);" id="dossier-savings-val">&mdash;</div>
+          <div class="pillar-desc" id="dossier-savings-sub">Analyzing seat dormancy across active IdP telemetry...</div>
         </div>
 
         <div class="pillar-card">
           <div class="pillar-title">Semantic Validation</div>
-          <div class="pillar-value" style="color: var(--accent-purple);" id="dossier-semantic-val">1 Mismatch Mitigated</div>
-          <div class="pillar-desc" id="dossier-semantic-sub">Auto-Archive rule simulated with Gemini. Fallback webhook generated.</div>
+          <div class="pillar-value" style="color: var(--accent-purple);" id="dossier-semantic-val">&mdash;</div>
+          <div class="pillar-desc" id="dossier-semantic-sub">Evaluating behavioral contracts and Gemini simulation...</div>
         </div>
 
         <div class="pillar-card">
           <div class="pillar-title">Workflow Integrations</div>
-          <div class="pillar-value" style="color: var(--accent-amber);" id="dossier-integrations-val">3 Zaps Mapped</div>
-          <div class="pillar-desc" id="dossier-integrations-sub">Downstream pipelines (Drive, Slack, Sheets) cataloged for safe migration.</div>
+          <div class="pillar-value" style="color: var(--accent-amber);" id="dossier-integrations-val">&mdash;</div>
+          <div class="pillar-desc" id="dossier-integrations-sub">Cataloging external automation hubs (Zapier, Make)...</div>
         </div>
       </div>
 
       <!-- The Single Human Governance Gate -->
       <div class="hitl-gate-container" id="hitl-gate-box">
-        <div class="hitl-gate-text">
-          <h3>🛡️ Human-in-the-Loop (HITL) Executive Governance Gate</h3>
-          <p id="hitl-gate-subtext">
-            All AI agents have completed analysis. As CISO / IT Director, authorize autonomous cutover and verifiable quarantine:
-          </p>
+        <div class="hitl-gate-header">
+          <div class="hitl-gate-text">
+            <h3>🛡️ Human-in-the-Loop (HITL) Executive Approval Gateway</h3>
+            <p id="hitl-gate-subtext">
+              Multi-agent validation complete. Verify identified zombie SaaS application below and authorize autonomous cutover or dispatch to Slack:
+            </p>
+          </div>
+          <div class="agent-status-tag" id="gate-approval-badge">AWAITING CISO REVIEW</div>
+        </div>
+
+        <!-- Dynamic Identified App Spotlight Card inside Gateway -->
+        <div class="gate-identified-card" id="gate-identified-card">
+          <div class="gate-card-top">
+            <div class="gate-card-title-group">
+              <div class="gate-app-icon" id="gate-app-icon">🎯</div>
+              <div class="gate-app-name-route">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="gate-app-name" id="gate-app-name">Loading Identified App...</span>
+                  <span class="tag tag-rose" id="gate-app-meta">FLAGGED ZOMBIE</span>
+                </div>
+                <div class="gate-app-route" id="gate-app-route">Scanning IdP logs...</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Recoverable Spend</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: var(--accent-emerald);" id="gate-app-savings">&mdash;</div>
+            </div>
+          </div>
+
+          <div class="gate-card-metrics">
+            <div class="gate-metric-box">
+              <span class="gate-metric-label">Seat Dormancy</span>
+              <span class="gate-metric-val" id="gate-app-dormant-seats" style="color: var(--accent-rose);">&mdash;</span>
+            </div>
+            <div class="gate-metric-box">
+              <span class="gate-metric-label">Inactivity Duration</span>
+              <span class="gate-metric-val" id="gate-app-inactivity" style="color: var(--accent-amber);">&mdash;</span>
+            </div>
+            <div class="gate-metric-box">
+              <span class="gate-metric-label">Target Standard</span>
+              <span class="gate-metric-val" id="gate-app-target" style="color: var(--accent-cyan);">&mdash;</span>
+            </div>
+            <div class="gate-metric-box">
+              <span class="gate-metric-label">Risk &amp; Redundancy</span>
+              <span class="gate-metric-val" id="gate-app-risk" style="color: var(--accent-purple);">&mdash;</span>
+            </div>
+          </div>
+
+          <div class="gate-slack-banner" id="gate-slack-banner">
+            <div class="gate-slack-banner-left">
+              <span style="font-size: 1rem;">💬</span>
+              <span id="gate-slack-status-text">Ready to dispatch interactive Block Kit approval card to Slack <strong>#ciso-saas-governance</strong></span>
+            </div>
+            <span class="tag tag-purple" id="gate-slack-badge" style="font-size: 0.68rem;">Block Kit Ready</span>
+          </div>
         </div>
 
         <div class="hitl-actions">
-          <button id="btn-hitl-approve" class="btn btn-success" disabled>
-            <span>✅ Approve & Execute Migration</span>
+          <button id="btn-push-slack" class="btn" style="background: #4A154B; border: 1px solid #7c2d7e; color: #ffffff; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(74, 21, 75, 0.4); cursor: pointer;">
+            <span id="btn-push-slack-icon">💬</span>
+            <span id="btn-push-slack-text">Push to Slack for CISO Approval</span>
           </button>
-          <button id="btn-hitl-defer" class="btn btn-secondary" disabled>
+          <button id="btn-hitl-approve" class="btn btn-success">
+            <span id="btn-hitl-approve-text">✅ Approve &amp; Execute Migration</span>
+          </button>
+          <button id="btn-hitl-defer" class="btn btn-secondary">
             <span>⏸️ Whitelist Application</span>
           </button>
         </div>
@@ -255,16 +325,29 @@
       </div>
       
       <div class="modal-body">
-        <div class="editor-toolbar">
+        <div class="editor-toolbar" style="flex-wrap: wrap; gap: 8px;">
           <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">Payload: idp_audit_stream.json</span>
-          <div style="display: flex; gap: 6px;">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button id="btn-load-enterprise" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px; border-color: rgba(56, 189, 248, 0.5); color: #38bdf8;">
+              <span>⚡ Load Enterprise Dataset (12 Apps • 2,670 Seats)</span>
+            </button>
+            <button id="btn-upload-file" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px;">
+              <span>📁 Upload JSON</span>
+            </button>
+            <input type="file" id="idp-file-input" accept=".json,.log,.txt" style="display: none;">
             <button id="btn-add-sample-app" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px;">
-              <span>+ Add App (e.g. Miro)</span>
+              <span>+ Add App</span>
             </button>
             <button id="btn-reset-idp-logs" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 4px 8px;">
-              <span>Reset Baseline</span>
+              <span>Reset</span>
             </button>
           </div>
+        </div>
+        <div id="idp-stats-bar" style="display: flex; gap: 16px; font-size: 0.74rem; color: #bae6fd; background: rgba(56, 189, 248, 0.08); padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.2); font-family: monospace;">
+          <span>📦 Apps: <strong id="stat-apps-count">3</strong></span>
+          <span>👥 Monitored Seats: <strong id="stat-seats-count">430</strong></span>
+          <span>💤 Inactive Seats: <strong id="stat-inactive-count">165</strong></span>
+          <span>🧟 Zombie Risk: <strong id="stat-zombies-count" style="color: var(--accent-rose);">2 Flagged</strong></span>
         </div>
         <textarea id="idp-json-editor" class="idp-code-editor" spellcheck="false"></textarea>
         <div id="idp-editor-status" style="margin-top: 4px; font-size: 0.75rem; color: var(--accent-cyan);">
@@ -281,6 +364,60 @@
     </div>
   </div>
 
-  <script src="/static/app.js" onerror="this.onerror=null;this.src='app.js';"></script>
+  <!-- Slack Interactive Block Kit Preview Modal -->
+  <div id="slack-modal-backdrop" class="modal-backdrop" style="display: none;">
+    <div class="modal-container glass-panel" style="max-width: 680px;">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+        <div>
+          <h3 style="margin: 0; font-size: 1.15rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+            <span>💬 Slack CISO Governance Gateway</span>
+            <span class="tag tag-green" id="slack-modal-status-tag" style="font-size: 0.65rem;">Block Kit Formatted</span>
+          </h3>
+          <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+            Real-time interactive Slack message dispatched for executive CISO decision.
+          </p>
+        </div>
+        <button id="btn-close-slack-modal" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 16px;">
+        <div style="margin-bottom: 12px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px;">TARGET SLACK INCOMING WEBHOOK (OPTIONAL):</div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="slack-webhook-input" placeholder="https://hooks.slack.com/services/..." style="flex: 1; background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 6px 10px; font-size: 0.75rem; color: #fff; font-family: monospace;">
+            <button id="btn-repush-slack" class="btn btn-sm" style="background: #4A154B; color: #fff; font-size: 0.72rem; padding: 4px 10px;">Re-Send</button>
+          </div>
+        </div>
+
+        <div style="background: #1A1D21; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <div style="width: 28px; height: 28px; border-radius: 4px; background: #E01E5A; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 0.8rem;">ZS</div>
+            <div>
+              <div style="font-size: 0.85rem; font-weight: bold; color: #fff;">Zombie SaaS Sentinel <span style="font-size: 0.65rem; background: rgba(255,255,255,0.15); padding: 1px 4px; border-radius: 3px; font-weight: normal; color: #ddd;">APP</span></div>
+              <div style="font-size: 0.7rem; color: #868686;">Today at <span id="slack-card-timestamp">12:00 PM</span></div>
+            </div>
+          </div>
+          
+          <div id="slack-card-rendered" style="border-left: 3px solid #E01E5A; padding-left: 12px; margin-left: 4px;">
+            <!-- Rendered Slack message content -->
+          </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <details style="font-size: 0.72rem; color: var(--text-muted);">
+            <summary style="cursor: pointer; color: var(--accent-cyan);">Inspect Raw Block Kit JSON Payload</summary>
+            <pre id="slack-raw-json" style="background: #020617; padding: 10px; border-radius: 4px; overflow-x: auto; margin-top: 6px; font-family: monospace; font-size: 0.7rem; color: #a5f3fc; max-height: 180px;"></pre>
+          </details>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span id="slack-dispatch-receipt" style="font-size: 0.75rem; color: var(--accent-emerald);"></span>
+        <button id="btn-dismiss-slack-modal" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=2" onerror="this.onerror=null;this.src='app.js?v=2';"></script>
 </body>
 </html>
