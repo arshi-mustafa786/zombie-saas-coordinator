@@ -47,7 +47,10 @@ def deploy_cloud_run(
                         {"name": "FIRESTORE_DATABASE_ID", "value": "zombie-saas-coordinator"},
                         {"name": "GEMINI_MODEL", "value": "gemini-3.1-flash-lite"},
                         {"name": "GEMINI_API_KEY", "value": "AQ.Ab8RN6L-YeHhDBneZfn2PQPFWd7XdyQ7X37xphfNYCr8ChVOeQ"},
+                        {"name": "DEPLOY_TIMESTAMP", "value": str(int(time.time()))},
+                        {"name": "ENVIRONMENT", "value": "production"},
                     ],
+
                     "livenessProbe": {
                         "httpGet": {
                             "path": "/health",
@@ -82,8 +85,10 @@ def deploy_cloud_run(
         print(f"[*] Updating service '{service_name}' with new container image: {image_uri}")
         op = v2.projects().locations().services().patch(
             name=full_service_name,
+            updateMask="template",
             body=service_body
         ).execute()
+
     else:
         print(f"[*] Creating Cloud Run service '{service_name}' in '{region}'...")
         op = v2.projects().locations().services().create(
@@ -111,9 +116,10 @@ def deploy_cloud_run(
     svc = v2.projects().locations().services().get(name=full_service_name).execute()
     service_url = svc.get("uri", "")
     print(f"\n=======================================================")
-    print(f"🎉 CLOUD RUN SERVICE IS LIVE!")
-    print(f"🔗 Public Service URL: {service_url}")
+    print(f"[SUCCESS] CLOUD RUN SERVICE IS LIVE!")
+    print(f"Public Service URL: {service_url}")
     print(f"=======================================================\n")
+
 
     # Grant public unauthenticated access if requested
     if allow_unauthenticated:

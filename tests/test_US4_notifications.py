@@ -388,3 +388,27 @@ def test_callback_rejects_expired_proposal(monkeypatch: pytest.MonkeyPatch) -> N
     assert response.status_code == 400
     assert "expired" in response.json()["detail"].lower()
 
+
+def test_api_actions_push_to_slack_dispatches_block_kit() -> None:
+    """POST /api/v1/actions/push-to-slack builds and returns formatted Block Kit payload."""
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/actions/push-to-slack",
+        json={
+            "proposal_id": "prop-trello-123",
+            "app_name": "Trello",
+            "target_app": "Asana",
+            "annual_savings": 14400.0,
+            "channel": "#ciso-saas-governance",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert data["app_name"] == "Trello"
+    assert data["target_app"] == "Asana"
+    assert "block_kit" in data
+    assert "blocks" in data["block_kit"]
+    assert data["dispatch"]["sent"] is True
+
+

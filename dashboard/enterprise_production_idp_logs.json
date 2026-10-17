@@ -1,0 +1,3515 @@
+[
+  {
+    "app_id": "app_trello_01",
+    "app_name": "Trello",
+    "vendor": "Atlassian",
+    "category": "Project Management",
+    "capabilities": [
+      "kanban",
+      "task-tracking",
+      "collaboration"
+    ],
+    "total_seats": 120,
+    "active_seats": 22,
+    "inactive_seats": 98,
+    "inactive_ratio": 0.82,
+    "last_login_date": "2026-07-03T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 45.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": true,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_e087598449f2",
+        "published": "2026-07-03T07:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_28f05004",
+          "type": "User",
+          "displayName": "Alex Zhang",
+          "email": "alex.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_b026c4df10ee",
+        "published": "2026-07-03T01:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_871c39b4",
+          "type": "User",
+          "displayName": "Anya Kowalski",
+          "email": "anya.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_9415f93bb434",
+        "published": "2026-07-03T01:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_4ed58d09",
+          "type": "User",
+          "displayName": "James Zhang",
+          "email": "james.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_e3e8baaf36cb",
+        "published": "2026-07-02T23:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_6d809be3",
+          "type": "User",
+          "displayName": "Alex Miller",
+          "email": "alex.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_8430c28b38ce",
+        "published": "2026-07-03T11:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_c2e86ae0",
+          "type": "User",
+          "displayName": "Anya Zhang",
+          "email": "anya.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_014470834504",
+        "published": "2026-07-03T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_acb03d74",
+          "type": "User",
+          "displayName": "Wei Dubois",
+          "email": "wei.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_2b4e7eea33d7",
+        "published": "2026-07-03T10:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_09d809ad",
+          "type": "User",
+          "displayName": "David Smith",
+          "email": "david.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_c55fb7bb6b2d",
+        "published": "2026-07-03T06:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_0788b047",
+          "type": "User",
+          "displayName": "Elena Smith",
+          "email": "elena.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_58cdb856b634",
+        "published": "2026-07-02T20:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_3672b3dd",
+          "type": "User",
+          "displayName": "Marcus Vance",
+          "email": "marcus.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      },
+      {
+        "eventId": "evt_cb5016ec472a",
+        "published": "2026-07-03T14:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_eae6701f",
+          "type": "User",
+          "displayName": "Alex Miller",
+          "email": "alex.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 104
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_airtable_01",
+    "app_name": "Airtable",
+    "vendor": "Formagrid Inc.",
+    "category": "Relational Database & Workflows",
+    "capabilities": [
+      "databases",
+      "automations",
+      "views",
+      "collaboration",
+      "custom-fields",
+      "integrations"
+    ],
+    "total_seats": 350,
+    "active_seats": 308,
+    "inactive_seats": 42,
+    "inactive_ratio": 0.12,
+    "last_login_date": "2026-10-14T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 38.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_a0f93816a8bb",
+        "published": "2026-10-03T18:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_6ca7b5de",
+          "type": "User",
+          "displayName": "Marcus Chen",
+          "email": "marcus.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 11
+        }
+      },
+      {
+        "eventId": "evt_2bf25c79631b",
+        "published": "2026-10-05T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_052f7f94",
+          "type": "User",
+          "displayName": "Marcus Patel",
+          "email": "marcus.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      },
+      {
+        "eventId": "evt_4ce53a464fc9",
+        "published": "2026-10-10T06:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_0108bdfa",
+          "type": "User",
+          "displayName": "Priya Kumar",
+          "email": "priya.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_97d10b27e528",
+        "published": "2026-10-07T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_27ad4f22",
+          "type": "User",
+          "displayName": "David Zhang",
+          "email": "david.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 7
+        }
+      },
+      {
+        "eventId": "evt_8506180d9748",
+        "published": "2026-10-03T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_9b83e5d8",
+          "type": "User",
+          "displayName": "Sarah O'Connor",
+          "email": "sarah.o'connor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 12
+        }
+      },
+      {
+        "eventId": "evt_3247ad557c50",
+        "published": "2026-10-10T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_ba22357b",
+          "type": "User",
+          "displayName": "Chloe Vance",
+          "email": "chloe.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_83b313d3a492",
+        "published": "2026-10-08T12:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_f1e6b382",
+          "type": "User",
+          "displayName": "Marcus Patel",
+          "email": "marcus.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 7
+        }
+      },
+      {
+        "eventId": "evt_0ae3c0c2a943",
+        "published": "2026-10-07T23:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_a61f8e0f",
+          "type": "User",
+          "displayName": "Liam Kowalski",
+          "email": "liam.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 7
+        }
+      },
+      {
+        "eventId": "evt_d55f45140b84",
+        "published": "2026-10-04T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_09f7feb9",
+          "type": "User",
+          "displayName": "Sarah Dubois",
+          "email": "sarah.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 11
+        }
+      },
+      {
+        "eventId": "evt_9408b5f6f979",
+        "published": "2026-10-11T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_444c6cef",
+          "type": "User",
+          "displayName": "Chloe Zhang",
+          "email": "chloe.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 4
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_miro_01",
+    "app_name": "Miro",
+    "vendor": "RealtimeBoard Inc.",
+    "category": "Whiteboard & Collaboration",
+    "capabilities": [
+      "whiteboard",
+      "mindmapping",
+      "brainstorming",
+      "collaboration"
+    ],
+    "total_seats": 85,
+    "active_seats": 21,
+    "inactive_seats": 64,
+    "inactive_ratio": 0.75,
+    "last_login_date": "2026-07-12T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 30.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": true,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_86abc761c6db",
+        "published": "2026-07-12T04:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_faf736f6",
+          "type": "User",
+          "displayName": "Fatima O'Connor",
+          "email": "fatima.o'connor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_d47aa15c7588",
+        "published": "2026-07-12T00:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_d7031568",
+          "type": "User",
+          "displayName": "Fatima Vance",
+          "email": "fatima.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_78395e2bd611",
+        "published": "2026-07-12T12:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_28f37cf9",
+          "type": "User",
+          "displayName": "Sarah Dubois",
+          "email": "sarah.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_9fa1067359d1",
+        "published": "2026-07-11T23:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_8053d8b2",
+          "type": "User",
+          "displayName": "Liam Al-Mansoor",
+          "email": "liam.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_fed38a035292",
+        "published": "2026-07-12T07:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_d1c5dfb2",
+          "type": "User",
+          "displayName": "Fatima Dubois",
+          "email": "fatima.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_e6293cadd377",
+        "published": "2026-07-12T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_d4a09741",
+          "type": "User",
+          "displayName": "Elena Kowalski",
+          "email": "elena.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_65572a30230c",
+        "published": "2026-07-12T11:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_a0009b4c",
+          "type": "User",
+          "displayName": "David Vance",
+          "email": "david.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_6373e904a8c1",
+        "published": "2026-07-12T10:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_13e61951",
+          "type": "User",
+          "displayName": "James Kowalski",
+          "email": "james.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_9937049dda50",
+        "published": "2026-07-12T07:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_5f250b4c",
+          "type": "User",
+          "displayName": "Alex Dubois",
+          "email": "alex.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      },
+      {
+        "eventId": "evt_8460b4e5ec18",
+        "published": "2026-07-12T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_8f44cbd3",
+          "type": "User",
+          "displayName": "Fatima Miller",
+          "email": "fatima.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 95
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_monday_01",
+    "app_name": "Monday.com",
+    "vendor": "Monday.com Ltd.",
+    "category": "Project Management",
+    "capabilities": [
+      "kanban",
+      "task-tracking",
+      "collaboration"
+    ],
+    "total_seats": 60,
+    "active_seats": 8,
+    "inactive_seats": 52,
+    "inactive_ratio": 0.87,
+    "last_login_date": "2026-07-19T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 40.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": true,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_f85628a58ad6",
+        "published": "2026-07-18T20:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_5d0cbed5",
+          "type": "User",
+          "displayName": "Priya Patel",
+          "email": "priya.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_3b81485afbd9",
+        "published": "2026-07-19T02:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_8036ae94",
+          "type": "User",
+          "displayName": "Fatima Vance",
+          "email": "fatima.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_eb0b2e73dd44",
+        "published": "2026-07-18T20:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_765e9bcf",
+          "type": "User",
+          "displayName": "Wei Smith",
+          "email": "wei.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_32e5e2bb8996",
+        "published": "2026-07-19T11:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_6797a359",
+          "type": "User",
+          "displayName": "Liam Kumar",
+          "email": "liam.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_60313f5fd253",
+        "published": "2026-07-19T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_dd6b9292",
+          "type": "User",
+          "displayName": "Chloe Dubois",
+          "email": "chloe.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_59b74b486c22",
+        "published": "2026-07-18T18:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_558d2373",
+          "type": "User",
+          "displayName": "Liam Miller",
+          "email": "liam.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_67c4c8869679",
+        "published": "2026-07-19T16:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_ba1856d5",
+          "type": "User",
+          "displayName": "Sarah Dubois",
+          "email": "sarah.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_a80930cd5da2",
+        "published": "2026-07-19T01:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_801501ed",
+          "type": "User",
+          "displayName": "David Miller",
+          "email": "david.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_2afb575d860d",
+        "published": "2026-07-19T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_de20df3f",
+          "type": "User",
+          "displayName": "Anya Miller",
+          "email": "anya.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      },
+      {
+        "eventId": "evt_b301294a11e7",
+        "published": "2026-07-19T05:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_41fc1f99",
+          "type": "User",
+          "displayName": "Chloe Kowalski",
+          "email": "chloe.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 88
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_jira_01",
+    "app_name": "Jira Software",
+    "vendor": "Atlassian",
+    "category": "Project Management",
+    "capabilities": [
+      "kanban",
+      "scrum",
+      "issue-tracking",
+      "task-tracking",
+      "collaboration",
+      "enterprise-agile"
+    ],
+    "total_seats": 450,
+    "active_seats": 414,
+    "inactive_seats": 36,
+    "inactive_ratio": 0.08,
+    "last_login_date": "2026-10-15T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 42.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_1e51ab75d22b",
+        "published": "2026-10-03T16:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_a5fbb33d",
+          "type": "User",
+          "displayName": "James Vance",
+          "email": "james.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 12
+        }
+      },
+      {
+        "eventId": "evt_711517cc4e74",
+        "published": "2026-10-01T02:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_1d288b16",
+          "type": "User",
+          "displayName": "Sarah Kowalski",
+          "email": "sarah.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_268d4aa2df17",
+        "published": "2026-10-08T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_bccdacf7",
+          "type": "User",
+          "displayName": "Chloe Novak",
+          "email": "chloe.novak@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 6
+        }
+      },
+      {
+        "eventId": "evt_8870634ea4a7",
+        "published": "2026-10-01T05:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_2a26a9f4",
+          "type": "User",
+          "displayName": "Wei Smith",
+          "email": "wei.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_7c4db2ad22e0",
+        "published": "2026-10-01T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_2d6990aa",
+          "type": "User",
+          "displayName": "Chloe Smith",
+          "email": "chloe.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_15d5b13e7014",
+        "published": "2026-10-14T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_1d50d1cb",
+          "type": "User",
+          "displayName": "Alex Kowalski",
+          "email": "alex.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_c0edbd55bf5e",
+        "published": "2026-10-03T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_b6734380",
+          "type": "User",
+          "displayName": "Marcus Zhang",
+          "email": "marcus.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 12
+        }
+      },
+      {
+        "eventId": "evt_b39e5bb98633",
+        "published": "2026-10-14T16:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_8e3bf728",
+          "type": "User",
+          "displayName": "Elena Chen",
+          "email": "elena.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_3c6ca6abf8ea",
+        "published": "2026-10-08T19:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_b72eca29",
+          "type": "User",
+          "displayName": "Elena Al-Mansoor",
+          "email": "elena.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 6
+        }
+      },
+      {
+        "eventId": "evt_077bbb6416a3",
+        "published": "2026-10-08T19:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_09ad3f7b",
+          "type": "User",
+          "displayName": "James Chen",
+          "email": "james.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 6
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_slack_01",
+    "app_name": "Slack Enterprise Grid",
+    "vendor": "Salesforce",
+    "category": "Team Communication",
+    "capabilities": [
+      "chat",
+      "channels",
+      "team-messaging",
+      "huddles"
+    ],
+    "total_seats": 500,
+    "active_seats": 475,
+    "inactive_seats": 25,
+    "inactive_ratio": 0.05,
+    "last_login_date": "2026-10-15T17:02:56.094010+00:00",
+    "sso_protocol": "OIDC",
+    "monthly_seat_cost": 15.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_3f1753903c8c",
+        "published": "2026-10-14T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_05504a23",
+          "type": "User",
+          "displayName": "Fatima Kumar",
+          "email": "fatima.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_2e71b997b22e",
+        "published": "2026-10-10T05:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_4780ae5c",
+          "type": "User",
+          "displayName": "James Al-Mansoor",
+          "email": "james.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_be1fd86424f8",
+        "published": "2026-10-15T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_6b880245",
+          "type": "User",
+          "displayName": "Fatima Kowalski",
+          "email": "fatima.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 0
+        }
+      },
+      {
+        "eventId": "evt_abe012445786",
+        "published": "2026-10-03T20:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_623b8c76",
+          "type": "User",
+          "displayName": "Sarah Miller",
+          "email": "sarah.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 11
+        }
+      },
+      {
+        "eventId": "evt_f3cbb8aa2b68",
+        "published": "2026-10-02T14:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_ca1d5db8",
+          "type": "User",
+          "displayName": "Chloe Patel",
+          "email": "chloe.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 13
+        }
+      },
+      {
+        "eventId": "evt_8fd2314360e5",
+        "published": "2026-10-12T07:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_cc98a273",
+          "type": "User",
+          "displayName": "James Dubois",
+          "email": "james.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 3
+        }
+      },
+      {
+        "eventId": "evt_56685cd5c619",
+        "published": "2026-10-14T12:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_92cbd422",
+          "type": "User",
+          "displayName": "Sarah Smith",
+          "email": "sarah.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_6a9e51c207be",
+        "published": "2026-10-06T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_0d5fe7dd",
+          "type": "User",
+          "displayName": "Marcus Al-Mansoor",
+          "email": "marcus.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      },
+      {
+        "eventId": "evt_0ade2da407b0",
+        "published": "2026-10-09T07:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_49070d3e",
+          "type": "User",
+          "displayName": "Chloe Kumar",
+          "email": "chloe.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 6
+        }
+      },
+      {
+        "eventId": "evt_54cf70bef2a0",
+        "published": "2026-10-05T18:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_249317d1",
+          "type": "User",
+          "displayName": "David Miller",
+          "email": "david.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_lucid_01",
+    "app_name": "Lucidchart",
+    "vendor": "Lucid Software",
+    "category": "Whiteboard & Collaboration",
+    "capabilities": [
+      "diagramming",
+      "flowcharts",
+      "whiteboard"
+    ],
+    "total_seats": 75,
+    "active_seats": 21,
+    "inactive_seats": 54,
+    "inactive_ratio": 0.72,
+    "last_login_date": "2026-07-31T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 28.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": true,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_4ecec92a90cd",
+        "published": "2026-07-31T12:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_cb58942e",
+          "type": "User",
+          "displayName": "David Smith",
+          "email": "david.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_6163b24abef7",
+        "published": "2026-07-31T00:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_c83dd2a3",
+          "type": "User",
+          "displayName": "Chloe Vance",
+          "email": "chloe.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_e66b3badf81b",
+        "published": "2026-07-31T10:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_4a8aeaf8",
+          "type": "User",
+          "displayName": "Wei Chen",
+          "email": "wei.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_b19d71315f06",
+        "published": "2026-07-31T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_c590a7c3",
+          "type": "User",
+          "displayName": "Sarah Miller",
+          "email": "sarah.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_64d0faf39a12",
+        "published": "2026-07-31T14:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_36c38178",
+          "type": "User",
+          "displayName": "Liam Chen",
+          "email": "liam.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_5109696e6382",
+        "published": "2026-07-31T01:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_547070bd",
+          "type": "User",
+          "displayName": "Liam Al-Mansoor",
+          "email": "liam.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_69aeb1785a6e",
+        "published": "2026-07-31T05:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_7d372e32",
+          "type": "User",
+          "displayName": "Fatima Zhang",
+          "email": "fatima.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_e2bb5263cba7",
+        "published": "2026-07-30T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_02c8dccf",
+          "type": "User",
+          "displayName": "Fatima Miller",
+          "email": "fatima.miller@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_c162962f7fc0",
+        "published": "2026-07-31T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_720e30c7",
+          "type": "User",
+          "displayName": "Wei Chen",
+          "email": "wei.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      },
+      {
+        "eventId": "evt_04a63f1aa174",
+        "published": "2026-07-30T20:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_1d158bff",
+          "type": "User",
+          "displayName": "James Kowalski",
+          "email": "james.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "DORMANT_INACTIVE",
+          "days_inactive": 76
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_github_01",
+    "app_name": "GitHub Enterprise",
+    "vendor": "Microsoft",
+    "category": "Developer Tools",
+    "capabilities": [
+      "git",
+      "code-review",
+      "ci-cd",
+      "packages"
+    ],
+    "total_seats": 220,
+    "active_seats": 212,
+    "inactive_seats": 8,
+    "inactive_ratio": 0.04,
+    "last_login_date": "2026-10-15T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 21.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_9f80c78c19a0",
+        "published": "2026-10-11T02:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_835dcdeb",
+          "type": "User",
+          "displayName": "Wei Dubois",
+          "email": "wei.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 4
+        }
+      },
+      {
+        "eventId": "evt_56424a7816b5",
+        "published": "2026-10-13T08:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_79b2bfab",
+          "type": "User",
+          "displayName": "Fatima Patel",
+          "email": "fatima.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 2
+        }
+      },
+      {
+        "eventId": "evt_664a3836c9e3",
+        "published": "2026-10-10T02:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_20c3823a",
+          "type": "User",
+          "displayName": "James Patel",
+          "email": "james.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_a6edeb5f7713",
+        "published": "2026-10-11T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_bf5b002f",
+          "type": "User",
+          "displayName": "Marcus Patel",
+          "email": "marcus.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 3
+        }
+      },
+      {
+        "eventId": "evt_151e8ce0335c",
+        "published": "2026-10-11T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_b11c6400",
+          "type": "User",
+          "displayName": "Fatima Zhang",
+          "email": "fatima.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 3
+        }
+      },
+      {
+        "eventId": "evt_26618cb0ccd7",
+        "published": "2026-10-14T07:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_a82491aa",
+          "type": "User",
+          "displayName": "David Chen",
+          "email": "david.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_a36872e5c7ce",
+        "published": "2026-09-30T19:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_aa74f850",
+          "type": "User",
+          "displayName": "Sarah Kumar",
+          "email": "sarah.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_3fd295a891ab",
+        "published": "2026-10-01T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_1d00b24a",
+          "type": "User",
+          "displayName": "Anya Kumar",
+          "email": "anya.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 13
+        }
+      },
+      {
+        "eventId": "evt_4a10ded56030",
+        "published": "2026-10-12T10:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_03e83aab",
+          "type": "User",
+          "displayName": "Wei Smith",
+          "email": "wei.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 3
+        }
+      },
+      {
+        "eventId": "evt_b2ac853c175a",
+        "published": "2026-10-09T20:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_4463f06b",
+          "type": "User",
+          "displayName": "Sarah Patel",
+          "email": "sarah.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_figma_01",
+    "app_name": "Figma Enterprise",
+    "vendor": "Figma Inc.",
+    "category": "Design & Prototyping",
+    "capabilities": [
+      "ui-design",
+      "prototyping",
+      "design-systems"
+    ],
+    "total_seats": 90,
+    "active_seats": 77,
+    "inactive_seats": 13,
+    "inactive_ratio": 0.14,
+    "last_login_date": "2026-10-13T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 45.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_ab4ab921f4b2",
+        "published": "2026-10-13T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_df5e3459",
+          "type": "User",
+          "displayName": "Liam Chen",
+          "email": "liam.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_75b589843489",
+        "published": "2026-10-14T01:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_263f4461",
+          "type": "User",
+          "displayName": "Chloe Kowalski",
+          "email": "chloe.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_26c7930c753b",
+        "published": "2026-10-08T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_fdbe9c16",
+          "type": "User",
+          "displayName": "Alex Chen",
+          "email": "alex.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 7
+        }
+      },
+      {
+        "eventId": "evt_1e00a2f29bf0",
+        "published": "2026-10-01T02:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_d90a09e1",
+          "type": "User",
+          "displayName": "Chloe Patel",
+          "email": "chloe.patel@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_5a7b12f08651",
+        "published": "2026-10-02T08:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_5dff6313",
+          "type": "User",
+          "displayName": "Fatima O'Connor",
+          "email": "fatima.o'connor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 13
+        }
+      },
+      {
+        "eventId": "evt_a145b410bd21",
+        "published": "2026-10-09T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_a76c4f30",
+          "type": "User",
+          "displayName": "Marcus Chen",
+          "email": "marcus.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_5f8eab43ee09",
+        "published": "2026-10-11T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_580133d0",
+          "type": "User",
+          "displayName": "Priya Al-Mansoor",
+          "email": "priya.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 3
+        }
+      },
+      {
+        "eventId": "evt_8d572111195d",
+        "published": "2026-10-09T20:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_96b141f0",
+          "type": "User",
+          "displayName": "Anya Zhang",
+          "email": "anya.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_1182371eedf0",
+        "published": "2026-10-07T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_ce5052ad",
+          "type": "User",
+          "displayName": "Anya Zhang",
+          "email": "anya.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 7
+        }
+      },
+      {
+        "eventId": "evt_bbd11ba927e3",
+        "published": "2026-10-05T14:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_a65369ef",
+          "type": "User",
+          "displayName": "Sarah Novak",
+          "email": "sarah.novak@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 10
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_aws_01",
+    "app_name": "AWS IAM Identity Center",
+    "vendor": "Amazon Web Services",
+    "category": "Cloud Infrastructure",
+    "capabilities": [
+      "cloud-console",
+      "iam",
+      "cloud-compute"
+    ],
+    "total_seats": 180,
+    "active_seats": 170,
+    "inactive_seats": 10,
+    "inactive_ratio": 0.06,
+    "last_login_date": "2026-10-15T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 0.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_623f91b75658",
+        "published": "2026-10-11T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_beda1eb1",
+          "type": "User",
+          "displayName": "Marcus Chen",
+          "email": "marcus.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 4
+        }
+      },
+      {
+        "eventId": "evt_54f0ea0e5a25",
+        "published": "2026-10-06T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_cb9feab3",
+          "type": "User",
+          "displayName": "Wei Smith",
+          "email": "wei.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 8
+        }
+      },
+      {
+        "eventId": "evt_185a413c85eb",
+        "published": "2026-10-12T00:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_d247c663",
+          "type": "User",
+          "displayName": "Priya Novak",
+          "email": "priya.novak@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 3
+        }
+      },
+      {
+        "eventId": "evt_676a060e62d9",
+        "published": "2026-10-13T09:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_8456a400",
+          "type": "User",
+          "displayName": "David Al-Mansoor",
+          "email": "david.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 2
+        }
+      },
+      {
+        "eventId": "evt_cc8ecc523757",
+        "published": "2026-10-05T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_e0d6c963",
+          "type": "User",
+          "displayName": "Liam Smith",
+          "email": "liam.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 10
+        }
+      },
+      {
+        "eventId": "evt_e122d09d1da7",
+        "published": "2026-10-10T11:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_a1e826a0",
+          "type": "User",
+          "displayName": "Elena Chen",
+          "email": "elena.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_6a421b7cf60a",
+        "published": "2026-10-06T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_e40550ba",
+          "type": "User",
+          "displayName": "David Dubois",
+          "email": "david.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      },
+      {
+        "eventId": "evt_cdd79a2cc2a2",
+        "published": "2026-10-06T00:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_74b3086d",
+          "type": "User",
+          "displayName": "Liam Kumar",
+          "email": "liam.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      },
+      {
+        "eventId": "evt_9b2ff4f3a532",
+        "published": "2026-10-13T11:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_2d59b0ae",
+          "type": "User",
+          "displayName": "Chloe Dubois",
+          "email": "chloe.dubois@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 2
+        }
+      },
+      {
+        "eventId": "evt_01d221e9bcc0",
+        "published": "2026-10-05T13:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_06d9c862",
+          "type": "User",
+          "displayName": "David Vance",
+          "email": "david.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 10
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_salesforce_01",
+    "app_name": "Salesforce Sales Cloud",
+    "vendor": "Salesforce",
+    "category": "CRM & Sales",
+    "capabilities": [
+      "crm",
+      "pipeline-tracking",
+      "account-management"
+    ],
+    "total_seats": 140,
+    "active_seats": 126,
+    "inactive_seats": 14,
+    "inactive_ratio": 0.1,
+    "last_login_date": "2026-10-14T17:02:56.094010+00:00",
+    "sso_protocol": "SAML_2_0",
+    "monthly_seat_cost": 150.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_5454e6cee726",
+        "published": "2026-10-01T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_f576d981",
+          "type": "User",
+          "displayName": "Anya Kumar",
+          "email": "anya.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_3eee487aa8e2",
+        "published": "2026-10-09T21:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_fa332136",
+          "type": "User",
+          "displayName": "Fatima Kumar",
+          "email": "fatima.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_bf1218487af6",
+        "published": "2026-10-05T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_66645e0c",
+          "type": "User",
+          "displayName": "Wei Vance",
+          "email": "wei.vance@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      },
+      {
+        "eventId": "evt_4dd11ab2f8d0",
+        "published": "2026-10-11T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_06bb3e27",
+          "type": "User",
+          "displayName": "Alex Kumar",
+          "email": "alex.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 4
+        }
+      },
+      {
+        "eventId": "evt_68b9459f1320",
+        "published": "2026-10-03T01:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_fa6f7cc6",
+          "type": "User",
+          "displayName": "Fatima Kowalski",
+          "email": "fatima.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 12
+        }
+      },
+      {
+        "eventId": "evt_8b6fc9e9e8f7",
+        "published": "2026-10-06T12:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_fe282ef1",
+          "type": "User",
+          "displayName": "Wei O'Connor",
+          "email": "wei.o'connor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      },
+      {
+        "eventId": "evt_2a0740ddeba9",
+        "published": "2026-10-09T02:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_fcd29f27",
+          "type": "User",
+          "displayName": "Fatima Chen",
+          "email": "fatima.chen@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 6
+        }
+      },
+      {
+        "eventId": "evt_54824106ef8a",
+        "published": "2026-10-13T18:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_1fcf2018",
+          "type": "User",
+          "displayName": "Fatima Kowalski",
+          "email": "fatima.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 1
+        }
+      },
+      {
+        "eventId": "evt_5a6fef42faf3",
+        "published": "2026-10-09T12:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_f9994fcc",
+          "type": "User",
+          "displayName": "James Kowalski",
+          "email": "james.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 6
+        }
+      },
+      {
+        "eventId": "evt_000e2b00fa2b",
+        "published": "2026-10-10T16:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_20ffe4b4",
+          "type": "User",
+          "displayName": "Alex Zhang",
+          "email": "alex.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "SAML_2_0"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      }
+    ]
+  },
+  {
+    "app_id": "app_zoom_01",
+    "app_name": "Zoom Workplace",
+    "vendor": "Zoom Video Communications",
+    "category": "Video Conferencing",
+    "capabilities": [
+      "video-meetings",
+      "webinars",
+      "phone"
+    ],
+    "total_seats": 400,
+    "active_seats": 364,
+    "inactive_seats": 36,
+    "inactive_ratio": 0.09,
+    "last_login_date": "2026-10-15T17:02:56.094010+00:00",
+    "sso_protocol": "OIDC",
+    "monthly_seat_cost": 20.0,
+    "idp_provider": "Okta Universal Directory / Google Workspace SSO",
+    "is_flagged_zombie": false,
+    "sample_audit_events": [
+      {
+        "eventId": "evt_a5293a5242a3",
+        "published": "2026-10-02T03:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_7369c776",
+          "type": "User",
+          "displayName": "Elena Kowalski",
+          "email": "elena.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 13
+        }
+      },
+      {
+        "eventId": "evt_9e7f8aaaee9b",
+        "published": "2026-10-15T15:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_85ae15b5",
+          "type": "User",
+          "displayName": "Fatima O'Connor",
+          "email": "fatima.o'connor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 0
+        }
+      },
+      {
+        "eventId": "evt_84deabad58ec",
+        "published": "2026-10-12T18:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_04ddf7ab",
+          "type": "User",
+          "displayName": "Marcus Al-Mansoor",
+          "email": "marcus.al-mansoor@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 2
+        }
+      },
+      {
+        "eventId": "evt_08b40f01a596",
+        "published": "2026-10-11T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_254e96f2",
+          "type": "User",
+          "displayName": "David Smith",
+          "email": "david.smith@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "195.55.120.45",
+          "geographicalContext": {
+            "city": "London",
+            "country": "United Kingdom"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 3
+        }
+      },
+      {
+        "eventId": "evt_02a64f5bc7d5",
+        "published": "2026-10-13T06:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_1762ba96",
+          "type": "User",
+          "displayName": "David Novak",
+          "email": "david.novak@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 2
+        }
+      },
+      {
+        "eventId": "evt_57a42e2550ed",
+        "published": "2026-10-10T05:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_d9d0c6ef",
+          "type": "User",
+          "displayName": "Liam Kumar",
+          "email": "liam.kumar@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.89",
+          "geographicalContext": {
+            "city": "New York",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 5
+        }
+      },
+      {
+        "eventId": "evt_ea9fcaa39652",
+        "published": "2026-09-30T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_7f9bdbcc",
+          "type": "User",
+          "displayName": "Chloe Kowalski",
+          "email": "chloe.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "133.242.18.5",
+          "geographicalContext": {
+            "city": "Tokyo",
+            "country": "Japan"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_106c8d77f99e",
+        "published": "2026-09-30T22:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_d1d10747",
+          "type": "User",
+          "displayName": "Marcus Kowalski",
+          "email": "marcus.kowalski@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 14
+        }
+      },
+      {
+        "eventId": "evt_fb6500215c0f",
+        "published": "2026-10-06T12:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_5be3ea58",
+          "type": "User",
+          "displayName": "James Zhang",
+          "email": "james.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "198.51.100.24",
+          "geographicalContext": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 9
+        }
+      },
+      {
+        "eventId": "evt_59924e889088",
+        "published": "2026-10-09T05:02:56.094010+00:00",
+        "eventType": "user.authentication.sso",
+        "actor": {
+          "id": "usr_6b23aa03",
+          "type": "User",
+          "displayName": "David Zhang",
+          "email": "david.zhang@enterprise.com"
+        },
+        "client": {
+          "ipAddress": "103.21.144.12",
+          "geographicalContext": {
+            "city": "Bengaluru",
+            "country": "India"
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0"
+        },
+        "securityContext": {
+          "mfa": "DUO_PUSH_VERIFIED",
+          "sso_protocol": "OIDC"
+        },
+        "outcome": {
+          "result": "SUCCESS",
+          "days_inactive": 6
+        }
+      }
+    ]
+  }
+]

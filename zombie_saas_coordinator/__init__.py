@@ -11,4 +11,4 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from zombie_saas_coordinator.agent import agent, root_agent  # noqa: F401
+from zombie_saas_coordinator.agent import agent, root_agent  # noqa: E402, F401
