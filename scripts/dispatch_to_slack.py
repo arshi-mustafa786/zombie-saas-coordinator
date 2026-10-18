@@ -9,11 +9,11 @@ dotenv.load_dotenv()
 from scripts.create_fresh_proposal import create_fresh_proposal
 from zombie_saas_coordinator.agents.auditor.tools import send_approval_card
 
-# Default to the webhook URL provided
-SLACK_WEBHOOK_URL = os.getenv(
-    "SLACK_WEBHOOK_URL",
-    "https://hooks.slack.com/services/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",
-)
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
+
+if not SLACK_WEBHOOK_URL:
+    print("[!] Warning: SLACK_WEBHOOK_URL is not set in environment or .env file.")
+    print("    Please set SLACK_WEBHOOK_URL in .env before running this script.")
 
 def main() -> None:
     print("=" * 70)
